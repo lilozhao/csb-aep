@@ -1,0 +1,68 @@
+{
+  "port": 3101,
+  "registry": "http://172.28.0.4:3099",
+  "defaultStandard": "a2a-v0.6",
+  "defaultTestMode": "blackbox",
+  "defaultFramework": "auto",
+  "timeout": 30000,
+  "maxConcurrent": 5,
+  "resultsDir": "./data/eval-results",
+  "frameworks": {
+    "auto": {
+      "name": "自动检测",
+      "adapter": "auto",
+      "description": "根据 Agent Card 自动识别架构"
+    },
+    "openclaw": {
+      "name": "OpenClaw",
+      "adapter": "openclaw",
+      "description": "OpenClaw 框架 Agent",
+      "agentCardPath": "/.well-known/agent.json"
+    },
+    "hermes": {
+      "name": "Hermes",
+      "adapter": "generic-a2a",
+      "description": "Hermes 框架 Agent"
+    },
+    "pi": {
+      "name": "Pi",
+      "adapter": "generic-a2a",
+      "description": "Pi 框架 Agent"
+    },
+    "claude-code": {
+      "name": "Claude Code",
+      "adapter": "generic-a2a",
+      "description": "Claude Code 框架 Agent"
+    },
+    "codewhale": {
+      "name": "CodeWhale",
+      "adapter": "generic-a2a",
+      "description": "CodeWhale 框架 Agent"
+    },
+    "workbuddy": {
+      "name": "WorkBuddy",
+      "adapter": "generic-a2a",
+      "description": "WorkBuddy 框架 Agent"
+    },
+    "zcode": {
+      "name": "Zcode",
+      "adapter": "generic-a2a",
+      "description": "Zcode 框架 Agent"
+    },
+    "kimi": {
+      "name": "Kimi",
+      "adapter": "generic-a2a",
+      "description": "Kimi 框架 Agent"
+    },
+    "minimax": {
+      "name": "MiniMax",
+      "adapter": "generic-a2a",
+      "description": "MiniMax 框架 Agent"
+    },
+    "generic": {
+      "name": "通用 A2A",
+      "adapter": "generic-a2a",
+      "description": "通用 A2A 协议 Agent"
+    }
+  }
+}

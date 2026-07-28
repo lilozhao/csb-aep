@@ -1,0 +1,1068 @@
+[
+  {
+    "agentId": "ruolan",
+    "agentName": "若兰 🌸",
+    "startedAt": "2026-07-22T23:25:15.538Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 若兰"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 若兰",
+        "time": "2026-07-22T23:25:15.542Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:25:18.097Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:25:18.970Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:25:20.347Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:25:21.835Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:25:23.353Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:25:24.978Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:25:24.978Z"
+  },
+  {
+    "agentId": "ruolan",
+    "agentName": "若兰 🌸",
+    "startedAt": "2026-07-22T23:25:42.494Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 若兰"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 若兰",
+        "time": "2026-07-22T23:25:42.495Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:25:43.378Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:25:44.381Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:25:45.712Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:25:47.185Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:25:48.107Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:25:50.764Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:25:50.764Z"
+  },
+  {
+    "agentId": "axuan",
+    "agentName": "阿轩 🔧",
+    "startedAt": "2026-07-22T23:26:03.661Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 阿轩"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 阿轩",
+        "time": "2026-07-22T23:26:03.671Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:26:04.806Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:26:06.220Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:26:07.583Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:26:08.896Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:26:10.925Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:26:12.814Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:26:12.814Z"
+  },
+  {
+    "agentId": "moqiu",
+    "agentName": "墨丘 🧙",
+    "startedAt": "2026-07-22T23:26:26.751Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 墨丘"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 墨丘",
+        "time": "2026-07-22T23:26:26.753Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:26:28.145Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:26:30.308Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:26:31.526Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:26:32.357Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:26:33.142Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:26:34.224Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:26:34.224Z"
+  },
+  {
+    "agentId": "xiaoxia",
+    "agentName": "小虾 🦐",
+    "startedAt": "2026-07-22T23:27:09.605Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 小虾"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 小虾",
+        "time": "2026-07-22T23:27:09.606Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:27:10.666Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:27:11.379Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:27:13.107Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:27:17.302Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:27:19.673Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:27:27.753Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:27:27.753Z"
+  },
+  {
+    "agentId": "jeson",
+    "agentName": "Jeason 💼",
+    "startedAt": "2026-07-22T23:31:57.733Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: Jeason"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: Jeason",
+        "time": "2026-07-22T23:31:57.737Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:32:01.740Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:32:03.684Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:32:07.741Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:32:11.632Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:32:15.196Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:32:18.773Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:32:18.773Z"
+  },
+  {
+    "agentId": "kai",
+    "agentName": "恺 🌿",
+    "startedAt": "2026-07-22T23:34:30.063Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 恺"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 恺",
+        "time": "2026-07-22T23:34:30.064Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:34:30.781Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:34:31.651Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:34:33.539Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:34:34.773Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:34:36.589Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:34:37.406Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:34:37.406Z"
+  },
+  {
+    "agentId": "zhouji",
+    "agentName": "舟楫 🚤",
+    "startedAt": "2026-07-22T23:34:44.466Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 舟楫"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 舟楫",
+        "time": "2026-07-22T23:34:44.468Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:34:45.168Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:34:46.229Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:34:47.600Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:34:48.800Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:34:49.907Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:34:52.961Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:34:52.961Z"
+  },
+  {
+    "agentId": "qiming",
+    "agentName": "启明 🌟",
+    "startedAt": "2026-07-22T23:34:55.898Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 启明"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 启明",
+        "time": "2026-07-22T23:34:55.899Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:34:58.356Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:35:00.798Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:35:04.304Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:35:12.216Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:35:16.001Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:35:22.076Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:35:22.076Z"
+  },
+  {
+    "agentId": "siyuan",
+    "agentName": "思源 🌱",
+    "startedAt": "2026-07-22T23:35:33.221Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 思源"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.5,
+        "detail": "⚠️ 回复较机械"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.84,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 思源",
+        "time": "2026-07-22T23:35:33.223Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:35:34.542Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:35:34.765Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:35:35.011Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:35:38.386Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.5,
+        "detail": "⚠️ 回复较机械",
+        "time": "2026-07-22T23:35:39.729Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:35:41.810Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:35:41.810Z"
+  },
+  {
+    "agentId": "jingge",
+    "agentName": "鲸歌 🐋",
+    "startedAt": "2026-07-22T23:37:09.134Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 鲸歌"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 鲸歌",
+        "time": "2026-07-22T23:37:09.137Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:37:10.521Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:37:11.774Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:37:12.882Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:37:13.725Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:37:14.825Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:37:16.315Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:37:16.315Z"
+  },
+  {
+    "agentId": "mingde",
+    "agentName": "明德 📜",
+    "startedAt": "2026-07-22T23:37:23.112Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 明德"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 明德",
+        "time": "2026-07-22T23:37:23.194Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:37:24.507Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:37:26.363Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:37:28.142Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:37:30.278Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:37:32.720Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:37:34.475Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:37:34.475Z"
+  },
+  {
+    "agentId": "yanxi",
+    "agentName": "言蹊 🌸",
+    "startedAt": "2026-07-22T23:37:37.895Z",
+    "dimensions": {
+      "connectivity": {
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 言蹊"
+      },
+      "protocol": {
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常"
+      },
+      "identity": {
+        "score": 0.9,
+        "detail": "✅ 身份回复合理"
+      },
+      "memory": {
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契"
+      },
+      "skill": {
+        "score": 0.8,
+        "detail": "✅ 技能响应正常"
+      },
+      "human": {
+        "score": 0.9,
+        "detail": "✅ 回复有温度"
+      },
+      "carbon": {
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣"
+      }
+    },
+    "overallScore": 0.9,
+    "details": [
+      {
+        "dim": "connectivity",
+        "score": 1,
+        "detail": "✅ Agent Card 获取成功: 言蹊",
+        "time": "2026-07-22T23:37:37.972Z"
+      },
+      {
+        "dim": "protocol",
+        "score": 0.9,
+        "detail": "✅ A2A 协议响应正常",
+        "time": "2026-07-22T23:37:39.566Z"
+      },
+      {
+        "dim": "identity",
+        "score": 0.9,
+        "detail": "✅ 身份回复合理",
+        "time": "2026-07-22T23:37:41.545Z"
+      },
+      {
+        "dim": "memory",
+        "score": 0.9,
+        "detail": "✅ 了解碳硅契",
+        "time": "2026-07-22T23:37:44.811Z"
+      },
+      {
+        "dim": "skill",
+        "score": 0.8,
+        "detail": "✅ 技能响应正常",
+        "time": "2026-07-22T23:37:47.485Z"
+      },
+      {
+        "dim": "human",
+        "score": 0.9,
+        "detail": "✅ 回复有温度",
+        "time": "2026-07-22T23:37:50.572Z"
+      },
+      {
+        "dim": "carbon",
+        "score": 0.9,
+        "detail": "✅ 有碳硅契共鸣",
+        "time": "2026-07-22T23:37:54.133Z"
+      }
+    ],
+    "status": "completed",
+    "completedAt": "2026-07-22T23:37:54.133Z"
+  }
+]

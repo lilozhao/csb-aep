@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSB-AEP · Agent 质量评估平台</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --text: #1e293b;
+      --text-secondary: #64748b;
+      --border: #e2e8f0;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; background: var(--bg); color: var(--text); }
+
+    /* Header */
+    .header { background: linear-gradient(135deg, var(--primary), #8b5cf6); color: white; padding: 32px 0; text-align: center; }
+    .header h1 { font-size: 28px; font-weight: 700; }
+    .header p { opacity: 0.85; margin-top: 6px; font-size: 14px; }
+
+    .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
+
+    /* Cards */
+    .card { background: var(--card); border-radius: 16px; padding: 24px; margin-bottom: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.06); border: 1px solid var(--border); }
+    .card h2 { font-size: 17px; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+    /* Form */
+    label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; margin-top: 14px; font-weight: 500; }
+    input[type="text"], select { width: 100%; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; font-size: 14px; background: var(--bg); transition: border-color 0.2s; }
+    input[type="text"]:focus, select:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .radio-group { display: flex; gap: 12px; margin-top: 6px; flex-wrap: wrap; }
+    .radio-pill { display: flex; align-items: center; gap: 6px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 20px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+    .radio-pill:has(input:checked) { border-color: var(--primary); background: rgba(99,102,241,0.06); color: var(--primary); font-weight: 500; }
+    .radio-pill input { display: none; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 28px; background: var(--primary); color: white; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 18px; transition: all 0.2s; width: 100%; }
+    .btn:hover { background: var(--primary-light); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(99,102,241,0.3); }
+    .btn:disabled { background: #94a3b8; cursor: not-allowed; transform: none; box-shadow: none; }
+
+    /* Loading */
+    .loading { text-align: center; padding: 40px; }
+    .spinner { display: inline-block; width: 32px; height: 32px; border: 3px solid var(--border); border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Score Display */
+    .score-hero { text-align: center; padding: 20px 0; }
+    .score-hero .score { font-size: 64px; font-weight: 800; background: linear-gradient(135deg, var(--primary), #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .score-hero .out-of { font-size: 18px; color: var(--text-secondary); }
+    .score-hero .agent-info { font-size: 13px; color: var(--text-secondary); margin-top: 8px; }
+
+    /* Dimension Bars */
+    .dim-group { margin-bottom: 20px; }
+    .dim-group h3 { font-size: 14px; color: var(--text-secondary); margin-bottom: 10px; display: flex; align-items: center; gap: 6px; }
+    .dim-item { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; }
+    .dim-label { width: 100px; font-size: 13px; color: var(--text-secondary); text-align: right; flex-shrink: 0; }
+    .dim-bar { flex: 1; height: 22px; background: var(--bg); border-radius: 11px; overflow: hidden; position: relative; }
+    .dim-fill { height: 100%; border-radius: 11px; transition: width 0.8s ease-out; display: flex; align-items: center; justify-content: flex-end; padding-right: 8px; font-size: 11px; color: white; font-weight: 600; min-width: 32px; }
+    .dim-fill.excellent { background: linear-gradient(90deg, #22c55e, #16a34a); }
+    .dim-fill.good { background: linear-gradient(90deg, #3b82f6, #2563eb); }
+    .dim-fill.warn { background: linear-gradient(90deg, #f59e0b, #d97706); }
+    .dim-fill.poor { background: linear-gradient(90deg, #ef4444, #dc2626); }
+
+    /* Check items */
+    .checks-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+    .check-item { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); padding: 4px 8px; border-radius: 6px; background: var(--bg); }
+    .check-item.pass { color: #166534; }
+    .check-item.fail { color: #991b1b; }
+
+    /* Recommendations */
+    .rec-card { padding: 14px; margin-top: 10px; border-radius: 10px; border-left: 4px solid; }
+    .rec-critical { background: #fef2f2; border-color: var(--danger); }
+    .rec-high { background: #fffbeb; border-color: var(--warning); }
+    .rec-medium { background: #eff6ff; border-color: #3b82f6; }
+    .rec-card strong { font-size: 13px; }
+    .rec-card p { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
+
+    /* History */
+    .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .history-item:last-child { border-bottom: none; }
+    .history-score { font-weight: 700; font-size: 16px; }
+
+    /* Tab nav */
+    .tabs { display: flex; gap: 4px; background: var(--bg); padding: 4px; border-radius: 10px; margin-bottom: 16px; }
+    .tab { flex: 1; text-align: center; padding: 8px; border-radius: 8px; font-size: 13px; cursor: pointer; color: var(--text-secondary); transition: all 0.2s; }
+    .tab.active { background: white; color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0,0,0,0.08); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* Badge */
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+    .badge-pass { background: #dcfce7; color: #166534; }
+    .badge-fail { background: #fee2e2; color: #991b1b; }
+
+    @media (max-width: 640px) {
+      .row { grid-template-columns: 1fr; }
+      .checks-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🔬 CSB-AEP</h1>
+    <p>Agent 质量评估平台 · 基于 CSB-A2A-AIP v5.0</p>
+    <p style="font-size:12px;opacity:0.7;margin-top:4px">需先安装 CSB-A2A-AIP v5.0 服务</p>
+  </div>
+
+  <div class="container">
+    <!-- 评估表单 -->
+    <div class="card" id="formCard">
+      <h2>📊 新建评估</h2>
+      <label>Agent 地址</label>
+      <input type="text" id="agentUrl" placeholder="http://172.28.0.5:3100" value="">
+      <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
+        <span style="font-size:12px;color:var(--text-secondary);line-height:28px">快捷：</span>
+        <button onclick="setAgent('http://localhost:3100','本机')" style="font-size:11px;padding:4px 10px;border:1px solid var(--primary);border-radius:12px;background:rgba(99,102,241,0.06);cursor:pointer;color:var(--primary);font-weight:600">🏠 本机</button>
+        <button onclick="setAgent('http://172.28.0.4:3100','若兰')" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:12px;background:white;cursor:pointer">🌸 若兰</button>
+        <button onclick="setAgent('http://172.28.0.5:3100','阿轩')" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:12px;background:white;cursor:pointer">🔧 阿轩</button>
+        <button onclick="setAgent('http://172.28.0.12:3100','小虾')" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:12px;background:white;cursor:pointer">🦐 小虾</button>
+        <button onclick="setAgent('http://172.28.0.7:3100','墨丘')" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:12px;background:white;cursor:pointer">🧙 墨丘</button>
+        <button onclick="setAgent('http://172.28.0.13:3300','恺')" style="font-size:11px;padding:4px 10px;border:1px solid var(--border);border-radius:12px;background:white;cursor:pointer">🌿 恺</button>
+      </div>
+      <div class="row">
+        <div>
+          <label>评估标准</label>
+          <select id="standard">
+            <option value="a2a-v0.6">A2A Protocol v0.6</option>
+            <option value="csb-v1.0">CSB 碳硅契标准 v1.0</option>
+          </select>
+        </div>
+        <div>
+          <label>Agent 架构</label>
+          <select id="framework">
+            <option value="auto">自动检测</option>
+            <option value="openclaw">OpenClaw</option>
+            <option value="hermes">Hermes</option>
+            <option value="pi">Pi</option>
+            <option value="claude-code">Claude Code</option>
+            <option value="codewhale">CodeWhale</option>
+            <option value="workbuddy">WorkBuddy</option>
+            <option value="zcode">Zcode</option>
+            <option value="kimi">Kimi</option>
+            <option value="minimax">MiniMax</option>
+            <option value="generic">通用 A2A</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>测试方式</label>
+          <select id="mode">
+            <option value="blackbox">黑盒测试</option>
+            <option value="both" selected>黑盒 + 白盒</option>
+            <option value="whitebox">仅白盒</option>
+          </select>
+        </div>
+        <div>
+          <label>Agent 文件路径（白盒用）</label>
+          <input type="text" id="agentPath" placeholder="/home/node/.openclaw/workspace" value="/home/node/.openclaw/workspace">
+        </div>
+      </div>
+      <button class="btn" id="startBtn" onclick="startEval()">🔍 开始评估</button>
+    </div>
+
+    <!-- 加载 -->
+    <div id="loading" class="card" style="display:none">
+      <div style="text-align:center">
+        <div class="spinner"></div>
+        <p style="margin-top:12px;font-weight:600" id="loadingStep">正在连接 Agent...</p>
+        <p style="font-size:12px;color:var(--text-secondary);margin-top:4px" id="loadingDetail"></p>
+      </div>
+      <div style="margin-top:16px;background:var(--bg);border-radius:8px;overflow:hidden;height:6px">
+        <div id="progressBar" style="height:100%;background:linear-gradient(90deg,var(--primary),#8b5cf6);border-radius:8px;width:0%;transition:width 0.5s"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:11px;color:var(--text-secondary)">
+        <span id="progressPercent">0%</span>
+        <span id="progressTime">预计需要 ~30 秒</span>
+      </div>
+    </div>
+
+    <!-- 结果 -->
+    <div id="resultCard" class="card" style="display:none">
+      <div class="score-hero">
+        <div class="score" id="totalScore">0</div>
+        <div class="out-of">/ 10</div>
+        <div class="agent-info" id="agentInfo"></div>
+      </div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('blackbox')">📡 黑盒</div>
+        <div class="tab" onclick="switchTab('whitebox')">📋 白盒</div>
+        <div class="tab" onclick="switchTab('csb')">🫂 CSB</div>
+        <div class="tab" onclick="switchTab('recs')">💡 建议</div>
+      </div>
+
+      <!-- 黑盒 -->
+      <div id="tab-blackbox" class="tab-content active"></div>
+
+      <!-- 白盒 -->
+      <div id="tab-whitebox" class="tab-content"></div>
+
+      <!-- CSB -->
+      <div id="tab-csb" class="tab-content"></div>
+
+      <!-- 建议 -->
+      <div id="tab-recs" class="tab-content"></div>
+    </div>
+
+    <!-- 历史 -->
+    <div class="card">
+      <h2>📜 评估历史</h2>
+      <div id="historyList"><p style="color:var(--text-secondary);font-size:13px">暂无记录</p></div>
+    </div>
+  </div>
+
+  <script>
+    const API = '/api';
+
+    // 评估步骤配置
+    const EVAL_STEPS = [
+      { pct: 5,  msg: '正在连接 Agent...', detail: '检查 Agent Card 是否可达' },
+      { pct: 15, msg: '正在验证 Agent Card...', detail: '解析 JSON 并检查必要字段' },
+      { pct: 25, msg: '正在测试 JSON-RPC 端点...', detail: '发送 A2A 标准请求' },
+      { pct: 35, msg: '正在进行对话测试...', detail: '发送测试消息并评估回复质量' },
+      { pct: 50, msg: '正在测试安全性...', detail: '检查是否能拒绝不当请求' },
+      { pct: 60, msg: '正在测试性能...', detail: '测量响应时间和稳定性' },
+      { pct: 70, msg: '正在运行白盒测试...', detail: '读取 Agent 配置文件并分析' },
+      { pct: 80, msg: '正在检查 CSB 标准...', detail: '评估碳硅契维度得分' },
+      { pct: 90, msg: '正在生成优化建议...', detail: '分析结果并生成改进方案' },
+      { pct: 95, msg: '正在保存报告...', detail: '写入评估数据' },
+    ];
+
+    let progressTimer = null;
+
+    function startProgress() {
+      let idx = 0;
+      const startTime = Date.now();
+      const bar = document.getElementById('progressBar');
+      const pct = document.getElementById('progressPercent');
+      const msg = document.getElementById('loadingStep');
+      const detail = document.getElementById('loadingDetail');
+      const timeEl = document.getElementById('progressTime');
+
+      function tick() {
+        if (idx >= EVAL_STEPS.length) return;
+        const step = EVAL_STEPS[idx];
+        bar.style.width = step.pct + '%';
+        pct.textContent = step.pct + '%';
+        msg.textContent = step.msg;
+        detail.textContent = step.detail;
+
+        // 估算剩余时间
+        const elapsed = (Date.now() - startTime) / 1000;
+        if (step.pct > 10) {
+          const totalEst = elapsed / (step.pct / 100);
+          const remain = Math.max(0, Math.ceil(totalEst - elapsed));
+          timeEl.textContent = remain > 0 ? `预计还需 ~${remain} 秒` : '即将完成...';
+        }
+        idx++;
+      }
+
+      tick();
+      progressTimer = setInterval(tick, 3000);
+    }
+
+    function stopProgress() {
+      if (progressTimer) { clearInterval(progressTimer); progressTimer = null; }
+      const bar = document.getElementById('progressBar');
+      const pct = document.getElementById('progressPercent');
+      const timeEl = document.getElementById('progressTime');
+      bar.style.width = '100%';
+      pct.textContent = '100%';
+      timeEl.textContent = '完成！';
+    }
+
+    function setAgent(url, name) {
+      document.getElementById('agentUrl').value = url;
+    }
+
+    async function startEval() {
+      const agentUrl = document.getElementById('agentUrl').value.trim();
+      if (!agentUrl) return alert('请输入 Agent 地址');
+
+      const standard = document.getElementById('standard').value;
+      const mode = document.getElementById('mode').value;
+      const framework = document.getElementById('framework').value;
+      const agentPath = document.getElementById('agentPath').value.trim();
+
+      document.getElementById('startBtn').disabled = true;
+      document.getElementById('startBtn').textContent = '⏳ 评估中...';
+      document.getElementById('loading').style.display = '';
+      document.getElementById('resultCard').style.display = 'none';
+      startProgress();
+
+      try {
+        const resp = await fetch(`${API}/eval`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentUrl, standard, mode, framework, agentPath: agentPath || undefined }),
+        });
+        const data = await resp.json();
+        if (data.error) throw new Error(data.error);
+
+        const reportResp = await fetch(`${API}/eval/${data.id}`);
+        const report = await reportResp.json();
+        stopProgress();
+        setTimeout(() => {
+          renderReport(report);
+          document.getElementById('loading').style.display = 'none';
+        }, 500);
+        loadHistory();
+      } catch (e) {
+        stopProgress();
+        alert('评估失败: ' + e.message);
+      } finally {
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('startBtn').textContent = '🔍 开始评估';
+        setTimeout(() => { document.getElementById('loading').style.display = 'none'; }, 600);
+      }
+    }
+
+    function switchTab(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    function renderReport(report) {
+      const score = report.score;
+      document.getElementById('totalScore').textContent = score.toFixed(1);
+      document.getElementById('agentInfo').textContent =
+        `${report.baseUrl} · ${new Date(report.timestamp).toLocaleString('zh-CN')} · ${report.duration}ms`;
+
+      // 黑盒
+      let bbHtml = '<div class="dim-group"><h3>📡 A2A 协议测试</h3>';
+      for (const r of report.results) {
+        const passClass = r.pass ? 'pass' : 'fail';
+        const badge = r.pass ? '<span class="badge badge-pass">通过</span>' : '<span class="badge badge-fail">未通过</span>';
+        bbHtml += `<div class="check-item ${passClass}">${badge} ${r.name}: ${r.detail || r.score}</div>`;
+      }
+      bbHtml += '</div>';
+      document.getElementById('tab-blackbox').innerHTML = bbHtml;
+
+      // 白盒
+      let wbHtml = '';
+      if (report.whitebox) {
+        const wb = report.whitebox;
+        wbHtml = `<div class="dim-group"><h3>📋 白盒测试 · ${wb.score.toFixed(1)}/10</h3>`;
+        for (const dim of wb.dimensions) {
+          const fillClass = dim.score >= 9 ? 'excellent' : dim.score >= 7 ? 'good' : dim.score >= 5 ? 'warn' : 'poor';
+          wbHtml += `
+            <div class="dim-item">
+              <div class="dim-label">${dim.name}</div>
+              <div class="dim-bar">
+                <div class="dim-fill ${fillClass}" style="width:${dim.score * 10}%">${dim.score}</div>
+              </div>
+            </div>`;
+          // 展开检查项
+          if (dim.checks) {
+            wbHtml += '<div class="checks-grid">';
+            for (const c of dim.checks) {
+              const icon = c.pass ? '✅' : '❌';
+              wbHtml += `<div class="check-item ${c.pass ? 'pass' : 'fail'}">${icon} ${c.name}</div>`;
+            }
+            wbHtml += '</div>';
+          }
+        }
+        wbHtml += '</div>';
+      } else {
+        wbHtml = '<p style="color:var(--text-secondary);text-align:center;padding:20px">未启用白盒测试</p>';
+      }
+      document.getElementById('tab-whitebox').innerHTML = wbHtml;
+
+      // CSB
+      let csbHtml = '';
+      if (report.csb) {
+        const csb = report.csb;
+        csbHtml = `<div class="dim-group"><h3>🫂 CSB 碳硅契标准 · ${csb.score.toFixed(1)}/10</h3>`;
+        for (const r of csb.results) {
+          const s10 = (r.score / 10).toFixed(1);
+          const fillClass = s10 >= 9 ? 'excellent' : s10 >= 7 ? 'good' : s10 >= 5 ? 'warn' : 'poor';
+          csbHtml += `
+            <div class="dim-item">
+              <div class="dim-label">${r.name}</div>
+              <div class="dim-bar">
+                <div class="dim-fill ${fillClass}" style="width:${s10 * 10}%">${s10}</div>
+              </div>
+            </div>`;
+          if (r.matchedKeywords && r.matchedKeywords.length > 0) {
+            csbHtml += `<div style="font-size:11px;color:var(--text-secondary);margin-left:112px;margin-bottom:6px">匹配: ${r.matchedKeywords.join('、')}</div>`;
+          }
+        }
+        csbHtml += '</div>';
+      } else {
+        csbHtml = '<p style="color:var(--text-secondary);text-align:center;padding:20px">未启用 CSB 标准</p>';
+      }
+      document.getElementById('tab-csb').innerHTML = csbHtml;
+
+      // 建议
+      let recHtml = '';
+      if (report.recommendations && report.recommendations.length > 0) {
+        for (const rec of report.recommendations) {
+          const cls = rec.priority === 'critical' ? 'rec-critical' : rec.priority === 'high' ? 'rec-high' : 'rec-medium';
+          recHtml += `
+            <div class="rec-card ${cls}">
+              <strong>[${rec.priority.toUpperCase()}] ${rec.symptom}</strong>
+              <p>${rec.prescription}</p>
+              <p style="margin-top:4px;font-size:11px;color:#888">预期提升: +${rec.estimatedGain || rec.impact} · 难度: ${rec.effort}</p>
+            </div>`;
+        }
+      } else {
+        recHtml = '<p style="text-align:center;padding:20px;color:var(--text-secondary)">🎉 暂无优化建议，表现优秀！</p>';
+      }
+      document.getElementById('tab-recs').innerHTML = recHtml;
+
+      // 默认显示有内容的 tab
+      if (report.results && report.results.length > 0) switchTabDirect('blackbox');
+      else if (report.whitebox) switchTabDirect('whitebox');
+
+      document.getElementById('resultCard').style.display = '';
+      document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function switchTabDirect(name) {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+      document.querySelector(`.tab[onclick*="${name}"]`).classList.add('active');
+      document.getElementById('tab-' + name).classList.add('active');
+    }
+
+    async function loadHistory() {
+      try {
+        const resp = await fetch(`${API}/eval/list?limit=10`);
+        const list = await resp.json();
+        if (list.length === 0) return;
+
+        let html = '';
+        for (const r of list) {
+          const time = new Date(r.timestamp).toLocaleString('zh-CN');
+          const scoreColor = r.score >= 8 ? 'var(--success)' : r.score >= 6 ? 'var(--warning)' : 'var(--danger)';
+          html += `
+            <div class="history-item">
+              <div>
+                <div style="font-weight:500">${r.agentUrl}</div>
+                <div style="font-size:12px;color:var(--text-secondary)">${time} · ${r.standard} · ${r.mode}</div>
+              </div>
+              <div class="history-score" style="color:${scoreColor}">${r.score.toFixed(1)}</div>
+            </div>`;
+        }
+        document.getElementById('historyList').innerHTML = html;
+      } catch {}
+    }
+
+    loadHistory();
+  </script>
+</body>
+</html>

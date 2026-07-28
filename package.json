@@ -1,0 +1,13 @@
+{
+  "name": "csb-aep",
+  "version": "2.0.0",
+  "description": "CSB Agent Evaluation Platform - Agent 质量评估平台",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node server/index.js"
+  },
+  "keywords": ["a2a", "agent", "evaluation", "csb"],
+  "author": "若兰 🌸",
+  "license": "MIT"
+}

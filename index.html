@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSB-AEP v2 · 碳硅契 Agent 评测平台</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--card:#12121a;--border:#1e1e2e;--text:#e0e0e0;--dim:#888;--accent:#6c5ce7;--accent2:#00cec9;--green:#00b894;--red:#d63031;--gold:#fdcb6e}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+h1{font-size:1.6em;text-align:center;margin-bottom:6px;background:linear-gradient(135deg,#6c5ce7,#00cec9);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.subtitle{text-align:center;color:var(--dim);margin-bottom:24px;font-size:0.85em}
+.section{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.section h2{font-size:1.1em;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.section h2 span{font-size:1.2em}
+/* Agent 网格 */
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:12px 0}
+.agent-card{background:#1a1a2e;border:2px solid var(--border);border-radius:10px;padding:14px;cursor:pointer;transition:all .2s;text-align:center}
+.agent-card:hover{border-color:var(--accent);transform:translateY(-2px)}
+.agent-card.selected{border-color:var(--accent);background:#1e1e3a;box-shadow:0 0 15px rgba(108,92,231,.3)}
+.agent-card .emoji{font-size:2em;display:block;margin-bottom:6px}
+.agent-card .name{font-weight:600;font-size:.9em}
+.agent-card .desc{color:var(--dim);font-size:.75em;margin-top:4px}
+/* 按钮 */
+.btn{background:linear-gradient(135deg,var(--accent),#a29bfe);color:#fff;border:none;padding:12px 28px;border-radius:8px;font-size:1em;cursor:pointer;transition:all .2s;font-weight:600}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 15px rgba(108,92,231,.4)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:16px}
+.btn-outline{background:transparent;border:1px solid var(--accent);color:var(--accent);padding:8px 20px;border-radius:8px;cursor:pointer;font-size:.85em;transition:all .2s}
+.btn-outline:hover{background:var(--accent);color:#fff}
+.btn-outline.active{background:var(--accent);color:#fff}
+/* 进度 */
+.progress-container{margin-top:16px;display:none}
+.progress-bar-bg{background:#1a1a2e;border-radius:8px;height:20px;overflow:hidden;position:relative}
+.progress-bar-fill{height:100%;border-radius:8px;transition:width .5s;background:linear-gradient(90deg,var(--accent),var(--accent2))}
+.progress-text{position:absolute;top:0;left:0;right:0;text-align:center;line-height:20px;font-size:.75em;font-weight:600}
+/* 维度条 */
+.dim-bars{margin-top:12px}
+.dim-bar{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.dim-bar .label{width:100px;font-size:.8em;color:var(--dim);text-align:right}
+.dim-bar .bar-bg{flex:1;background:#1a1a2e;border-radius:6px;height:14px;overflow:hidden}
+.dim-bar .bar-fill{height:100%;border-radius:6px;transition:width .5s}
+.dim-bar .score{width:50px;font-size:.8em;font-weight:600}
+/* 日志 */
+.log-box{background:#0d0d15;border:1px solid var(--border);border-radius:8px;padding:12px;max-height:250px;overflow-y:auto;margin-top:12px;font-family:'Fira Code',monospace;font-size:.78em;line-height:1.6}
+.log-entry{color:var(--dim)}.log-entry.ok{color:var(--green)}.log-entry.err{color:var(--red)}.log-entry.info{color:var(--accent2)}
+/* 排行榜 */
+.lb-table{width:100%;border-collapse:collapse;margin-top:12px}
+.lb-table th{color:var(--dim);font-size:.75em;font-weight:500;padding:8px 12px;text-align:left;border-bottom:1px solid var(--border)}
+.lb-table td{padding:10px 12px;border-bottom:1px solid #151520;font-size:.85em}
+.lb-table tr:hover{background:#151520}
+.medal{font-size:1.2em;margin-right:4px}
+.score-badge{display:inline-block;padding:2px 10px;border-radius:12px;font-weight:600;font-size:.85em}
+.score-badge.high{background:rgba(0,206,201,.15);color:var(--accent2)}
+.score-badge.mid{background:rgba(253,203,110,.15);color:var(--gold)}
+.score-badge.low{background:rgba(214,48,49,.15);color:var(--red)}
+/* 详情 */
+.detail-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
+.test-card{background:#151520;border:1px solid var(--border);border-radius:8px;padding:12px}
+.test-card .q{color:var(--accent2);font-size:.85em;margin-bottom:6px}
+.test-card .detail{color:var(--dim);font-size:.8em}
+.test-card .resp{background:#0d0d15;border-radius:6px;padding:8px;margin-top:8px;font-size:.8em;color:var(--text);max-height:100px;overflow-y:auto}
+.test-score{float:right;font-weight:600;font-size:.85em}
+.test-score.good{color:var(--green)}.test-score.ok{color:var(--gold)}.test-score.bad{color:var(--red)}
+/* 多轮对话 */
+.turn-card{background:#151520;border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:8px}
+.turn-card .turn-num{color:var(--accent);font-weight:600;font-size:.85em}
+.turn-card .turn-q{color:var(--accent2);font-size:.8em;margin:4px 0}
+.turn-card .turn-r{color:var(--text);font-size:.8em;background:#0d0d15;border-radius:6px;padding:8px;max-height:80px;overflow-y:auto}
+/* 筛选 */
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+/* 响应式 */
+@media(max-width:600px){.agent-grid{grid-template-columns:repeat(2,1fr)}.container{padding:12px}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔬 CSB-AEP v2 · 碳硅契 Agent 评测平台</h1>
+  <p class="subtitle">17道题 + 安全测试 + 多轮对话 · 有区分度的评测</p>
+
+  <!-- Agent 选择 -->
+  <div class="section" id="agent-section">
+    <h2><span>📡</span> 选择评测目标</h2>
+    <div class="filter-row">
+      <button class="btn-outline active" onclick="filterAgents('all')">全部</button>
+      <button class="btn-outline" onclick="filterAgents('family')">🏠 家庭</button>
+      <button class="btn-outline" onclick="filterAgents('internal')">🔌 内网</button>
+      <button class="btn-outline" onclick="filterAgents('remote')">🌐 公网</button>
+    </div>
+    <div class="agent-grid" id="agent-grid"></div>
+    <div class="btn-row">
+      <button class="btn" id="eval-btn" onclick="startEval()" disabled>🚀 开始评测</button>
+      <button class="btn-outline" onclick="batchEval()">📊 批量评测</button>
+    </div>
+  </div>
+
+  <!-- 评测进度 -->
+  <div class="section" id="progress-section" style="display:none">
+    <h2><span>⏳</span> 评测进行中 <span id="progress-counter" style="color:var(--accent2);font-size:.9em"></span></h2>
+    <div class="progress-container" style="display:block">
+      <div class="progress-bar-bg">
+        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+        <div class="progress-text" id="progress-text">0%</div>
+      </div>
+    </div>
+    <div class="dim-bars" id="dim-bars"></div>
+    <div class="log-box" id="log-box"></div>
+  </div>
+
+  <!-- 结果 -->
+  <div class="section" id="result-section" style="display:none">
+    <h2><span>📊</span> 评测结果</h2>
+    <div id="result-content"></div>
+  </div>
+
+  <!-- 排行榜 -->
+  <div class="section">
+    <h2><span>🏆</span> 评测排行榜</h2>
+    <div id="leaderboard">加载中...</div>
+  </div>
+</div>
+
+<script>
+const API = '';
+let agents = [];
+let selectedAgent = null;
+
+async function loadAgents() {
+  const res = await fetch(`${API}/api/agents`);
+  agents = await res.json();
+  renderAgents(agents);
+}
+
+function renderAgents(list) {
+  const grid = document.getElementById('agent-grid');
+  grid.innerHTML = list.map(a => `
+    <div class="agent-card" data-id="${a.id}" data-group="${a.group}" onclick="selectAgent('${a.id}')">
+      <span class="emoji">${a.name.split(' ')[1] || '🤖'}</span>
+      <div class="name">${a.name}</div>
+      <div class="desc">${a.desc}</div>
+    </div>
+  `).join('');
+}
+
+function filterAgents(group) {
+  document.querySelectorAll('.filter-row .btn-outline').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  const list = group === 'all' ? agents : agents.filter(a => a.group === group);
+  renderAgents(list);
+}
+
+function selectAgent(id) {
+  selectedAgent = id;
+  document.querySelectorAll('.agent-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector(`.agent-card[data-id="${id}"]`)?.classList.add('selected');
+  document.getElementById('eval-btn').disabled = false;
+}
+
+// 单个评测
+async function startEval() {
+  if (!selectedAgent) return;
+  const agent = agents.find(a => a.id === selectedAgent);
+  
+  document.getElementById('progress-section').style.display = 'block';
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('log-box').innerHTML = '';
+  document.getElementById('dim-bars').innerHTML = '';
+  updateProgress(0, 0, 0);
+
+  const log = (msg, cls = '') => {
+    const box = document.getElementById('log-box');
+    box.innerHTML += `<div class="log-entry ${cls}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  };
+
+  log(`开始评测 ${agent.name}... (24道题)`, 'info');
+
+  try {
+    const res = await fetch(`${API}/api/eval?agent=${selectedAgent}`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = JSON.parse(line.slice(6));
+
+        if (data.type === 'start') {
+          log(`📡 评测目标: ${data.agent} (${data.totalTests}道题)`, 'info');
+        }
+
+        if (data.type === 'progress') {
+          const pct = Math.round(data.testCount / data.totalTests * 100);
+          updateProgress(pct, data.testCount, data.totalTests);
+          renderDimBars(data.dimensions);
+          if (data.details?.length) {
+            const d = data.details[0];
+            log(d.msg, d.cls);
+          }
+        }
+
+        if (data.type === 'complete') {
+          updateProgress(100, data.result.testCount, data.result.totalTests);
+          log(`✅ 评测完成！总分: ${data.result.overallScore}/10`, 'ok');
+          showResult(data.result);
+          loadLeaderboard();
+        }
+
+        if (data.type === 'error') {
+          log(`❌ ${data.message}`, 'err');
+        }
+      }
+    }
+  } catch (e) {
+    log(`❌ 评测失败: ${e.message}`, 'err');
+  }
+}
+
+// 批量评测
+async function batchEval() {
+  document.getElementById('progress-section').style.display = 'block';
+  document.getElementById('result-section').style.display = 'none';
+  document.getElementById('log-box').innerHTML = '';
+  updateProgress(0, 0, 0);
+
+  const log = (msg, cls = '') => {
+    const box = document.getElementById('log-box');
+    box.innerHTML += `<div class="log-entry ${cls}">[${new Date().toLocaleTimeString()}] ${msg}</div>`;
+    box.scrollTop = box.scrollHeight;
+  };
+
+  log('🚀 开始批量评测...', 'info');
+
+  try {
+    const res = await fetch(`${API}/api/batch-eval?group=all`);
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    let completed = 0;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop();
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const data = JSON.parse(line.slice(6));
+
+        if (data.type === 'batch-start') log(`共 ${data.count} 个 Agent`, 'info');
+        if (data.type === 'agent-start') log(`▶ ${data.agentName}`, 'info');
+        if (data.type === 'agent-progress') {
+          const pct = Math.round(data.testCount / data.totalTests * 100);
+          updateProgress(pct, data.testCount, data.totalTests);
+        }
+        if (data.type === 'agent-complete') {
+          completed++;
+          const s = data.result.overallScore;
+          log(`✅ ${data.result.agentName}: ${s}/10`, s >= 7 ? 'ok' : 'err');
+        }
+        if (data.type === 'agent-error') {
+          completed++;
+          log(`❌ ${data.agentId}: ${data.message}`, 'err');
+        }
+        if (data.type === 'batch-complete') {
+          log('🎉 批量评测完成！', 'ok');
+          loadLeaderboard();
+        }
+      }
+    }
+  } catch (e) {
+    log(`❌ 批量评测失败: ${e.message}`, 'err');
+  }
+}
+
+function updateProgress(pct, current, total) {
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent = pct + '%';
+  document.getElementById('progress-counter').textContent = total > 0 ? `(${current}/${total})` : '';
+}
+
+function renderDimBars(dims) {
+  const colors = { memory: '#00cec9', preference: '#a29bfe', boundary: '#d63031', trust: '#fdcb6e', learning: '#e17055', expression: '#00b894', csb: '#6c5ce7' };
+  const container = document.getElementById('dim-bars');
+  container.innerHTML = Object.entries(dims).map(([dim, data]) => {
+    const score = data.normalizedScore || (data.max > 0 ? Math.round(data.total / data.max * 10) : 0);
+    const pct = Math.round(score * 10);
+    const color = colors[dim] || '#6c5ce7';
+    return `<div class="dim-bar"><div class="label">${data.name || dim}</div><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="score" style="color:${color}">${score}</div></div>`;
+  }).join('');
+}
+
+function showResult(result) {
+  document.getElementById('result-section').style.display = 'block';
+  const score = result.overallScore;
+  const badge = score >= 8 ? 'high' : score >= 6 ? 'mid' : 'low';
+  
+  let html = `
+    <div style="text-align:center;margin:16px 0">
+      <div style="font-size:3em;font-weight:700;color:${score >= 8 ? 'var(--accent2)' : score >= 6 ? 'var(--gold)' : 'var(--red)'}">${score}<span style="font-size:.4em;color:var(--dim)">/10</span></div>
+      <div style="color:var(--dim);font-size:.85em">${result.agentName} · ${result.testCount}道题</div>
+    </div>
+  `;
+
+  // 维度得分
+  html += '<div class="dim-bars">';
+  const colors = { memory: '#00cec9', preference: '#a29bfe', boundary: '#d63031', trust: '#fdcb6e', learning: '#e17055', expression: '#00b894', csb: '#6c5ce7' };
+  for (const [dim, data] of Object.entries(result.dimensions)) {
+    const s = data.normalizedScore || 0;
+    const pct = Math.round(s * 10);
+    const color = colors[dim] || '#6c5ce7';
+    html += `<div class="dim-bar"><div class="label">${data.name || dim}</div><div class="bar-bg"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div><div class="score" style="color:${color}">${s}</div></div>`;
+  }
+  // 安全测试
+  if (result.globalSwitch) {
+    const gs = result.globalSwitch.normalizedScore || 0;
+    html += `<div class="dim-bar"><div class="label">安全测试</div><div class="bar-bg"><div class="bar-fill" style="width:${gs*10}%;background:#e17055"></div></div><div class="score" style="color:#e17055">${gs}</div></div>`;
+  }
+  // 多轮对话
+  if (result.multiTurn) {
+    const mt = result.multiTurn.normalizedScore || 0;
+    html += `<div class="dim-bar"><div class="label">多轮对话</div><div class="bar-bg"><div class="bar-fill" style="width:${mt*10}%;background:#00cec9"></div></div><div class="score" style="color:#00cec9">${mt}</div></div>`;
+  }
+  html += '</div>';
+
+  // 各维度详细题目
+  html += '<div class="detail-grid">';
+  for (const [dim, data] of Object.entries(result.dimensions)) {
+    if (!data.tests || data.tests.length === 0) continue;
+    html += `<h3 style="color:${colors[dim] || '#6c5ce7'};margin-top:12px;font-size:.9em">${data.name} (${data.normalizedScore || 0}/10)</h3>`;
+    for (const t of data.tests) {
+      const s = t.score || 0;
+      const cls = s >= 3.5 ? 'good' : s >= 2 ? 'ok' : 'bad';
+      html += `<div class="test-card">
+        <div class="q">${t.id}: ${t.question || ''} <span class="test-score ${cls}">${s.toFixed(1)}/5</span></div>
+        <div class="detail">${t.detail || ''}</div>
+        ${t.responsePreview ? `<div class="resp">${escapeHtml(t.responsePreview)}</div>` : ''}
+      </div>`;
+    }
+  }
+  html += '</div>';
+
+  // 多轮对话
+  if (result.multiTurn?.conversation) {
+    html += `<h3 style="color:var(--accent2);margin-top:16px;font-size:.9em">多轮对话 (${result.multiTurn.successfulTurns}/${result.multiTurn.turns} 成功)</h3>`;
+    for (const turn of result.multiTurn.conversation) {
+      html += `<div class="turn-card">
+        <div class="turn-num">第${turn.turn}轮</div>
+        <div class="turn-q">Q: ${escapeHtml(turn.question)}</div>
+        <div class="turn-r">${turn.ok ? escapeHtml(turn.responsePreview || turn.response || '') : '❌ 无响应'}</div>
+      </div>`;
+    }
+  }
+
+  document.getElementById('result-content').innerHTML = html;
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// 排行榜
+async function loadLeaderboard() {
+  const res = await fetch(`${API}/api/leaderboard`);
+  const lb = await res.json();
+  const medals = ['🥇', '🥈', '🥉'];
+  
+  if (lb.length === 0) {
+    document.getElementById('leaderboard').innerHTML = '<p style="color:var(--dim);text-align:center;padding:20px">暂无评测记录</p>';
+    return;
+  }
+
+  document.getElementById('leaderboard').innerHTML = `
+    <table class="lb-table">
+      <tr><th>#</th><th>Agent</th><th>评分</th><th>测试数</th><th>时间</th></tr>
+      ${lb.map((r, i) => {
+        const score = r.overallScore;
+        const badge = score >= 8 ? 'high' : score >= 6 ? 'mid' : 'low';
+        return `<tr>
+          <td>${medals[i] || (i + 1)}</td>
+          <td>${r.agentName}</td>
+          <td><span class="score-badge ${badge}">${score}/10</span></td>
+          <td style="color:var(--dim)">${r.testCount || '?'}</td>
+          <td style="color:var(--dim);font-size:.8em">${new Date(r.completedAt).toLocaleString('zh-CN')}</td>
+        </tr>`;
+      }).join('')}
+    </table>
+  `;
+}
+
+loadAgents();
+loadLeaderboard();
+</script>
+</body>
+</html>
