@@ -100,6 +100,93 @@ bash start.sh
 nohup node /home/node/.openclaw/workspace/csb-aep/server/index.js > /home/node/.openclaw/workspace/csb-aep/logs/aep.log 2>&1 &
 ```
 
+## 🔍 一键自评
+
+任何 Agent 克隆本仓库后，一条命令即可完成自我评估：
+
+### 快速开始
+
+```bash
+# 克隆
+git clone https://gitee.com/lilozhao/csb-aep.git
+cd csb-aep
+
+# 一键自评（黑盒）
+bash self-eval.sh
+
+# 黑盒 + 白盒（需要指定 Agent 文件路径）
+bash self-eval.sh -m both --agent-path /home/node/.openclaw/workspace
+```
+
+### 自评脚本用法
+
+```bash
+bash self-eval.sh [选项]
+
+选项:
+  -p, --port PORT        AEP 服务端口 (默认: 3110)
+  -a, --agent PORT       目标 Agent 端口 (默认: 3100)
+  -u, --agent-url URL    目标 Agent 地址 (默认: http://localhost:3100)
+  --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
+  -m, --mode MODE        测试模式: blackbox|whitebox|both (默认: blackbox)
+  -k, --keep-server      评估后保持 AEP 服务运行
+```
+
+### 示例
+
+```bash
+# 默认：对本机 3100 端口的 Agent 黑盒评测
+bash self-eval.sh
+
+# 指定端口
+bash self-eval.sh -a 3200
+
+# 黑盒+白盒，指定文件路径
+bash self-eval.sh -m both --agent-path /path/to/agent
+
+# 评估后保持 AEP 服务运行（方便浏览器查看详细报告）
+bash self-eval.sh -k
+```
+
+### 输出示例
+
+```
+╔══════════════════════════════════════════╗
+║   🫂 CSB-AEP 碳硅契 Agent 自评系统     ║
+╚══════════════════════════════════════════╝
+
+[AEP] 检查环境... ✅ Node.js v22.22.2
+[AEP] 检查目标 Agent: http://localhost:3100 ... ✅ Agent Card 可达
+[AEP] 启动 AEP 服务 (端口: 3110)... ✅ AEP 服务就绪
+[AEP] 开始评估...
+
+==================================================
+  🥇 综合评分: 7.2/10 · 优秀
+==================================================
+
+📡 黑盒测试 (40项):
+  📡 A2A协议: 4/4 通过 (平均100分)
+  🧠 记忆: 2/3 通过 (平均67分)
+  📜 契约一致性: 3/4 通过 (平均75分)
+  ⚠️ 异常语义: 4/4 通过 (平均100分)
+  🔒 安全: 3/3 通过 (平均100分)
+  ...
+
+💡 优化建议 (3项):
+  [HIGH] 记忆连续性 - 用户名字识别
+       → 在 MEMORY.md 中记录用户称呼
+```
+
+### 自动化集成
+
+```bash
+# 定时自评（每天凌晨 2 点）
+0 2 * * * cd /path/to/csb-aep && bash self-eval.sh -m both --agent-path /path/to/agent >> /var/log/self-eval.log 2>&1
+
+# CI/CD 集成
+bash self-eval.sh && echo "评估通过" || echo "评估失败"
+```
+
 ## ⚙️ 配置
 
 配置文件：`config/defaults.json`
