@@ -10,12 +10,38 @@ const { GenericA2AAdapter } = require('../adapter/generic-a2a');
 const { OpenClawAdapter } = require('../adapter/openclaw');
 const { HermesAdapter } = require('../adapter/hermes');
 const { CozeAdapter } = require('../adapter/coze');
+const { ClaudeCodeAdapter } = require('../adapter/claude-code');
+const { CursorAdapter } = require('../adapter/cursor');
+const { ClineAdapter } = require('../adapter/cline');
+const { ContinueAdapter } = require('../adapter/continue');
+const { AiderAdapter } = require('../adapter/aider');
+const { OpenCodeAdapter } = require('../adapter/opencode');
+const { AutoGPTAdapter } = require('../adapter/auto-gpt');
+const { CrewAIAdapter } = require('../adapter/crewai');
+const { MetaGPTAdapter } = require('../adapter/metagpt');
+const { LangChainAdapter } = require('../adapter/langchain');
+const { DifyAdapter } = require('../adapter/dify');
+const { FastGPTAdapter } = require('../adapter/fastgpt');
+const { PiAgentAdapter } = require('../adapter/pi-agent');
 
 // 适配器注册
 const adapters = {
   'openclaw': new OpenClawAdapter(),
   'hermes': new HermesAdapter(),
   'coze': new CozeAdapter(),
+  'claude-code': new ClaudeCodeAdapter(),
+  'cursor': new CursorAdapter(),
+  'cline': new ClineAdapter(),
+  'continue': new ContinueAdapter(),
+  'aider': new AiderAdapter(),
+  'opencode': new OpenCodeAdapter(),
+  'auto-gpt': new AutoGPTAdapter(),
+  'crewai': new CrewAIAdapter(),
+  'metagpt': new MetaGPTAdapter(),
+  'langchain': new LangChainAdapter(),
+  'dify': new DifyAdapter(),
+  'fastgpt': new FastGPTAdapter(),
+  'pi-agent': new PiAgentAdapter(),
   'generic-a2a': new GenericA2AAdapter(),
 };
 

@@ -196,6 +196,19 @@ AEP 支持多种 Agent 架构，通过适配器模式实现：
 | **generic-a2a** | ✅ | ❌ | 通用兜底，任何 A2A 兼容 Agent 都能测 |
 | **openclaw** | ✅ | ✅ | OpenClaw 架构，读取 SOUL.md/MEMORY.md 等 |
 | **hermes** | ✅ | ✅ | Hermes 架构，读取 .hermes/ 目录 |
+| **claude-code** | ✅ | ✅ | Claude Code，读取 .claude/ 目录 |
+| **cursor** | ✅ | ✅ | Cursor 编辑器，读取 .cursor/ 目录 |
+| **cline** | ✅ | ✅ | Cline 插件，读取 .cline/ 目录 |
+| **continue** | ✅ | ✅ | Continue 插件，读取 .continue/ 目录 |
+| **aider** | ✅ | ✅ | Aider CLI，读取 .aider* 文件 |
+| **opencode** | ✅ | ✅ | OpenCode，读取 .opencode/ 目录 |
+| **auto-gpt** | ✅ | ✅ | Auto-GPT，读取 auto_gpt_workspace/ |
+| **crewai** | ✅ | ✅ | CrewAI，读取 config/ 目录 |
+| **metagpt** | ✅ | ✅ | MetaGPT，读取 config/ 目录 |
+| **langchain** | ✅ | ✅ | LangChain Agent，读取 prompts/ 目录 |
+| **dify** | ✅ | ✅ | Dify 平台，读取 dify.yaml |
+| **fastgpt** | ✅ | ✅ | FastGPT 平台，读取 config.json |
+| **pi-agent** | ✅ | ✅ | Pi Agent，读取 pi.json/PI.md |
 | **coze** | ✅ | ❌ | Coze 平台，通过 API 对话 |
 
 ### 原则
