@@ -8,10 +8,14 @@ const { CSBChecker } = require('../standard/csb');
 const { ResultsStore } = require('../store/results');
 const { GenericA2AAdapter } = require('../adapter/generic-a2a');
 const { OpenClawAdapter } = require('../adapter/openclaw');
+const { HermesAdapter } = require('../adapter/hermes');
+const { CozeAdapter } = require('../adapter/coze');
 
 // 适配器注册
 const adapters = {
   'openclaw': new OpenClawAdapter(),
+  'hermes': new HermesAdapter(),
+  'coze': new CozeAdapter(),
   'generic-a2a': new GenericA2AAdapter(),
 };
 

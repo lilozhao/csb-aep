@@ -187,6 +187,60 @@ bash self-eval.sh -k
 bash self-eval.sh && echo "评估通过" || echo "评估失败"
 ```
 
+## 🔌 架构适配器
+
+AEP 支持多种 Agent 架构，通过适配器模式实现：
+
+| 适配器 | 黑盒 | 白盒 | 说明 |
+|--------|------|------|------|
+| **generic-a2a** | ✅ | ❌ | 通用兜底，任何 A2A 兼容 Agent 都能测 |
+| **openclaw** | ✅ | ✅ | OpenClaw 架构，读取 SOUL.md/MEMORY.md 等 |
+| **hermes** | ✅ | ✅ | Hermes 架构，读取 .hermes/ 目录 |
+| **coze** | ✅ | ❌ | Coze 平台，通过 API 对话 |
+
+### 原则
+
+- **黑盒测试不需要适配器** — 只要目标 Agent 支持 A2A 协议就能测
+- **白盒测试需要适配器** — 因为不同架构文件位置不同
+- **新架构只需写适配器** — 继承 `BaseAdapter`，实现 `readAgentFiles()` 即可
+
+### 添加新适配器
+
+```javascript
+// server/adapter/your-framework.js
+const { BaseAdapter } = require('./base');
+
+class YourFrameworkAdapter extends BaseAdapter {
+  constructor() {
+    super('your-framework');
+  }
+
+  // 白盒：读取本地文件
+  async readAgentFiles(agentPath) {
+    return {
+      identity: await this.readFile(`${agentPath}/config.json`),
+      soul: await this.readFile(`${agentPath}/soul.md`),
+      memory: await this.readFile(`${agentPath}/memory.md`),
+      // ...
+    };
+  }
+
+  // 可选：最佳实践建议
+  getBestPractices() {
+    return [{ category: '...', items: ['...'] }];
+  }
+}
+
+module.exports = { YourFrameworkAdapter };
+```
+
+然后在 `server/api/eval.js` 中注册：
+
+```javascript
+const { YourFrameworkAdapter } = require('../adapter/your-framework');
+adapters['your-framework'] = new YourFrameworkAdapter();
+```
+
 ## ⚙️ 配置
 
 配置文件：`config/defaults.json`
