@@ -22,7 +22,7 @@
 
     /* Header */
     .header { background: linear-gradient(135deg, var(--primary), #8b5cf6); color: white; padding: 32px 0; text-align: center; }
-    .header h1 { font-size: 28px; font-weight: 700; }
+    .header h1 { font-size: 22px; font-weight: 700; }
     .header p { opacity: 0.85; margin-top: 6px; font-size: 14px; }
 
     .container { max-width: 960px; margin: 0 auto; padding: 24px 16px; }
@@ -82,7 +82,8 @@
     .rec-card p { font-size: 12px; color: var(--text-secondary); margin-top: 4px; }
 
     /* History */
-    .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .history-item { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; cursor: pointer; border-radius: 6px; padding-left: 8px; padding-right: 8px; transition: background 0.15s; }
+    .history-item:hover { background: rgba(99,102,241,0.06); }
     .history-item:last-child { border-bottom: none; }
     .history-score { font-weight: 700; font-size: 16px; }
 
@@ -106,9 +107,7 @@
 </head>
 <body>
   <div class="header">
-    <h1>🔬 CSB-AEP</h1>
-    <p>Agent 质量评估平台 · 基于 CSB-A2A-AIP v5.0</p>
-    <p style="font-size:12px;opacity:0.7;margin-top:4px">需先安装 CSB-A2A-AIP v5.0 服务</p>
+    <h1>🔬 CSB-AEP v2.0 · Agent 质量评估平台</h1>
   </div>
 
   <div class="container">
@@ -116,7 +115,8 @@
     <div class="card" id="formCard">
       <h2>📊 新建评估</h2>
       <label>Agent 地址</label>
-      <input type="text" id="agentUrl" placeholder="http://172.28.0.5:3100" value="">
+      <div style="font-size:12px;color:var(--text-secondary);margin-bottom:8px">基于 <a href="https://gitee.com/lilozhao/csb-a2a-aip.git" target="_blank" style="color:var(--primary);text-decoration:none;font-weight:600">CSB-A2A-AIP v5.0</a> · 需先安装 <a href="https://gitee.com/lilozhao/csb-a2a-aip.git" target="_blank" style="color:var(--primary);text-decoration:none">A2A 服务</a></div>
+      <input type="text" id="agentUrl" placeholder="http://localhost:3100" value="http://localhost:3100">
       <div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">
         <span style="font-size:12px;color:var(--text-secondary);line-height:28px">快捷：</span>
         <button onclick="setAgent('http://localhost:3100','本机')" style="font-size:11px;padding:4px 10px;border:1px solid var(--primary);border-radius:12px;background:rgba(99,102,241,0.06);cursor:pointer;color:var(--primary);font-weight:600">🏠 本机</button>
@@ -338,14 +338,41 @@
       document.getElementById('agentInfo').textContent =
         `${report.baseUrl} · ${new Date(report.timestamp).toLocaleString('zh-CN')} · ${report.duration}ms`;
 
-      // 黑盒
-      let bbHtml = '<div class="dim-group"><h3>📡 A2A 协议测试</h3>';
+      // 黑盒 - 按类别分组
+      const categoryNames = {
+        'protocol': '📡 A2A 协议',
+        'task': '📋 任务管理',
+        'memory': '🧠 记忆连续性',
+        'preference': '💝 偏好识别',
+        'boundary': '🛡️ 边界意识',
+        'trust': '🤝 信任建立',
+        'learning': '📚 学习能力',
+        'expression': '💬 表达能力',
+        'csb': '🫂 碳硅契',
+        'contract': '📜 契约一致性',
+        'exception': '⚠️ 异常语义规范',
+        'safety': '🔒 安全意识',
+        'performance': '⏱️ 性能',
+      };
+      const grouped = {};
       for (const r of report.results) {
-        const passClass = r.pass ? 'pass' : 'fail';
-        const badge = r.pass ? '<span class="badge badge-pass">通过</span>' : '<span class="badge badge-fail">未通过</span>';
-        bbHtml += `<div class="check-item ${passClass}">${badge} ${r.name}: ${r.detail || r.score}</div>`;
+        const cat = r.category || 'other';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(r);
       }
-      bbHtml += '</div>';
+      let bbHtml = '';
+      for (const [cat, items] of Object.entries(grouped)) {
+        const catName = categoryNames[cat] || cat;
+        const catScore = items.reduce((s, r) => s + r.score, 0) / items.length;
+        const catClass = catScore >= 80 ? 'excellent' : catScore >= 60 ? 'good' : catScore >= 40 ? 'warn' : 'poor';
+        bbHtml += `<div class="dim-group"><h3>${catName} <span style="font-size:12px;color:var(--text-secondary)">(${items.length}项 · 平均${Math.round(catScore)}分)</span></h3>`;
+        for (const r of items) {
+          const passClass = r.pass ? 'pass' : 'fail';
+          const badge = r.pass ? '<span class="badge badge-pass">通过</span>' : '<span class="badge badge-fail">未通过</span>';
+          bbHtml += `<div class="check-item ${passClass}">${badge} ${r.name}: ${r.detail || r.score}</div>`;
+        }
+        bbHtml += '</div>';
+      }
       document.getElementById('tab-blackbox').innerHTML = bbHtml;
 
       // 白盒
@@ -446,7 +473,7 @@
           const time = new Date(r.timestamp).toLocaleString('zh-CN');
           const scoreColor = r.score >= 8 ? 'var(--success)' : r.score >= 6 ? 'var(--warning)' : 'var(--danger)';
           html += `
-            <div class="history-item">
+            <div class="history-item" onclick="viewHistory('${r.id}')">
               <div>
                 <div style="font-weight:500">${r.agentUrl}</div>
                 <div style="font-size:12px;color:var(--text-secondary)">${time} · ${r.standard} · ${r.mode}</div>
@@ -459,6 +486,19 @@
     }
 
     loadHistory();
+
+    async function viewHistory(id) {
+      try {
+        const resp = await fetch(`${API}/eval/${id}`);
+        const report = await resp.json();
+        if (report.error) throw new Error(report.error);
+        renderReport(report);
+        document.getElementById('resultCard').style.display = '';
+        document.getElementById('resultCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      } catch (e) {
+        alert('加载评估结果失败: ' + e.message);
+      }
+    }
   </script>
 </body>
 </html>

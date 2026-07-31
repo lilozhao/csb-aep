@@ -1,5 +1,5 @@
 {
-  "port": 3101,
+  "port": 3110,
   "registry": "http://172.28.0.4:3099",
   "defaultStandard": "a2a-v0.6",
   "defaultTestMode": "blackbox",

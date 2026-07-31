@@ -39,11 +39,11 @@ class EvalAPI {
     // 创建评估任务
     app.post('/api/eval', this.createEval.bind(this));
 
+    // 最近评估列表（必须在 :id 之前注册，否则 list 被当成 id）
+    app.get('/api/eval/list', this.listEval.bind(this));
+
     // 查询评估结果
     app.get('/api/eval/:id', this.getEval.bind(this));
-
-    // 最近评估列表
-    app.get('/api/eval/list', this.listEval.bind(this));
 
     // 可用标准
     app.get('/api/standards', this.listStandards.bind(this));
@@ -194,14 +194,16 @@ class EvalAPI {
    * GET /api/eval/list
    */
   async listEval(req, res) {
-    const limit = parseInt(req.query.limit) || 10;
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const limit = parseInt(url.searchParams.get('limit')) || 10;
     const results = await this.store.getLatest(limit);
     res.json(results.map(r => ({
       id: r.id,
-      agentUrl: r.agentUrl,
+      agentUrl: r.agentUrl || r.baseUrl,
       score: r.score,
       timestamp: r.timestamp,
       standard: r.standard,
+      mode: r.mode || 'blackbox',
     })));
   }
 
