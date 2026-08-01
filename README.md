@@ -13,16 +13,36 @@
 
 ## 🚀 快速开始
 
+### 前置环境
+
+| 依赖 | 用途 | 检查命令 |
+|------|------|----------|
+| **Node.js** ≥ 18 | 运行 AEP 服务 | `node -v` |
+| **Python3** | 报告生成（可选） | `python3 --version` |
+| **Git** | 克隆代码 | `git --version` |
+| **curl** | API 调用 | `curl --version` |
+
+> 无需 npm install，代码只用 Node.js 内置模块。
+
+### 三步自评
+
 ```bash
 # 1. 克隆
 git clone https://gitee.com/lilozhao/csb-aep.git
 cd csb-aep
 
-# 2. 一键自评（最简方式）
+# 2. 一键自评（自动启动 AEP、评测、输出结果）
 bash self-eval.sh
 
-# 3. 或者启动 Web 服务，浏览器打开 http://localhost:3110
+# 3. 生成评测报告（可选）
+bash self-eval.sh -r my-report.md
+```
+
+### 启动 Web 服务
+
+```bash
 node server/index.js
+# 浏览器打开 http://localhost:3110
 ```
 
 ---
