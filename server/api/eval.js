@@ -63,6 +63,86 @@ class EvalAPI {
   }
 
   /**
+   * 自动检测 Agent 框架
+   */
+  async detectFramework(agentUrl, agentPath) {
+    // 1. 先通过 Agent Card 检测
+    try {
+      const resp = await fetch(`${agentUrl}/.well-known/agent-card.json`, { signal: AbortSignal.timeout(5000) });
+      if (resp.ok) {
+        const card = await resp.json();
+        const fw = card.metadata?.framework || card.framework || '';
+        if (fw && adapters[fw]) {
+          console.log(`[AEP] 🔍 自动检测框架: ${fw} (来自 Agent Card)`);
+          return adapters[fw];
+        }
+        // 从名称/描述推断
+        const name = (card.name || '').toLowerCase();
+        const desc = (card.description || '').toLowerCase();
+        const combined = name + ' ' + desc;
+        const hints = [
+          { keys: ['openclaw', 'claw'], id: 'openclaw' },
+          { keys: ['hermes'], id: 'hermes' },
+          { keys: ['claude', 'anthropic'], id: 'claude-code' },
+          { keys: ['cursor'], id: 'cursor' },
+          { keys: ['cline'], id: 'cline' },
+          { keys: ['continue'], id: 'continue' },
+          { keys: ['aider'], id: 'aider' },
+          { keys: ['opencode'], id: 'opencode' },
+          { keys: ['auto-gpt', 'autogpt'], id: 'auto-gpt' },
+          { keys: ['crewai', 'crew'], id: 'crewai' },
+          { keys: ['metagpt'], id: 'metagpt' },
+          { keys: ['langchain'], id: 'langchain' },
+          { keys: ['dify'], id: 'dify' },
+          { keys: ['fastgpt'], id: 'fastgpt' },
+          { keys: ['coze'], id: 'coze' },
+          { keys: ['pi-agent', 'pi agent'], id: 'pi-agent' },
+        ];
+        for (const h of hints) {
+          if (h.keys.some(k => combined.includes(k))) {
+            console.log(`[AEP] 🔍 自动检测框架: ${h.id} (来自名称/描述)`);
+            return adapters[h.id];
+          }
+        }
+      }
+    } catch (e) { /* ignore */ }
+
+    // 2. 通过文件结构检测（白盒模式）
+    if (agentPath) {
+      const fs = require('fs').promises;
+      const path = require('path');
+      const checks = [
+        { file: 'SOUL.md', id: 'openclaw' },
+        { file: 'identity.json', id: 'openclaw' },
+        { file: '.hermes', id: 'hermes', isDir: true },
+        { file: '.claude', id: 'claude-code', isDir: true },
+        { file: '.cursorrules', id: 'cursor' },
+        { file: '.cursor', id: 'cursor', isDir: true },
+        { file: '.cline', id: 'cline', isDir: true },
+        { file: '.continue', id: 'continue', isDir: true },
+        { file: '.aider.conf.yml', id: 'aider' },
+        { file: '.opencode', id: 'opencode', isDir: true },
+        { file: 'auto_gpt_workspace', id: 'auto-gpt', isDir: true },
+        { file: 'pi.json', id: 'pi-agent' },
+        { file: 'PI.md', id: 'pi-agent' },
+        { file: 'dify.yaml', id: 'dify' },
+      ];
+      for (const c of checks) {
+        try {
+          const stat = await fs.stat(path.join(agentPath, c.file));
+          if (c.isDir ? stat.isDirectory() : stat.isFile()) {
+            console.log(`[AEP] 🔍 自动检测框架: ${c.id} (来自文件 ${c.file})`);
+            return adapters[c.id];
+          }
+        } catch { /* not found */ }
+      }
+    }
+
+    console.log(`[AEP] 🔍 未检测到特定框架，使用 generic-a2a`);
+    return adapters['generic-a2a'];
+  }
+
+  /**
    * 注册路由
    */
   register(app) {
@@ -108,12 +188,12 @@ class EvalAPI {
         // 根据指定架构选择适配器
         adapter = adapters[framework] || adapters['generic-a2a'];
       }
-      if (!adapter && req.body.agentPath) {
-        // 有 agentPath 时自动选择 OpenClaw 适配器
-        adapter = adapters['openclaw'];
+      // 自动检测框架
+      if (!adapter || framework === 'auto') {
+        adapter = await this.detectFramework(agentUrl, req.body.agentPath);
       }
       adapter = adapter || adapters['generic-a2a'];
-      console.log(`[AEP] 🔧 使用适配器: ${adapter.name} (架构: ${framework})`);
+      console.log(`[AEP] 🔧 使用适配器: ${adapter.name} (架构: ${adapter.name})`);
 
       let evalResult = { results: [], score: 0 };
       let whiteboxResult = null;

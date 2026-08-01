@@ -38,6 +38,23 @@ bash self-eval.sh
 bash self-eval.sh -r my-report.md
 ```
 
+### 指定框架
+
+不同架构的 Agent 可以用 `-f` 参数指定框架，获得更准确的评测：
+
+```bash
+# OpenClaw 架构
+bash self-eval.sh -f openclaw -m both --agent-path /path/to/workspace -r report.md
+
+# Hermes 架构
+bash self-eval.sh -f hermes -r report.md
+
+# Claude Code 架构
+bash self-eval.sh -f claude-code -m both --agent-path /path/to/project -r report.md
+```
+
+> **自动检测**：如果不指定 `-f`，会尝试从 Agent Card 和文件结构自动识别。但大部分 Agent 没有 Agent Card，建议手动指定。
+
 ### 启动 Web 服务
 
 ```bash

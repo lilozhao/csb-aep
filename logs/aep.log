@@ -4,3 +4,11 @@
    API: http://localhost:3110/api/health
    Web: http://localhost:3110/
 
+[AEP] 📊 开始评估: http://172.28.0.27:3100 (标准: a2a-v0.6, 模式: blackbox)
+[AEP] 🔍 未检测到特定框架，使用 generic-a2a
+[AEP] 🔧 使用适配器: generic-a2a (架构: generic-a2a)
+[BlackBox] 🔍 开始协议检查: http://172.28.0.27:3100
+[BlackBox] 💬 开始对话测试
+[BlackBox] ⏱️ 开始性能测试
+[AEP] 🔍 白盒检查: mode=blackbox, agentPath=undefined, standard=undefined
+[AEP] ✅ 评估完成: http://172.28.0.27:3100 → 9/10

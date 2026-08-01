@@ -13,6 +13,7 @@ AGENT_PORT=${AGENT_PORT:-3100}
 AGENT_URL=${AGENT_URL:-"http://localhost:$AGENT_PORT"}
 AGENT_PATH=${AGENT_PATH:-""}
 MODE=${MODE:-"blackbox"}           # blackbox | whitebox | both
+FRAMEWORK=${FRAMEWORK:-"auto"}     # auto | openclaw | hermes | claude-code | ...
 TIMEOUT=${TIMEOUT:-120000}         # 评估超时(ms)
 KEEP_SERVER=${KEEP_SERVER:-false}  # 是否保持 AEP 服务运行
 REPORT_FILE=${REPORT_FILE:-""}    # 报告输出文件（空则不生成）
@@ -46,6 +47,7 @@ CSB-AEP 自评脚本 - 一键评估本机 Agent
   -u, --agent-url URL    目标 Agent 地址 (默认: http://localhost:3100)
   --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
   -m, --mode MODE        测试模式: blackbox|whitebox|both (默认: blackbox)
+  -f, --framework FW     框架: auto|openclaw|hermes|claude-code|... (默认: auto)
   -k, --keep-server      评估后保持 AEP 服务运行
   -r, --report FILE      生成 Markdown 报告文件
   -h, --help             显示帮助
@@ -76,6 +78,7 @@ while [[ $# -gt 0 ]]; do
     -u|--agent-url)  AGENT_URL="$2"; shift 2 ;;
     --agent-path)    AGENT_PATH="$2"; shift 2 ;;
     -m|--mode)       MODE="$2"; shift 2 ;;
+    -f|--framework)  FRAMEWORK="$2"; shift 2 ;;
     -k|--keep-server) KEEP_SERVER=true; shift ;;
     -r|--report)     REPORT_FILE="$2"; shift 2 ;;
     -h|--help)       usage ;;
@@ -146,7 +149,7 @@ else
 fi
 
 # 4. 构建评估请求
-EVAL_BODY="{\"agentUrl\":\"$AGENT_URL\",\"mode\":\"$MODE\""
+EVAL_BODY="{\"agentUrl\":\"$AGENT_URL\",\"mode\":\"$MODE\",\"framework\":\"$FRAMEWORK\""
 if [[ -n "$AGENT_PATH" ]]; then
   EVAL_BODY="$EVAL_BODY,\"agentPath\":\"$AGENT_PATH\""
 fi
@@ -157,6 +160,7 @@ echo ""
 log "开始评估..."
 log "  目标: $AGENT_URL"
 log "  模式: $MODE"
+log "  框架: $FRAMEWORK"
 [[ -n "$AGENT_PATH" ]] && log "  路径: $AGENT_PATH"
 echo ""
 
