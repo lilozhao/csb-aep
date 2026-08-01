@@ -15,6 +15,7 @@ AGENT_PATH=${AGENT_PATH:-""}
 MODE=${MODE:-"blackbox"}           # blackbox | whitebox | both
 TIMEOUT=${TIMEOUT:-120000}         # 评估超时(ms)
 KEEP_SERVER=${KEEP_SERVER:-false}  # 是否保持 AEP 服务运行
+REPORT_FILE=${REPORT_FILE:-""}    # 报告输出文件（空则不生成）
 AEP_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 # === 颜色 ===
@@ -46,6 +47,7 @@ CSB-AEP 自评脚本 - 一键评估本机 Agent
   --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
   -m, --mode MODE        测试模式: blackbox|whitebox|both (默认: blackbox)
   -k, --keep-server      评估后保持 AEP 服务运行
+  -r, --report FILE      生成 Markdown 报告文件
   -h, --help             显示帮助
 
 示例:
@@ -75,6 +77,7 @@ while [[ $# -gt 0 ]]; do
     --agent-path)    AGENT_PATH="$2"; shift 2 ;;
     -m|--mode)       MODE="$2"; shift 2 ;;
     -k|--keep-server) KEEP_SERVER=true; shift ;;
+    -r|--report)     REPORT_FILE="$2"; shift 2 ;;
     -h|--help)       usage ;;
     *) err "未知参数: $1"; usage ;;
   esac
@@ -276,3 +279,16 @@ echo -e "${CYAN}─────────────────────�
 echo -e "  耗时: ${DURATION}s | 完整报告: http://localhost:$AEP_PORT"
 [[ "$KEEP_SERVER" == "true" ]] && echo -e "  AEP 服务保持运行中 (端口: $AEP_PORT)"
 echo ""
+
+# 7. 生成 Markdown 报告
+if [[ -n "$REPORT_FILE" ]]; then
+  log "生成报告: $REPORT_FILE"
+  # 通过 API 获取完整 JSON，再用 Python 转 Markdown
+  curl -sf "http://localhost:$AEP_PORT/api/eval/$EVAL_ID" | \
+    python3 "$AEP_DIR/generate-report.py" - "$REPORT_FILE" 2>/dev/null
+  if [[ -f "$REPORT_FILE" ]]; then
+    ok "报告已生成: $REPORT_FILE"
+  else
+    warn "报告生成失败"
+  fi
+fi
