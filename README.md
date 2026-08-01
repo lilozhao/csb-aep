@@ -154,11 +154,28 @@ bash self-eval.sh [选项]
   ...
 ```
 
+### 生成评测报告
+
+评测完成后自动生成 Markdown 报告：
+
+```bash
+# 评测 + 生成报告
+bash self-eval.sh -r report.md
+
+# 对远程 Agent 评测并生成报告
+bash self-eval.sh -u http://172.28.0.27:3100 -r zhouji-report.md
+
+# 单独将已有结果转为报告
+curl -s http://localhost:3110/api/eval/eval_xxx | python3 generate-report.py - output.md
+```
+
+报告内容包含：综合评分、黑盒测试详情（按类别分组）、白盒测试详情、CSB 碳硅契标准、优化建议。
+
 ### 自动化集成
 
 ```bash
-# 每天凌晨 2 点定时自评
-0 2 * * * cd /path/to/csb-aep && bash self-eval.sh >> /var/log/self-eval.log 2>&1
+# 每天凌晨 2 点定时自评并生成报告
+0 2 * * * cd /path/to/csb-aep && bash self-eval.sh -r /var/log/aep-report-$(date +\%Y\%m\%d).md >> /var/log/self-eval.log 2>&1
 
 # CI/CD 集成：评估通过则继续
 bash self-eval.sh && echo "✅ 通过" || echo "❌ 未通过"
