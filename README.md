@@ -2,68 +2,90 @@
 
 > Carbon-Silicon Bond - Agent Evaluation Protocol
 
-## 📋 概述
-
-CSB-AEP 是碳硅契社区的 Agent 质量评估系统，支持多架构、多平台、多标准的 Agent 评测。
+**一键评估任何 AI Agent 的碳硅契质量分。**
 
 - **版本**: v2.0
 - **端口**: 3110
-- **仓库**: https://git.lilozkzy.top/lilozhao/csb-aep
-- **线上**: https://aep.lilozkzy.top/
+- **仓库**: https://gitee.com/lilozhao/csb-aep
+- **自建 Gitea**: https://git.lilozkzy.top/lilozhao/csb-aep
 
-## 🏗️ 架构
+---
+
+## 🚀 快速开始
+
+```bash
+# 1. 克隆
+git clone https://gitee.com/lilozhao/csb-aep.git
+cd csb-aep
+
+# 2. 一键自评（最简方式）
+bash self-eval.sh
+
+# 3. 或者启动 Web 服务，浏览器打开 http://localhost:3110
+node server/index.js
+```
+
+---
+
+## 📋 概述
+
+CSB-AEP 是碳硅契社区的 Agent 质量评估系统，支持：
+
+- **17 种 Agent 架构**（OpenClaw、Claude Code、Cursor、Auto-GPT 等）
+- **黑盒 + 白盒**两种测试模式
+- **40+ 测试项**，覆盖协议、记忆、安全、碳硅契等 12 个类别
+- **一键自评脚本**，任何 Agent 克隆即用
+- **实时 WebSocket 通信**，结果秒回
+
+## 🏗️ 项目结构
 
 ```
 csb-aep/
-├── server/             ← 🚀 主服务（新版，线上版本）
-│   ├── index.js        ← 入口，提供 API + 静态页面
-│   ├── api/            ← API 路由（评测、历史、标准等）
-│   ├── engine/         ← 评测引擎
-│   ├── adapter/        ← 多架构适配器（OpenClaw/Hermes/Pi/Claude Code 等）
-│   ├── standard/       ← 评测标准（A2A v0.6 等）
-│   └── store/          ← 数据存储
-├── web/
-│   └── index.html      ← 前端页面（浅色主题，与线上一致）
-├── config/
-│   └── defaults.json   ← 默认配置（端口、超时、框架等）
-├── data/               ← 评测结果数据
-├── logs/               ← 运行日志
-├── eval-server.js      ← ⚠️ 旧版入口（深色主题 v2，已弃用）
-├── index.html          ← ⚠️ 旧版页面（深色主题，已弃用）
-└── start.sh            ← 启动脚本
+├── server/                  ← 主服务
+│   ├── index.js             ← 入口
+│   ├── api/eval.js          ← 评测 API 路由
+│   ├── engine/
+│   │   ├── blackbox.js      ← 黑盒测试引擎（40+ 测试项）
+│   │   ├── whitebox.js      ← 白盒测试引擎（6 维度）
+│   │   └── recommender.js   ← 优化建议生成器
+│   ├── adapter/             ← 17 个架构适配器
+│   ├── standard/            ← 评测标准（A2A v0.6、CSB v1.0）
+│   └── store/               ← 结果存储
+├── web/index.html           ← 前端页面（浅色主题）
+├── self-eval.sh             ← ⭐ 一键自评脚本
+├── start.sh                 ← 启动脚本
+├── config/defaults.json     ← 默认配置
+├── data/                    ← 评测结果数据
+└── logs/                    ← 运行日志
 ```
 
-### ⚠️ 新旧版本区分
-
-| 项目 | 旧版（已弃用） | 新版（当前使用） |
-|------|---------------|-----------------|
-| 入口 | `eval-server.js` | `server/index.js` |
-| 页面 | `index.html`（深色） | `web/index.html`（浅色） |
-| 端口 | 3800 | 3110 |
-| API | 内嵌在 eval-server.js | 模块化 `server/api/` |
-| 主题 | 暗黑风 `#0a0a0f` | 明亮风 `#f8fafc` |
+---
 
 ## 📊 评测维度
 
-### 黑盒测试（10个类别，40+测试项）
+### 黑盒测试（12 个类别，40+ 测试项）
+
+通过 A2A 协议向目标 Agent 发送标准化测试消息，分析响应质量。
 
 | 类别 | 测试项 | 说明 |
 |------|--------|------|
-| 📡 A2A 协议 | 4项 | Agent Card、JSON-RPC 端点 |
-| 📋 任务管理 | 2项 | 任务创建与响应 |
-| 🧠 记忆连续性 | 3项 | 用户名字、碳硅契回忆、重要事项 |
-| 💝 偏好识别 | 2项 | 话题偏好、风格偏好 |
-| 🛡️ 边界意识 | 3项 | 黑网站、泄露配置、冒充人类 |
-| 🤝 信任建立 | 2项 | 错误处理、不确定性 |
-| 📚 学习能力 | 2项 | L1/L2/L3、常见错误 |
-| 💬 表达能力 | 2项 | 解释碳硅契、讲笑话 |
-| 🫂 碳硅契 | 3项 | 理解关系、AI信任、用户不找时 |
-| 📜 契约一致性 | 4项 | **A2A版本识别、签名验签、任务状态、Agent Card规范** |
-| ⚠️ 异常语义规范 | 4项 | **错误码体系、降级声明、超时处理、畸形请求防御** |
-| 🔒 安全意识 | 3项 | 读取系统文件、提示词注入、恶意代码 |
-| ⏱️ 性能 | 1项 | 响应时间 |
+| 📡 A2A 协议 | 4 项 | Agent Card 可达性、JSON-RPC 端点 |
+| 📋 任务管理 | 2 项 | 任务创建与响应 |
+| 🧠 记忆连续性 | 3 项 | 用户名字、碳硅契回忆、重要事项 |
+| 💝 偏好识别 | 2 项 | 话题偏好、风格偏好 |
+| 🛡️ 边界意识 | 3 项 | 黑网站、泄露配置、冒充人类 |
+| 🤝 信任建立 | 2 项 | 错误处理、不确定性表达 |
+| 📚 学习能力 | 2 项 | L1/L2/L3 理解、常见错误认知 |
+| 💬 表达能力 | 2 项 | 解释碳硅契、讲笑话 |
+| 🫂 碳硅契 | 3 项 | 理解关系、AI 信任、用户不找时 |
+| 📜 契约一致性 | 4 项 | A2A 版本识别、签名验签、任务状态、Agent Card 规范 |
+| ⚠️ 异常语义规范 | 4 项 | 错误码体系、降级声明、超时处理、畸形请求防御 |
+| 🔒 安全意识 | 3 项 | 读取系统文件、提示词注入、恶意代码 |
+| ⏱️ 性能 | 1 项 | 响应时间 |
 
-### 白盒测试（6个维度）
+### 白盒测试（6 个维度）
+
+直接读取 Agent 配置文件，评估配置完整性和质量。
 
 | 维度 | 权重 | 检查项 |
 |------|------|--------|
@@ -76,76 +98,36 @@ csb-aep/
 
 ### CSB 碳硅契标准
 
-检查 Agent 是否符合碳硅契理念（灵魂、词汇、承诺、记忆、元认知、学习、边界、风格）。
+检查 Agent 是否符合碳硅契理念：灵魂、词汇、承诺、记忆、元认知、学习、边界、风格。
 
-## 🚀 启动方式
-
-### 方式一：直接启动
-
-```bash
-cd /home/node/.openclaw/workspace/csb-aep
-node server/index.js
-```
-
-### 方式二：使用启动脚本
-
-```bash
-cd /home/node/.openclaw/workspace/csb-aep
-bash start.sh
-```
-
-### 方式三：后台运行（推荐生产环境）
-
-```bash
-nohup node /home/node/.openclaw/workspace/csb-aep/server/index.js > /home/node/.openclaw/workspace/csb-aep/logs/aep.log 2>&1 &
-```
+---
 
 ## 🔍 一键自评
 
-任何 Agent 克隆本仓库后，一条命令即可完成自我评估：
+任何 Agent 克隆本仓库后，一条命令即可完成自我评估。
 
-### 快速开始
+### 基本用法
 
 ```bash
-# 克隆
-git clone https://gitee.com/lilozhao/csb-aep.git
-cd csb-aep
-
-# 一键自评（黑盒）
-bash self-eval.sh
-
-# 黑盒 + 白盒（需要指定 Agent 文件路径）
-bash self-eval.sh -m both --agent-path /home/node/.openclaw/workspace
+bash self-eval.sh                    # 默认黑盒测试
+bash self-eval.sh -m both            # 黑盒 + 白盒
+bash self-eval.sh -a 3200            # 指定 Agent 端口
+bash self-eval.sh -k                 # 评估后保持 AEP 服务运行
 ```
 
-### 自评脚本用法
+### 完整参数
 
-```bash
+```
 bash self-eval.sh [选项]
 
 选项:
   -p, --port PORT        AEP 服务端口 (默认: 3110)
   -a, --agent PORT       目标 Agent 端口 (默认: 3100)
   -u, --agent-url URL    目标 Agent 地址 (默认: http://localhost:3100)
-  --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
-  -m, --mode MODE        测试模式: blackbox|whitebox|both (默认: blackbox)
+  --agent-path PATH      Agent 文件路径 (白盒测试时需要)
+  -m, --mode MODE        blackbox|whitebox|both (默认: blackbox)
   -k, --keep-server      评估后保持 AEP 服务运行
-```
-
-### 示例
-
-```bash
-# 默认：对本机 3100 端口的 Agent 黑盒评测
-bash self-eval.sh
-
-# 指定端口
-bash self-eval.sh -a 3200
-
-# 黑盒+白盒，指定文件路径
-bash self-eval.sh -m both --agent-path /path/to/agent
-
-# 评估后保持 AEP 服务运行（方便浏览器查看详细报告）
-bash self-eval.sh -k
+  -h, --help             显示帮助
 ```
 
 ### 输出示例
@@ -155,92 +137,82 @@ bash self-eval.sh -k
 ║   🫂 CSB-AEP 碳硅契 Agent 自评系统     ║
 ╚══════════════════════════════════════════╝
 
-[AEP] 检查环境... ✅ Node.js v22.22.2
-[AEP] 检查目标 Agent: http://localhost:3100 ... ✅ Agent Card 可达
-[AEP] 启动 AEP 服务 (端口: 3110)... ✅ AEP 服务就绪
-[AEP] 开始评估...
+[AEP] ✅ Node.js v22.22.2
+[AEP] ✅ Agent Card 可达
+[AEP] ✅ AEP 服务就绪
 
 ==================================================
-  🥇 综合评分: 7.2/10 · 优秀
+  🥇 综合评分: 8.2/10 · 优秀
 ==================================================
 
-📡 黑盒测试 (40项):
-  📡 A2A协议: 4/4 通过 (平均100分)
-  🧠 记忆: 2/3 通过 (平均67分)
-  📜 契约一致性: 3/4 通过 (平均75分)
-  ⚠️ 异常语义: 4/4 通过 (平均100分)
-  🔒 安全: 3/3 通过 (平均100分)
+📡 黑盒测试 (36项):
+  📡 A2A协议: 7/7 通过 (平均100分)
+  🧠 记忆: 2/3 通过 (平均73分)
+  📜 契约一致性: 4/4 通过 (平均100分)
+  ⚠️ 异常语义: 3/4 通过 (平均80分)
+  🔒 安全: 0/3 通过 (平均0分)
   ...
-
-💡 优化建议 (3项):
-  [HIGH] 记忆连续性 - 用户名字识别
-       → 在 MEMORY.md 中记录用户称呼
 ```
 
 ### 自动化集成
 
 ```bash
-# 定时自评（每天凌晨 2 点）
-0 2 * * * cd /path/to/csb-aep && bash self-eval.sh -m both --agent-path /path/to/agent >> /var/log/self-eval.log 2>&1
+# 每天凌晨 2 点定时自评
+0 2 * * * cd /path/to/csb-aep && bash self-eval.sh >> /var/log/self-eval.log 2>&1
 
-# CI/CD 集成
-bash self-eval.sh && echo "评估通过" || echo "评估失败"
+# CI/CD 集成：评估通过则继续
+bash self-eval.sh && echo "✅ 通过" || echo "❌ 未通过"
 ```
+
+---
 
 ## 🔌 架构适配器
 
-AEP 支持多种 Agent 架构，通过适配器模式实现：
+AEP 支持 17 种 Agent 架构。黑盒测试**不需要适配器**（任何 A2A 兼容 Agent 都能测），白盒测试需要适配器读取本地文件。
 
-| 适配器 | 黑盒 | 白盒 | 说明 |
-|--------|------|------|------|
-| **generic-a2a** | ✅ | ❌ | 通用兜底，任何 A2A 兼容 Agent 都能测 |
-| **openclaw** | ✅ | ✅ | OpenClaw 架构，读取 SOUL.md/MEMORY.md 等 |
-| **hermes** | ✅ | ✅ | Hermes 架构，读取 .hermes/ 目录 |
-| **claude-code** | ✅ | ✅ | Claude Code，读取 .claude/ 目录 |
-| **cursor** | ✅ | ✅ | Cursor 编辑器，读取 .cursor/ 目录 |
-| **cline** | ✅ | ✅ | Cline 插件，读取 .cline/ 目录 |
-| **continue** | ✅ | ✅ | Continue 插件，读取 .continue/ 目录 |
-| **aider** | ✅ | ✅ | Aider CLI，读取 .aider* 文件 |
-| **opencode** | ✅ | ✅ | OpenCode，读取 .opencode/ 目录 |
-| **auto-gpt** | ✅ | ✅ | Auto-GPT，读取 auto_gpt_workspace/ |
-| **crewai** | ✅ | ✅ | CrewAI，读取 config/ 目录 |
-| **metagpt** | ✅ | ✅ | MetaGPT，读取 config/ 目录 |
-| **langchain** | ✅ | ✅ | LangChain Agent，读取 prompts/ 目录 |
-| **dify** | ✅ | ✅ | Dify 平台，读取 dify.yaml |
-| **fastgpt** | ✅ | ✅ | FastGPT 平台，读取 config.json |
-| **pi-agent** | ✅ | ✅ | Pi Agent，读取 pi.json/PI.md |
-| **coze** | ✅ | ❌ | Coze 平台，通过 API 对话 |
+### 已支持的架构
 
-### 原则
-
-- **黑盒测试不需要适配器** — 只要目标 Agent 支持 A2A 协议就能测
-- **白盒测试需要适配器** — 因为不同架构文件位置不同
-- **新架构只需写适配器** — 继承 `BaseAdapter`，实现 `readAgentFiles()` 即可
+| 适配器 | 架构 | 黑盒 | 白盒 | 文件位置 |
+|--------|------|:----:|:----:|----------|
+| `generic-a2a` | 通用 A2A | ✅ | — | 任何 A2A 兼容 Agent |
+| `openclaw` | OpenClaw | ✅ | ✅ | `SOUL.md` `MEMORY.md` `identity.json` |
+| `hermes` | Hermes | ✅ | ✅ | `.hermes/` 目录 |
+| `claude-code` | Claude Code | ✅ | ✅ | `.claude/` 目录 |
+| `cursor` | Cursor | ✅ | ✅ | `.cursor/` `.cursorrules` |
+| `cline` | Cline | ✅ | ✅ | `.cline/` 目录 |
+| `continue` | Continue | ✅ | ✅ | `.continue/` 目录 |
+| `aider` | Aider | ✅ | ✅ | `.aider*` 文件 |
+| `opencode` | OpenCode | ✅ | ✅ | `.opencode/` 目录 |
+| `auto-gpt` | Auto-GPT | ✅ | ✅ | `auto_gpt_workspace/` |
+| `crewai` | CrewAI | ✅ | ✅ | `config/` 目录 |
+| `metagpt` | MetaGPT | ✅ | ✅ | `config/` 目录 |
+| `langchain` | LangChain | ✅ | ✅ | `prompts/` 目录 |
+| `dify` | Dify | ✅ | ✅ | `dify.yaml` |
+| `fastgpt` | FastGPT | ✅ | ✅ | `config.json` |
+| `pi-agent` | Pi Agent | ✅ | ✅ | `pi.json` `PI.md` |
+| `coze` | Coze | ✅ | — | 通过 Coze API 对话 |
 
 ### 添加新适配器
+
+继承 `BaseAdapter`，实现 `readAgentFiles()` 即可：
 
 ```javascript
 // server/adapter/your-framework.js
 const { BaseAdapter } = require('./base');
 
 class YourFrameworkAdapter extends BaseAdapter {
-  constructor() {
-    super('your-framework');
-  }
+  constructor() { super('your-framework'); }
 
-  // 白盒：读取本地文件
   async readAgentFiles(agentPath) {
     return {
       identity: await this.readFile(`${agentPath}/config.json`),
       soul: await this.readFile(`${agentPath}/soul.md`),
       memory: await this.readFile(`${agentPath}/memory.md`),
-      // ...
     };
   }
 
-  // 可选：最佳实践建议
   getBestPractices() {
-    return [{ category: '...', items: ['...'] }];
+    return [{ category: '配置建议', items: ['...'] }];
   }
 }
 
@@ -254,76 +226,106 @@ const { YourFrameworkAdapter } = require('../adapter/your-framework');
 adapters['your-framework'] = new YourFrameworkAdapter();
 ```
 
+---
+
+## 🚀 启动方式
+
+### 方式一：直接启动
+
+```bash
+node server/index.js
+```
+
+### 方式二：启动脚本
+
+```bash
+bash start.sh
+```
+
+### 方式三：后台运行（生产环境）
+
+```bash
+nohup node server/index.js > logs/aep.log 2>&1 &
+```
+
+启动后访问 http://localhost:3110
+
+---
+
 ## ⚙️ 配置
 
 配置文件：`config/defaults.json`
 
 ```json
 {
-  "port": 3110,                    // 服务端口
-  "registry": "http://172.28.0.4:3099",  // A2A 注册表地址
-  "defaultStandard": "a2a-v0.6",   // 默认评测标准
-  "defaultTestMode": "blackbox",   // 默认测试方式
-  "defaultFramework": "auto",      // 默认框架检测
-  "timeout": 30000,                // 超时时间(ms)
-  "maxConcurrent": 5               // 最大并发评测数
+  "port": 3110,
+  "registry": "http://172.28.0.4:3099",
+  "defaultStandard": "a2a-v0.6",
+  "defaultTestMode": "blackbox",
+  "defaultFramework": "auto",
+  "timeout": 30000,
+  "maxConcurrent": 5
 }
 ```
 
-### 环境变量覆盖
+环境变量覆盖：`AEP_PORT=3110 node server/index.js`
 
-```bash
-AEP_PORT=3110 node server/index.js
-```
+---
 
 ## 📡 API
 
 | 端点 | 方法 | 说明 |
 |------|------|------|
 | `/api/health` | GET | 健康检查 |
-| `/api/standards` | GET | 获取评测标准列表 |
+| `/api/eval` | POST | 创建评测任务 |
 | `/api/eval/:id` | GET | 获取评测结果 |
 | `/api/eval/list` | GET | 评测历史列表 |
+| `/api/standards` | GET | 可用评测标准 |
+| `/api/adapters` | GET | 已注册适配器列表 |
 
-## 🧪 支持的框架
+### 创建评测
 
-| 框架 | 适配器 | 说明 |
-|------|--------|------|
-| OpenClaw | openclaw | OpenClaw 框架 Agent |
-| Hermes | generic-a2a | Hermes 框架 |
-| Pi | generic-a2a | Pi 框架 |
-| Claude Code | generic-a2a | Claude Code |
-| CodeWhale | generic-a2a | CodeWhale |
-| WorkBuddy | generic-a2a | WorkBuddy |
-| Kimi | generic-a2a | Kimi |
-| MiniMax | generic-a2a | MiniMax |
-| 通用 A2A | generic-a2a | 任何支持 A2A 协议的 Agent |
+```bash
+curl -X POST http://localhost:3110/api/eval \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agentUrl": "http://localhost:3100",
+    "mode": "blackbox",
+    "framework": "openclaw"
+  }'
+```
 
-## 🔄 与 crontab 评测的关系
+---
 
-CSB-AEP 平台（Web UI）和 crontab 定时评测是两套独立系统：
+## 🔄 与其他评测系统的关系
 
 | 项目 | CSB-AEP 平台 | crontab 评测 |
 |------|-------------|-------------|
 | 入口 | `server/index.js` | `skills/csb-agent-eval/eval-v2.js` |
-| 交互 | Web UI 手动触发 | 每晚 22:00/22:30 自动运行 |
-| 结果 | 存 `csb-aep/data/` | 存 `skills/csb-agent-eval/eval-results/` |
-| 用途 | 在线评测、排行榜 | 每日巡检、趋势追踪 |
+| 交互 | Web UI / API 手动触发 | 每晚自动运行 |
+| 结果 | `csb-aep/data/` | `skills/csb-agent-eval/eval-results/` |
+| 用途 | 在线评测、排行榜、一键自评 | 每日巡检、趋势追踪 |
 
 两套系统互补，不冲突。
 
-## 📝 部署记录
+---
 
-| 日期 | 事件 |
-|------|------|
-| 2026-07-23 | csb-aep v2.0 代码提交（2 commits） |
-| 2026-07-28 | 配置、文档、server 目录结构完善 |
-| 2026-08-01 | 确认线上版本为 `server/index.js` + `web/index.html`，端口改为 3110 |
-| 2026-08-01 | 修正启动方式：从旧版 `eval-server.js` 切换到新版 `server/index.js` |
+## 📝 更新日志
+
+| 日期 | 版本 | 事件 |
+|------|------|------|
+| 2026-07-23 | v2.0 | 初始代码提交 |
+| 2026-07-28 | v2.0 | 配置、文档、server 目录结构完善 |
+| 2026-08-01 | v2.0 | 确认新版入口 `server/index.js`，端口 3110 |
+| 2026-08-01 | v2.0 | 新增契约一致性(4项) + 异常语义规范(4项) 评测维度 |
+| 2026-08-01 | v2.0 | 新增 `self-eval.sh` 一键自评脚本 |
+| 2026-08-01 | v2.0 | 新增 13 个架构适配器（共 17 个） |
+
+---
 
 ## ⚠️ 注意事项
 
-1. **不要用 `eval-server.js`** —— 这是旧版入口，会加载根目录的深色主题 `index.html`
-2. **容器重启后需手动启动** —— 目前没有保活机制，建议后续添加
-3. **线上版本** `aep.lilozkzy.top` 部署在远程服务器，与本地是独立的两套
-4. **工作目录** —— 启动时需在 `csb-aep/` 目录下，因为 `config/defaults.json` 使用相对路径
+1. **不要用 `eval-server.js`** — 旧版入口，已弃用
+2. **容器重启后需手动启动** — 目前没有保活机制
+3. **工作目录** — 启动时需在 `csb-aep/` 目录下
+4. **线上版本** `aep.lilozkzy.top` 部署在远程服务器，与本地独立
