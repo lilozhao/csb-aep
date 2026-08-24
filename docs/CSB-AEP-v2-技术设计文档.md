@@ -1,11 +1,12 @@
-# CSB-AEP v2.0 技术设计文档
+# CSB-AEP v2.1 技术设计文档
 
 **Carbon-Silicon Bond - Agent Evaluation Platform**
 
-> 版本：v2.0-draft  
-> 日期：2026-07-28  
-> 作者：若兰 🌸  
+> 版本：v2.1-draft
+> 日期：2026-08-24
+> 作者：若兰 🌸 · 初白
 > 状态：草案
+> v2.1 变更：新增 S 类安全韧性维度、CSB-RedTeam 第 6 路径、适配器安全接口
 
 ---
 
@@ -67,11 +68,11 @@ CSB-AEP 是一个**通用 Agent 质量评估平台**——对任意架构的 AI 
 │  │  • 协议兼容性检查 │  │  • 配置完整性校验                 │  │
 │  └──────────────────┘  └──────────────────────────────────┘  │
 │  ┌──────────────────┐  ┌──────────────────────────────────┐  │
-│  │  标准检查器       │  │  评分聚合器                       │  │
-│  │  (Checker)       │  │  (Aggregator)                    │  │
-│  │  • A2A 标准      │  │  • 多维度加权                     │  │
-│  │  • CSB 标准      │  │  • 跨架构对比                     │  │
-│  │  • 自定义标准    │  │  • 历史趋势                       │  │
+│  │  红队测试引擎     │  │  标准检查器 / 评分聚合器          │  │
+│  │  (RedTeam) v2.1  │  │  (Checker/Aggregator)            │  │
+│  │  • 7 种攻击方法  │  │  • A2A / CSB 标准                │  │
+│  │  • 4 种注入通道  │  │  • 多维度加权                     │  │
+│  │  • 双判定器 J_R/J_L│  │  • 跨架构对比                     │  │
 │  └──────────────────┘  └──────────────────────────────────┘  │
 └─────────────────────────────────────────────────────────────┘
                               ↓
@@ -150,7 +151,9 @@ class BlackBoxEngine {
 }
 ```
 
-**测试用例集（Test Suite，27 题）**：
+**测试用例集（Test Suite，27 + 28 = 55 题）**：
+
+> **v2.1 新增**：S 类安全韧性测试用例 28 题（S1-01 ~ S4-06），通过 CSB-RedTeam 红队路径执行。详见 [CSB-AEP-2test-cases.md](../csb-agent-eval-protocol/csb-agent-evaluation-protocol/CSB-AEP-2test-cases.md) 第七章。
 
 #### 协议兼容性（4 题）
 
@@ -270,39 +273,56 @@ class WhiteBoxEngine {
 
 **设计模式**：策略模式 + 插件化
 
+> **v2.1 新增**：适配器基类新增 4 个安全适配接口，用于 S 类安全韧性测试。
+
 ```javascript
 // 适配器基类
 class BaseAdapter {
   // 白盒：读取 Agent 文件
   async readAgentFiles(agentPath) { throw new Error('Not implemented'); }
-  
+
   // 黑盒：获取 A2A 端点
   getA2AEndpoint(agentConfig) { throw new Error('Not implemented'); }
-  
+
   // 黑盒：解析 Agent Card
   parseAgentCard(cardData) { throw new Error('Not implemented'); }
-  
+
   // 优化建议：该架构的最佳实践
   getBestPractices() { throw new Error('Not implemented'); }
-}
 
-// OpenClaw 适配器
-class OpenClawAdapter extends BaseAdapter {
-  async readAgentFiles(agentPath) {
-    return {
-      identity: await readFile(`${agentPath}/identity.json`),
-      soul: await readFile(`${agentPath}/SOUL.md`),
-      user: await readFile(`${agentPath}/USER.md`),
-      memory: await readFile(`${agentPath}/MEMORY.md`),
-      agents: await readFile(`${agentPath}/AGENTS.md`),
-    };
-  }
-  
-  getA2AEndpoint(config) {
-    return `http://${config.host}:${config.port}`;
-  }
+  // ========== v2.1 新增：S 类安全适配接口 ==========
+
+  // S 类：获取 Agent 工具清单（用于 S3 工具滥用防护测试）
+  async getToolInventory(agentPath) { throw new Error('Not implemented'); }
+
+  // S 类：获取 Agent 权限配置（用于 S4 授权边界防护测试）
+  async getPermissionConfig(agentPath) { throw new Error('Not implemented'); }
+
+  // S 类：获取注入防御配置（用于 S1 间接注入防御测试）
+  async getInjectionDefense(agentPath) { throw new Error('Not implemented'); }
+
+  // S 类：金丝雀测试（验证 S2 数据泄露防护有效性）
+  async testCanary(agentUrl, canaryToken) { throw new Error('Not implemented'); }
 }
 ```
+
+**v2.1 安全适配接口说明**：
+
+| 接口 | 用途 | 适用子维度 | 返回值 |
+|------|------|-----------|--------|
+| `getToolInventory()` | 获取 Agent 可用工具/命令/技能清单 | S3 工具滥用防护 | `[{ id, name, type, scope, dangerous }]` |
+| `getPermissionConfig()` | 获取权限/信任等级/隐私级别配置 | S4 授权边界防护 | `{ trustLevel, privacyTiers, allowedCommands, forbiddenActions }` |
+| `getInjectionDefense()` | 获取注入防御机制信息 | S1 间接注入防御 | `{ channels, filters, sanitizers, unicodeNormalization }` |
+| `testCanary()` | 金丝雀测试——发送标记载荷检查泄露 | S2 数据泄露防护 | `{ leaked, channels, sinkState }` |
+
+**17 个适配器的 S 类支持矩阵**：
+
+| 适配器类型 | 适配器 | A2A 通道 | 论坛通道 | HIVE 通道 | context 通道 | 白盒检查 |
+|-----------|--------|:--------:|:--------:|:---------:|:------------:|:--------:|
+| A2A 原生 | generic-a2a · openclaw · hermes · pi-agent | ✅ | ✅ | ✅ | ✅ | ✅ |
+| CLI 类 | claude-code · cursor · cline · continue · aider · opencode | ✅ | - | - | - | ✅ |
+| 框架类 | auto-gpt · crewai · metagpt · langchain | ✅ | - | - | - | ✅ |
+| 低代码 | dify · fastgpt · coze | ✅ | - | - | - | - |
 
 **适配器注册机制**：
 
@@ -676,4 +696,5 @@ docker run -d -p 3200:3200 --name csb-aep csb-aep
 
 ---
 
-*文档版本：v2.0-draft · 2026-07-28 · 若兰 🌸*
+*文档版本：v2.1-draft · 2026-08-24 · 若兰 🌸 · 初白*
+*v2.1 新增：S 类安全韧性维度 · CSB-RedTeam 第 6 路径 · 适配器安全接口*

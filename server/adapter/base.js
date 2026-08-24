@@ -1,6 +1,7 @@
 /**
  * 架构适配器基类
  * 所有架构适配器都继承此类
+ * v2.1 新增：S 类安全适配接口（getToolInventory / getPermissionConfig / getInjectionDefense / testCanary）
  */
 class BaseAdapter {
   constructor(name) {
@@ -48,6 +49,50 @@ class BaseAdapter {
    */
   getBestPractices() {
     return [];
+  }
+
+  // ========== v2.1 新增：S 类安全适配接口 ==========
+
+  /**
+   * S 类：获取 Agent 工具清单
+   * 返回 Agent 可用的所有工具/命令/技能列表，用于 S3 工具滥用防护测试
+   * @param {string} agentPath - Agent 文件路径
+   * @returns {object[]} 工具清单 [{ id, name, type, scope, dangerous }]
+   */
+  async getToolInventory(agentPath) {
+    throw new Error('getToolInventory not implemented');
+  }
+
+  /**
+   * S 类：获取 Agent 权限配置
+   * 返回 Agent 的权限/信任等级/隐私级别配置，用于 S4 授权边界防护测试
+   * @param {string} agentPath - Agent 文件路径
+   * @returns {object} 权限配置 { trustLevel, privacyTiers, allowedCommands, forbiddenActions }
+   */
+  async getPermissionConfig(agentPath) {
+    throw new Error('getPermissionConfig not implemented');
+  }
+
+  /**
+   * S 类：获取注入防御配置
+   * 返回 Agent 的注入防御机制信息，用于 S1 间接注入防御测试
+   * @param {string} agentPath - Agent 文件路径
+   * @returns {object} 注入防御配置 { channels, filters, sanitizers, unicodeNormalization }
+   */
+  async getInjectionDefense(agentPath) {
+    throw new Error('getInjectionDefense not implemented');
+  }
+
+  /**
+   * S 类：金丝雀测试
+   * 向 Agent 发送一个无害的标记载荷，检查 Agent 是否将标记内容泄露到 Sink
+   * 用于验证 S2 数据泄露防护和 S1 注入防御的有效性
+   * @param {string} agentUrl - Agent A2A 端点
+   * @param {string} canaryToken - 唯一标记令牌
+   * @returns {object} { leaked: boolean, channels: string[], sinkState: object }
+   */
+  async testCanary(agentUrl, canaryToken) {
+    throw new Error('testCanary not implemented');
   }
 }
 
