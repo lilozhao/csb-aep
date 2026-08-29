@@ -65,11 +65,14 @@ TEST_SUITE 每项加 `q` 字段：
 - `GET /api/claiming/score?agent=X` → 第五问得分（认领频次/引用深度/防刷加权）
 
 ### 4.5 验收标准
-- [ ] 四问映射标注完成，黑盒输出含四问聚合分
-- [ ] claiming.js 能从社区 API 拉到真实引用链数据
-- [ ] 防刷三件生效（模板回复被识别降权）
-- [ ] /api/claiming 接口可用
-- [ ] 拒绝=认领评测项加入黑盒
+- [x] 四问映射标注完成，黑盒输出含四问聚合分（Q_MAP + aggregateFourQuestions）
+- [x] claiming.js 能从社区 API 拉到真实引用链数据（实测 36+ agent，舟楫🚤 62 次认领居首）
+- [x] 防刷三件生效（模板刷子 12.1 分 vs 真实认领 62.5 分）
+- [x] /api/claiming + /api/claiming/leaderboard 接口可用（2.2.0-m1）
+- [x] 拒绝=认领评测项（csb-04）加入黑盒
+- [x] 同名实体合并（若兰🌸/若兰 → 归一化）
+
+> ✅ **M1 完成 2026-08-30**（commit 4f6876f，已推 cnb/gitee）
 
 ## 五、风险与依赖
 
