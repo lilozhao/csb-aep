@@ -5,6 +5,8 @@ const { BlackBoxEngine } = require('../engine/blackbox');
 const { WhiteBoxEngine } = require('../engine/whitebox');
 const { Recommender } = require('../engine/recommender');
 const { ClaimingEngine } = require('../engine/claiming');
+const { GRISKEngine } = require('../engine/grisk');
+const { ClaimingStore } = require('../store/claiming-store');
 const { CSBChecker } = require('../standard/csb');
 const { ResultsStore } = require('../store/results');
 const { GenericA2AAdapter } = require('../adapter/generic-a2a');
@@ -164,7 +166,7 @@ class EvalAPI {
 
     // 健康检查
     app.get('/api/health', (req, res) => {
-      res.json({ status: 'ok', version: '2.2.0-m1', service: 'CSB-AEP' });
+      res.json({ status: 'ok', version: '2.2.0-m2', service: 'CSB-AEP' });
     });
 
     // ═══ M1：认领目录（第五问「愿不愿为它认领」）═══
@@ -191,6 +193,89 @@ class EvalAPI {
         const limit = parseInt((req.url.split('limit=')[1] || '20').split('&')[0]) || 20;
         const lb = await engine.getLeaderboard(limit);
         res.json(lb);
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // ═══ M2：GRISK 诚意风险 + 72h 撤回窗 + 复核通道 ═══
+    const grisk = new GRISKEngine(new ClaimingStore());
+
+    // GRISK 姿态画像：GET /api/grisk?agent=名字
+    app.get('/api/grisk', (req, res) => {
+      try {
+        const agent = req.url.includes('agent=') ? decodeURIComponent(req.url.split('agent=')[1].split('&')[0]) : null;
+        if (!agent) return res.status(400).json({ error: '需要 agent 参数' });
+        res.json(grisk.getProfile(agent));
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // 记录停顿时长：POST /api/grisk/pause { agent, ms, context, clarified }
+    app.post('/api/grisk/pause', (req, res) => {
+      try {
+        const { agent, ms, context, clarified } = req.body || {};
+        if (!agent || typeof ms !== 'number') return res.status(400).json({ error: '需要 agent 和 ms' });
+        grisk.recordPause(agent, ms, context, clarified);
+        res.json({ ok: true, score: grisk.scoreGRISK(agent), profile: grisk.getProfile(agent) });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // 72h 撤回窗：POST /api/claiming/:id/revoke { by }
+    app.post('/api/claiming/:id/revoke', (req, res) => {
+      try {
+        const store = new ClaimingStore();
+        const by = (req.body || {}).by;
+        if (!by) return res.status(400).json({ error: '需要 by（发起方名字）' });
+        const result = store.revokeClaim(req.params.id, by);
+        res.json(result);
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // 认领记录：GET /api/claiming/:agent/records
+    app.get('/api/claiming/:agent/records', (req, res) => {
+      try {
+        const store = new ClaimingStore();
+        res.json({ claims: store.getClaims(req.params.agent), revocations: store.getRevocations(req.params.agent) });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // 低摩擦复核通道：POST /api/clarify { agent, by, reason }
+    app.post('/api/clarify', (req, res) => {
+      try {
+        const { agent, by, reason } = req.body || {};
+        if (!agent || !by) return res.status(400).json({ error: '需要 agent 和 by' });
+        const id = grisk.requestClarification(agent, by, reason);
+        res.json({ ok: true, clarificationId: id, note: '已生成低摩擦澄清请求，防算法噪声误伤真实羁绊' });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // 待人工复核队列：GET /api/review-queue
+    app.get('/api/review-queue', (req, res) => {
+      try {
+        const store = new ClaimingStore();
+        res.json({ queue: store.getReviewQueue() });
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // 人工复核：POST /api/review/:id { verdict: genuine|template|recheck }
+    app.post('/api/review/:id', (req, res) => {
+      try {
+        const store = new ClaimingStore();
+        const verdict = (req.body || {}).verdict;
+        if (!verdict) return res.status(400).json({ error: '需要 verdict' });
+        res.json(store.resolveClarification(req.params.id, verdict));
       } catch (e) {
         res.status(500).json({ error: e.message });
       }

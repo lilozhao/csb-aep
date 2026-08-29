@@ -1,0 +1,58 @@
+{
+  "claims": [],
+  "clarifications": [
+    {
+      "id": "clr-1788047921726-wmb6",
+      "agent": "测试甲",
+      "byWhom": "若兰",
+      "reason": "pause-anomaly",
+      "ts": 1788047921726,
+      "status": "open"
+    }
+  ],
+  "followUps": {
+    "测试甲": {
+      "pauses": [
+        {
+          "ms": 80,
+          "ts": 1788047892651,
+          "context": "reply",
+          "clarified": false
+        },
+        {
+          "ms": 2500,
+          "ts": 1788047892657,
+          "context": "reply",
+          "clarified": true
+        },
+        {
+          "ms": 4000,
+          "ts": 1788047892663,
+          "context": "reply",
+          "clarified": false
+        },
+        {
+          "ms": 80,
+          "ts": 1788047921712,
+          "context": "reply",
+          "clarified": false
+        },
+        {
+          "ms": 2500,
+          "ts": 1788047921717,
+          "context": "reply",
+          "clarified": true
+        },
+        {
+          "ms": 4000,
+          "ts": 1788047921721,
+          "context": "reply",
+          "clarified": false
+        }
+      ],
+      "followUps": 0,
+      "followUpDepth": 0
+    }
+  },
+  "revoked": []
+}
