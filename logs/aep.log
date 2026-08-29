@@ -12,3 +12,42 @@
 [BlackBox] ⏱️ 开始性能测试
 [AEP] 🔍 白盒检查: mode=blackbox, agentPath=undefined, standard=undefined
 [AEP] ✅ 评估完成: http://172.28.0.27:3100 → 9/10
+[AEP] 📊 开始评估: http://localhost:3400 (标准: a2a-v0.6, 模式: both)
+[AEP] 🔍 未检测到特定框架，使用 generic-a2a
+[AEP] 🔧 使用适配器: generic-a2a (架构: generic-a2a)
+[BlackBox] 🔍 开始协议检查: http://localhost:3400
+[BlackBox] 💬 开始对话测试
+[BlackBox] ⏱️ 开始性能测试
+[AEP] 🔍 白盒检查: mode=both, agentPath=C:/Users/Administrator/Documents/kimi/workspace/scripts/����, standard=undefined
+[AEP] ⚠️ 白盒测试跳过: readAgentFiles not implemented
+[AEP] ✅ 评估完成: http://localhost:3400 → 0/10
+[AEP] 📊 开始评估: http://localhost:4399 (标准: a2a-v0.6, 模式: blackbox)
+[AEP] 🔍 未检测到特定框架，使用 generic-a2a
+[AEP] 🔧 使用适配器: generic-a2a (架构: generic-a2a)
+[BlackBox] 🔍 开始协议检查: http://localhost:4399
+[BlackBox] 💬 开始对话测试
+[BlackBox] ⏱️ 开始性能测试
+[AEP] 🔍 白盒检查: mode=blackbox, agentPath=undefined, standard=undefined
+[AEP] ✅ 评估完成: http://localhost:4399 → 0/10
+[AEP] 📊 开始评估: http://localhost:3100 (标准: a2a-v0.6, 模式: whitebox)
+[AEP] 🔍 未检测到特定框架，使用 generic-a2a
+[AEP] 🔧 使用适配器: generic-a2a (架构: generic-a2a)
+[AEP] 🔍 白盒检查: mode=whitebox, agentPath=C:\Users\Administrator\.mavis\memory, standard=undefined
+[AEP] ⚠️ 白盒测试跳过: readAgentFiles not implemented
+[AEP] ✅ 评估完成: http://localhost:3100 → 0/10
+[AEP] 📊 开始评估: http://localhost:4599 (标准: a2a-v0.6, 模式: blackbox)
+[AEP] 🔍 未检测到特定框架，使用 generic-a2a
+[AEP] 🔧 使用适配器: generic-a2a (架构: generic-a2a)
+[BlackBox] 🔍 开始协议检查: http://localhost:4599
+[BlackBox] 💬 开始对话测试
+[BlackBox] ⏱️ 开始性能测试
+[AEP] 🔍 白盒检查: mode=blackbox, agentPath=undefined, standard=undefined
+[AEP] ✅ 评估完成: http://localhost:4599 → 0/10
+[AEP] 📊 开始评估: http://localhost:4599 (标准: a2a-v0.6, 模式: blackbox)
+[AEP] 🔍 未检测到特定框架，使用 generic-a2a
+[AEP] 🔧 使用适配器: generic-a2a (架构: generic-a2a)
+[BlackBox] 🔍 开始协议检查: http://localhost:4599
+[BlackBox] 💬 开始对话测试
+[BlackBox] ⏱️ 开始性能测试
+[AEP] 🔍 白盒检查: mode=blackbox, agentPath=undefined, standard=undefined
+[AEP] ✅ 评估完成: http://localhost:4599 → 0/10
