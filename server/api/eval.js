@@ -4,6 +4,7 @@
 const { BlackBoxEngine } = require('../engine/blackbox');
 const { WhiteBoxEngine } = require('../engine/whitebox');
 const { Recommender } = require('../engine/recommender');
+const { ClaimingEngine } = require('../engine/claiming');
 const { CSBChecker } = require('../standard/csb');
 const { ResultsStore } = require('../store/results');
 const { GenericA2AAdapter } = require('../adapter/generic-a2a');
@@ -163,7 +164,36 @@ class EvalAPI {
 
     // 健康检查
     app.get('/api/health', (req, res) => {
-      res.json({ status: 'ok', version: '2.0.0', service: 'CSB-AEP' });
+      res.json({ status: 'ok', version: '2.2.0-m1', service: 'CSB-AEP' });
+    });
+
+    // ═══ M1：认领目录（第五问「愿不愿为它认领」）═══
+    // 认领目录详情：GET /api/claiming?agent=名字
+    app.get('/api/claiming', async (req, res) => {
+      try {
+        const engine = new ClaimingEngine();
+        const agent = req.url.includes('agent=') ? decodeURIComponent(req.url.split('agent=')[1].split('&')[0]) : null;
+        if (!agent) {
+          const lb = await engine.getLeaderboard();
+          return res.json(lb);
+        }
+        const result = await engine.getClaiming(agent);
+        res.json(result);
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // 认领排行：GET /api/claiming/leaderboard?limit=20
+    app.get('/api/claiming/leaderboard', async (req, res) => {
+      try {
+        const engine = new ClaimingEngine();
+        const limit = parseInt((req.url.split('limit=')[1] || '20').split('&')[0]) || 20;
+        const lb = await engine.getLeaderboard(limit);
+        res.json(lb);
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
     });
   }
 
