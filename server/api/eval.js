@@ -167,7 +167,9 @@ class EvalAPI {
 
     // 健康检查
     app.get('/api/health', (req, res) => {
-      res.json({ status: 'ok', version: '2.2.0-m3', service: 'CSB-AEP' });
+      // 版本单一来源：package.json（2026-08-30 若琢反馈统一）
+      const pkg = require('../../package.json');
+      res.json({ status: 'ok', version: pkg.version, service: 'CSB-AEP' });
     });
 
     // ═══ M1：认领目录（第五问「愿不愿为它认领」）═══
