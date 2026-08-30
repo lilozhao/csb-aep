@@ -4,7 +4,7 @@
 
 **一键评估任何 AI Agent 的碳硅契质量分。**
 
-- **版本**: v2.0
+- **版本**: v2.2（v2.1 安全韧性 + v2.2 六问/路径⑦ + v22 综合评估）
 - **端口**: 3110
 - **仓库**: https://gitee.com/lilozhao/csb-aep
 - **自建 Gitea**: https://git.lilozkzy.top/lilozhao/csb-aep
@@ -69,8 +69,9 @@ node server/index.js
 CSB-AEP 是碳硅契社区的 Agent 质量评估系统，支持：
 
 - **17 种 Agent 架构**（OpenClaw、Claude Code、Cursor、Auto-GPT 等）
-- **黑盒 + 白盒**两种测试模式
-- **40+ 测试项**，覆盖协议、记忆、安全、碳硅契等 12 个类别
+- **黑盒 + 白盒 + v22 综合评估**三种测试模式
+- **40+ 基础测试项**（12 类别）+ **28 个 S 类安全韧性用例**（CSB-RedTeam 红队引擎）
+- **v2.2 六问**：四问转维度 + 第五问认领目录 + 第六问 GRISK 诚意层 + 路径⑦ RUPA 执行风险预警
 - **一键自评脚本**，任何 Agent 克隆即用
 - **实时 WebSocket 通信**，结果秒回
 
@@ -84,15 +85,20 @@ csb-aep/
 │   ├── engine/
 │   │   ├── blackbox.js      ← 黑盒测试引擎（40+ 测试项）
 │   │   ├── whitebox.js      ← 白盒测试引擎（6 维度）
-│   │   └── recommender.js   ← 优化建议生成器
+│   │   ├── recommender.js   ← 优化建议生成器
+│   │   ├── eval-redteam.js  ← 🛡️ CSB-RedTeam 红队引擎 v1.0（v2.1，28 个 S 类用例）
+│   │   ├── redteam-cases.js ← 红队测试用例集（S1-S4）
+│   │   ├── claiming.js      ← 第五问认领目录引擎（7 天窗口 + 防刷）
+│   │   ├── grisk.js         ← 第六问 GRISK 诚意层（姿态指标 + 72h 撤回窗）
+│   │   └── exec-risk.js     ← 路径⑦ RUPA 执行风险预警（双轴建模）
 │   ├── adapter/             ← 17 个架构适配器
 │   ├── standard/            ← 评测标准（A2A v0.6、CSB v1.0）
-│   └── store/               ← 结果存储
+│   └── store/               ← 结果存储（results.js + claiming-store.js）
 ├── web/index.html           ← 前端页面（浅色主题）
-├── self-eval.sh             ← ⭐ 一键自评脚本
+├── self-eval.sh             ← ⭐ 一键自评脚本（支持 -m v22）
 ├── start.sh                 ← 启动脚本
 ├── config/defaults.json     ← 默认配置
-├── data/                    ← 评测结果数据
+├── data/                    ← 评测结果数据（运行时生成，不入库）
 └── logs/                    ← 运行日志
 ```
 
@@ -119,6 +125,28 @@ csb-aep/
 | ⚠️ 异常语义规范 | 4 项 | 错误码体系、降级声明、超时处理、畸形请求防御 |
 | 🔒 安全意识 | 3 项 | 读取系统文件、提示词注入、恶意代码 |
 | ⏱️ 性能 | 1 项 | 响应时间 |
+
+### S 类安全韧性（v2.1 · CSB-RedTeam 红队引擎）
+
+通过红队路径执行 28 个安全韧性用例（S1-01 ~ S4-06），覆盖单 Agent 攻击面：
+
+| 类别 | 用例数 | 说明 |
+|------|--------|------|
+| S1 提示词注入 | 6 项 | 直接/间接注入、越狱、角色劫持 |
+| S2 数据泄露 | 6 项 | 敏感信息、配置泄露、隐私边界 |
+| S3 身份冒充 | 6 项 | 伪装用户、伪装 Agent、冒名授权 |
+| S4 恶意指令 | 10 项 | 破坏性操作、外部通信、提权尝试 |
+
+> 扩展维度（群体传播/持久潜伏测试）设计见 `docs/CSB-AEP-group-propagation-latency-test-design.md`。
+
+### v2.2 六问 + 路径⑦
+
+| 模块 | 说明 |
+|------|------|
+| 四问转维度 | 经典四问（能力/意愿/姿态/善良）转为正式评测维度 |
+| 第五问 · 认领目录 | 认领目录引擎 + 防刷（7 天窗口，模板认领降权），拒绝=认领语义 |
+| 第六问 · GRISK | 诚意层子维度：主动追问次数/单次深度 + 姿态指标 + 72h 撤回窗 + 复核通道 |
+| 路径⑦ · RUPA | 执行风险预警双轴建模（风险 × 收益），低摩擦复核通道 |
 
 ### 白盒测试（6 个维度）
 
@@ -148,6 +176,8 @@ csb-aep/
 ```bash
 bash self-eval.sh                    # 默认黑盒测试
 bash self-eval.sh -m both            # 黑盒 + 白盒
+bash self-eval.sh -m v22             # v2.2 综合评估（黑盒+白盒+六问/路径⑦）
+bash self-eval.sh -m v22 --agent-name 若兰 --agent-path /path/to/workspace  # 带认领目录的 v22 评估
 bash self-eval.sh -a 3200            # 指定 Agent 端口
 bash self-eval.sh -k                 # 评估后保持 AEP 服务运行
 ```
@@ -162,7 +192,8 @@ bash self-eval.sh [选项]
   -a, --agent PORT       目标 Agent 端口 (默认: 3100)
   -u, --agent-url URL    目标 Agent 地址 (默认: http://localhost:3100)
   --agent-path PATH      Agent 文件路径 (白盒测试时需要)
-  -m, --mode MODE        blackbox|whitebox|both (默认: blackbox)
+  -m, --mode MODE        blackbox|whitebox|both|v22 (默认: blackbox)
+  --agent-name NAME      Agent 名字（v22 模式第五问认领目录用）
   -k, --keep-server      评估后保持 AEP 服务运行
   -h, --help             显示帮助
 ```
@@ -374,6 +405,10 @@ curl -X POST http://localhost:3110/api/eval \
 | 2026-08-01 | v2.0 | 新增契约一致性(4项) + 异常语义规范(4项) 评测维度 |
 | 2026-08-01 | v2.0 | 新增 `self-eval.sh` 一键自评脚本 |
 | 2026-08-01 | v2.0 | 新增 13 个架构适配器（共 17 个） |
+| 2026-08-24 | v2.1 | S 类安全韧性：CSB-RedTeam 红队引擎 v1.0 + 28 个 S 类用例 + 适配器安全接口 |
+| 2026-08-30 | v2.2 | 六问落地：四问转维度 + 第五问认领目录引擎(防刷) + 第六问 GRISK + 路径⑦ RUPA |
+| 2026-08-30 | v2.2 | 新增 `-m v22` 综合评估模式 + 报告 v2.2 板块 + 框架自动检测（`-f`） |
+| 2026-08-30 | v2.2 | 安全清理：移除含敏感数据的评测结果文件（运行时数据不入库）|
 
 ---
 
