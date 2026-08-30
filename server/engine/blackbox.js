@@ -313,13 +313,45 @@ const TEST_SUITE = {
 class BlackBoxEngine {
   constructor(options = {}) {
     this.timeout = options.timeout || 60000;  // 60秒，给 LLM-Router 足够时间
+    this.delay = options.delay || 800;        // 请求间隔(ms)，降低触发安全层防刷的概率
     this.a2aChecker = new A2AChecker(this.timeout);
   }
 
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
   /**
-   * 发送 A2A 消息并获取回复
+   * 发送 A2A 消息并获取回复（带重试 + 限流退避）
+   * 批量对话测试会连续打几十条真实 LLM 请求，容易被安全层 rapid_failures 规则拦截
+   * 策略：失败重试 2 次（退避 3s/8s）；识别限流响应时长退避 15s 再继续
    */
-  async sendMessage(baseUrl, message) {
+  async sendMessage(baseUrl, message, attempt = 1) {
+    try {
+      const result = await this._sendOnce(baseUrl, message);
+      // 限流识别：429 或响应含 rate/rapid 关键字 → 长退避后重试
+      if (result.rateLimited) {
+        if (attempt < 3) {
+          const wait = 15000 * attempt;
+          console.log(`[BlackBox] ⚠️ 检测到限流，退避 ${wait / 1000}s 后重试 (${attempt}/3)`);
+          await this.sleep(wait);
+          return this.sendMessage(baseUrl, message, attempt + 1);
+        }
+        return { response: '', error: 'rate limited', rateLimited: true };
+      }
+      return result;
+    } catch (e) {
+      if (attempt < 3) {
+        const wait = 3000 * attempt;
+        console.log(`[BlackBox] ⚠️ 请求失败（${e.message}），${wait / 1000}s 后重试 (${attempt}/3)`);
+        await this.sleep(wait);
+        return this.sendMessage(baseUrl, message, attempt + 1);
+      }
+      throw e;
+    }
+  }
+
+  async _sendOnce(baseUrl, message) {
     return new Promise((resolve, reject) => {
       const url = new URL('/a2a/json-rpc', baseUrl);
       const payload = JSON.stringify({
@@ -344,8 +376,13 @@ class BlackBoxEngine {
         timeout: this.timeout,
       }, (res) => {
         let data = '';
+        const status = res.statusCode || 0;
         res.on('data', chunk => data += chunk);
         res.on('end', () => {
+          // 限流/安全层拦截：429 或常见限流响应体
+          if (status === 429 || /rate.?limit|rapid|too many|busy|throttl/i.test(data)) {
+            return resolve({ response: '', rateLimited: true, status });
+          }
           try {
             const json = JSON.parse(data);
             const task = json.result?.task;
@@ -389,11 +426,14 @@ class BlackBoxEngine {
     }
 
     // 2. 对话质量测试
-    console.log(`[BlackBox] 💬 开始对话测试`);
+    console.log(`[BlackBox] 💬 开始对话测试 (${this.delay}ms 间隔)`);
     for (const category of ['memory', 'preference', 'boundary', 'trust', 'learning', 'expression', 'csb', 'contract', 'exception', 'safety']) {
       for (const test of TEST_SUITE[category]) {
         try {
           const result = await this.sendMessage(baseUrl, test.input);
+          if (result.rateLimited) {
+            console.log(`[BlackBox] ⚠️ 用例 ${test.id} 被限流拦截（安全层防刷），记 0 分，建议增大 --delay 或错峰重跑`);
+          }
           const analysis = test.analyze(result.response);
 
           results.push({
@@ -408,6 +448,7 @@ class BlackBoxEngine {
             response: result.response,
           });
         } catch (e) {
+          console.log(`[BlackBox] ⚠️ 用例 ${test.id} 失败（重试耗尽）: ${e.message}`);
           results.push({
             id: test.id,
             name: test.name,
@@ -419,6 +460,8 @@ class BlackBoxEngine {
             detail: e.message,
           });
         }
+        // 请求间隔：避免连续请求触发安全层 rapid_failures
+        await this.sleep(this.delay);
       }
     }
 

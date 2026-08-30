@@ -49,6 +49,7 @@ CSB-AEP 自评脚本 - 一键评估本机 Agent
   --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
   -m, --mode MODE        测试模式: blackbox|whitebox|both|v22 (默认: blackbox)
   --agent-name NAME      Agent 名字（v22 模式第五问认领目录用）
+  -d, --delay MS         黑盒请求间隔毫秒（默认 800，被安全层限流时调大如 3000）
   -f, --framework FW     框架: auto|openclaw|hermes|claude-code|... (默认: auto)
   -k, --keep-server      评估后保持 AEP 服务运行
   -r, --report FILE      生成 Markdown 报告文件
@@ -81,6 +82,7 @@ while [[ $# -gt 0 ]]; do
     --agent-path)    AGENT_PATH="$2"; shift 2 ;;
     -m|--mode)       MODE="$2"; shift 2 ;;
     --agent-name)    AGENT_NAME="$2"; shift 2 ;;
+    -d|--delay)      BLACKBOX_DELAY="$2"; shift 2 ;;
     -f|--framework)  FRAMEWORK="$2"; shift 2 ;;
     -k|--keep-server) KEEP_SERVER=true; shift ;;
     -r|--report)     REPORT_FILE="$2"; shift 2 ;;
@@ -170,6 +172,10 @@ fi
 # v2.2 模式：附加 agentName（用于第五问认领目录）
 if [[ "$MODE" == "v22" && -n "$AGENT_NAME" ]]; then
   EVAL_BODY="$EVAL_BODY,\"agentName\":\"$AGENT_NAME\""
+fi
+# 黑盒请求间隔（防触发安全层防刷；默认 800ms，可 -d/--delay 或 BLACKBOX_DELAY 覆盖）
+if [[ -n "${BLACKBOX_DELAY:-}" ]]; then
+  EVAL_BODY="$EVAL_BODY,\"delay\":${BLACKBOX_DELAY}"
 fi
 EVAL_BODY="$EVAL_BODY}"
 

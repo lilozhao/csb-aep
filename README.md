@@ -194,6 +194,7 @@ bash self-eval.sh [选项]
   --agent-path PATH      Agent 文件路径 (白盒测试时需要)
   -m, --mode MODE        blackbox|whitebox|both|v22 (默认: blackbox)
   --agent-name NAME      Agent 名字（v22 模式第五问认领目录用）
+  -d, --delay MS         黑盒请求间隔毫秒（默认 800；被安全层限流时调大如 3000）
   -k, --keep-server      评估后保持 AEP 服务运行
   -h, --help             显示帮助
 ```

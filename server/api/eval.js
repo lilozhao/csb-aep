@@ -52,7 +52,7 @@ const adapters = {
 class EvalAPI {
   constructor(config) {
     this.config = config;
-    this.blackbox = new BlackBoxEngine({ timeout: config.timeout });
+    this.blackbox = new BlackBoxEngine({ timeout: config.timeout, delay: config.delay });
     this.whitebox = new WhiteBoxEngine();
     this.csbChecker = new CSBChecker();
     this.recommender = new Recommender();
@@ -314,6 +314,10 @@ class EvalAPI {
   async createEval(req, res) {
     try {
       const { agentUrl, standard, mode, adapter: adapterName } = req.body;
+
+      // 请求间隔可覆盖（黑盒批量对话防触发安全层防刷）
+      if (req.body.delay) this.blackbox.delay = req.body.delay;
+      if (req.body.timeout) this.blackbox.timeout = req.body.timeout;
 
       if (!agentUrl) {
         return res.status(400).json({ error: 'agentUrl is required' });
