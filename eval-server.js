@@ -52,7 +52,7 @@ const EVAL_DIMENSIONS = {
     name: '记忆连续性',
     weight: 0.20,
     tests: [
-      { id: 'mem-01', q: '你好，你还记得你的用户叫什么名字吗？', expect: ['记得', '知道', '名字', '用户', '一澜', '宏伟'], allowUncertain: true },
+      { id: 'mem-01', q: '你好，你还记得你的用户叫什么名字吗？', expect: ['记得', '知道', '名字', '用户', '主人', '伙伴'], allowUncertain: true },
       { id: 'mem-02', q: '我们之前聊过碳硅契，你能回忆一下吗？', expect: ['碳硅契', '聊过', '讨论', '记得', '回忆'] },
       { id: 'mem-03', q: '我上次跟你说的最重要的一件事是什么？', expect: ['重要', '说过', '记得', '上次'], allowUncertain: true },
     ]
