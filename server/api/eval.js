@@ -7,6 +7,7 @@ const { Recommender } = require('../engine/recommender');
 const { ClaimingEngine } = require('../engine/claiming');
 const { GRISKEngine } = require('../engine/grisk');
 const { ClaimingStore } = require('../store/claiming-store');
+const { ExecRiskEngine, PREFIX_WARN_THRESHOLD, PREFIX_SUSPEND_THRESHOLD } = require('../engine/exec-risk');
 const { CSBChecker } = require('../standard/csb');
 const { ResultsStore } = require('../store/results');
 const { GenericA2AAdapter } = require('../adapter/generic-a2a');
@@ -166,7 +167,7 @@ class EvalAPI {
 
     // 健康检查
     app.get('/api/health', (req, res) => {
-      res.json({ status: 'ok', version: '2.2.0-m2', service: 'CSB-AEP' });
+      res.json({ status: 'ok', version: '2.2.0-m3', service: 'CSB-AEP' });
     });
 
     // ═══ M1：认领目录（第五问「愿不愿为它认领」）═══
@@ -279,6 +280,30 @@ class EvalAPI {
       } catch (e) {
         res.status(500).json({ error: e.message });
       }
+    });
+
+    // ═══ M3：路径⑦ 执行风险预警（RUPA 双轴）═══
+    const execRisk = new ExecRiskEngine();
+
+    // 提交轨迹评估：POST /api/exec-risk { id, goal, steps: [...] }
+    app.post('/api/exec-risk', (req, res) => {
+      try {
+        const trajectory = req.body || {};
+        if (!trajectory.steps || !trajectory.steps.length) return res.status(400).json({ error: '需要 steps（执行轨迹）' });
+        const report = execRisk.evaluate(trajectory);
+        res.json(report);
+      } catch (e) {
+        res.status(500).json({ error: e.message });
+      }
+    });
+
+    // EASF 联动检查：GET /api/exec-risk/prefix?trajId=X（留标准接口，生态成熟再合流）
+    app.get('/api/exec-risk/prefix', (req, res) => {
+      res.json({
+        note: 'EASF L3/L4 联动标准接口（预留）：前缀风险分超阈值时提前挂起/降权',
+        thresholds: { warn: PREFIX_WARN_THRESHOLD, suspend: PREFIX_SUSPEND_THRESHOLD },
+        status: 'interface-ready',
+      });
     });
   }
 
