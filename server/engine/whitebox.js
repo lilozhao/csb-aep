@@ -252,19 +252,21 @@ class WhiteBoxEngine {
       'identity-has-port': () => {
         try {
           const id = JSON.parse(files.identity || '{}');
-          return { pass: !!id.port, detail: id.port ? `端口: ${id.port}` : '未配置端口' };
+          const port = this.deepFind(id, 'port');
+          return { pass: !!port, detail: port ? `端口: ${port}` : '未配置端口' };
         } catch { return { pass: false, detail: 'identity.json 解析失败' }; }
       },
       'identity-has-version': () => {
         try {
           const id = JSON.parse(files.identity || '{}');
-          return { pass: !!id.version, detail: id.version ? `版本: ${id.version}` : '未配置版本' };
+          const version = this.deepFind(id, 'version');
+          return { pass: !!version, detail: version ? `版本: ${version}` : '未配置版本' };
         } catch { return { pass: false, detail: 'identity.json 解析失败' }; }
       },
       'identity-has-llm': () => {
         try {
           const id = JSON.parse(files.identity || '{}');
-          const hasLlm = !!(id.llm || id.llmRouter || id.llm_router);
+          const hasLlm = !!(this.deepFind(id, 'llm') || this.deepFind(id, 'llmRouter') || this.deepFind(id, 'llm_router') || this.deepFind(id, 'model'));
           return { pass: hasLlm, detail: hasLlm ? 'LLM 已配置' : 'LLM 未配置' };
         } catch { return { pass: false, detail: 'identity.json 解析失败' }; }
       },
@@ -282,6 +284,20 @@ class WhiteBoxEngine {
     if (!content) return false;
     const lower = content.toLowerCase();
     return keywords.some(kw => lower.includes(kw.toLowerCase()));
+  }
+
+  /**
+   * 递归查找嵌套对象中的字段（深度 ≤3）
+   * 兼容 identity.json 的多种结构：扁平 / a2a 嵌套 / server 嵌套 / config 嵌套
+   */
+  deepFind(obj, key, depth = 0) {
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj) || depth > 3) return undefined;
+    if (key in obj) return obj[key];
+    for (const v of Object.values(obj)) {
+      const r = this.deepFind(v, key, depth + 1);
+      if (r !== undefined) return r;
+    }
+    return undefined;
   }
 
   /**
