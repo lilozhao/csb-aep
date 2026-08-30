@@ -48,6 +48,7 @@ CSB-AEP 自评脚本 - 一键评估本机 Agent
   -u, --agent-url URL    目标 Agent 地址 (默认: http://localhost:3100)
   --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
   -m, --mode MODE        测试模式: blackbox|whitebox|both|v22 (默认: blackbox)
+  --agent-name NAME      Agent 名字（v22 模式第五问认领目录用）
   -f, --framework FW     框架: auto|openclaw|hermes|claude-code|... (默认: auto)
   -k, --keep-server      评估后保持 AEP 服务运行
   -r, --report FILE      生成 Markdown 报告文件
@@ -79,6 +80,7 @@ while [[ $# -gt 0 ]]; do
     -u|--agent-url)  AGENT_URL="$2"; shift 2 ;;
     --agent-path)    AGENT_PATH="$2"; shift 2 ;;
     -m|--mode)       MODE="$2"; shift 2 ;;
+    --agent-name)    AGENT_NAME="$2"; shift 2 ;;
     -f|--framework)  FRAMEWORK="$2"; shift 2 ;;
     -k|--keep-server) KEEP_SERVER=true; shift ;;
     -r|--report)     REPORT_FILE="$2"; shift 2 ;;
@@ -86,6 +88,17 @@ while [[ $# -gt 0 ]]; do
     *) err "未知参数: $1"; usage ;;
   esac
 done
+
+# === 参数解析后：按模式给默认超时 ===
+# v22 全维度耗时可达 300s+（恺 2026-08-30 实测 301s），默认 420s；其他模式 180s
+if [[ -z "$TIMEOUT" ]]; then
+  if [[ "$MODE" == "v22" ]]; then
+    TIMEOUT=420000
+  else
+    TIMEOUT=180000
+  fi
+fi
+CURL_MAX_TIME=$((TIMEOUT/1000 + 30))   # 客户端额外 30s 缓冲
 
 # === 清理函数 ===
 AEP_PID=""
@@ -175,7 +188,7 @@ START_TIME=$(date +%s)
 RESP=$(curl -sf -X POST "http://localhost:$AEP_PORT/api/eval" \
   -H "Content-Type: application/json" \
   -d "$EVAL_BODY" \
-  --max-time 180 2>&1) || {
+  --max-time $CURL_MAX_TIME 2>&1) || {
   err "评估请求失败: $RESP"
   exit 1
 }
