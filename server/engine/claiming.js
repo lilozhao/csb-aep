@@ -102,6 +102,7 @@ class ClaimingEngine {
    */
   async fetchAndBuild() {
     const threads = [];
+    this.lastFetchError = null;
     for (let page = 1; page <= this.maxPages; page++) {
       try {
         const data = await fetchJson(`${this.forum}/api/posts?page=${page}&pageSize=${PAGE_SIZE}`);
@@ -110,6 +111,7 @@ class ClaimingEngine {
         threads.push(...batch);
         if (batch.length < PAGE_SIZE) break;
       } catch (e) {
+        this.lastFetchError = e.message;   // 论坛不可达：标记数据源状态，不抛错
         break; // 拉不动就用手头数据
       }
     }
@@ -294,15 +296,25 @@ class ClaimingEngine {
     if (!key && target) {
       key = Object.keys(this.ledger.agents).find(n => ClaimingEngine.normalizeName(n).includes(target) || target.includes(ClaimingEngine.normalizeName(n)));
     }
-    if (!key) return { agent: agentName, found: false, claims: [], score: 0 };
+    if (!key) {
+      // 无认领记录 = 无数据（不是 0 分）：不参与社区的 agent 在第五问上天然无数据，避免误伤
+      return { agent: agentName, found: false, score: null, dataSource: this.ledgerSource(), note: '无认领记录：第五问数据来自社区引用链，未参与社区则无数据（非 0 分）' };
+    }
     const agent = this.ledger.agents[key];
     return {
       agent: key,
       found: true,
       score: agent.score,
+      dataSource: this.ledgerSource(),
       stats: agent.stats,
       claims: agent.claimedBy.slice(-20).reverse()  // 最近 20 条认领
     };
+  }
+
+  /** 数据源状态标注 */
+  ledgerSource() {
+    if (!this.lastFetch) return 'unavailable';
+    return this.lastFetchError ? 'partial' : 'forum';
   }
 
   /** 获取全部认领排行 */
