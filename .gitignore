@@ -1,2 +1,5 @@
 __pycache__/
 *.pyc
+data/eval-results/
+data/results.json
+data/results.v1.backup.json
