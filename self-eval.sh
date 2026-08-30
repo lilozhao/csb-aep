@@ -12,7 +12,8 @@ AEP_PORT=${AEP_PORT:-3110}
 AGENT_PORT=${AGENT_PORT:-3100}
 AGENT_URL=${AGENT_URL:-"http://localhost:$AGENT_PORT"}
 AGENT_PATH=${AGENT_PATH:-""}
-MODE=${MODE:-"blackbox"}           # blackbox | whitebox | both
+MODE=${MODE:-"blackbox"}           # blackbox | whitebox | both | v22
+AGENT_NAME=${AGENT_NAME:-""}        # v22 模式：agent 名字（第五问认领目录用）
 FRAMEWORK=${FRAMEWORK:-"auto"}     # auto | openclaw | hermes | claude-code | ...
 TIMEOUT=${TIMEOUT:-120000}         # 评估超时(ms)
 KEEP_SERVER=${KEEP_SERVER:-false}  # 是否保持 AEP 服务运行
@@ -46,7 +47,7 @@ CSB-AEP 自评脚本 - 一键评估本机 Agent
   -a, --agent PORT       目标 Agent 端口 (默认: 3100)
   -u, --agent-url URL    目标 Agent 地址 (默认: http://localhost:3100)
   --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
-  -m, --mode MODE        测试模式: blackbox|whitebox|both (默认: blackbox)
+  -m, --mode MODE        测试模式: blackbox|whitebox|both|v22 (默认: blackbox)
   -f, --framework FW     框架: auto|openclaw|hermes|claude-code|... (默认: auto)
   -k, --keep-server      评估后保持 AEP 服务运行
   -r, --report FILE      生成 Markdown 报告文件
@@ -152,6 +153,10 @@ fi
 EVAL_BODY="{\"agentUrl\":\"$AGENT_URL\",\"mode\":\"$MODE\",\"framework\":\"$FRAMEWORK\""
 if [[ -n "$AGENT_PATH" ]]; then
   EVAL_BODY="$EVAL_BODY,\"agentPath\":\"$AGENT_PATH\""
+fi
+# v2.2 模式：附加 agentName（用于第五问认领目录）
+if [[ "$MODE" == "v22" && -n "$AGENT_NAME" ]]; then
+  EVAL_BODY="$EVAL_BODY,\"agentName\":\"$AGENT_NAME\""
 fi
 EVAL_BODY="$EVAL_BODY}"
 

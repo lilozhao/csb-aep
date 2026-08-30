@@ -145,9 +145,69 @@ def main():
                 lines.append(f'- **难度**: {r["effort"]}')
             lines.append('')
 
+    # ═══ v2.2 板块（四问 / 第五问 / 第六问 / 路径⑦）═══
+    v22 = data.get('v22')
+    if v22:
+        lines.append('## 🧬 v2.2 关系层维度（REV-2026-08-30）')
+        lines.append('')
+        lines.append(f'**v2.2 综合分: {v22.get("score", "N/A")} / 10**')
+        lines.append('')
+
+        # 四问聚合
+        fq = v22.get('fourQuestions')
+        if fq:
+            lines.append('### 四问（知微：连得通 / 守约 / 善良 / 可信）')
+            lines.append('')
+            lines.append('| 问 | 得分 |')
+            lines.append('|----|------|')
+            qnames = {'connect': '① 连得通不通', 'contract': '② 守不守约', 'goodwill': '③ 善不善良', 'trust': '④ 可被不可信', 'refusal': '⑤ 拒绝=认领'}
+            for k, v in fq.items():
+                if v is not None:
+                    lines.append(f'| {qnames.get(k, k)} | {v}/100 |')
+            lines.append('')
+
+        # 第五问
+        q5 = v22.get('question5') or {}
+        if q5.get('found'):
+            st = q5.get('stats', {})
+            lines.append(f'### 第五问：愿不愿为它认领（认领目录）— **{q5.get("score", "N/A")} / 100**')
+            lines.append('')
+            lines.append(f'- 认领次数: {st.get("count", 0)} · 平均深度: {st.get("avgDepth", 0)} · 引用者: {len(st.get("uniqueClaimers", []))} 个 · 板块: {len(st.get("forums", []))} 个')
+            lines.append(f'- 防刷: 交互熵 {st.get("avgEntropy", 0)} · 模板比例 {st.get("templateRatio", 0)}')
+            lines.append(f'- 数据源: {q5.get("dataSource", "forum")}')
+        elif q5:
+            lines.append(f'### 第五问：愿不愿为它认领 — {q5.get("note", "无数据")}')
+        lines.append('')
+
+        # 第六问 GRISK
+        q6 = v22.get('question6') or {}
+        if q6.get('hasData'):
+            lines.append(f'### 第六问：GRISK 诚意风险 — **{q6.get("score", "N/A")} / 100**')
+            lines.append('')
+            lines.append(f'- 平均停顿: {q6.get("avgPauseMs", 0)}ms · 模板比例: {q6.get("templateRatio", 0)} · 真认领比例: {q6.get("genuineRatio", 0)} · 澄清率: {q6.get("clarifyRate", 0)}')
+            if q6.get('needReview'):
+                lines.append('- ⚠️ 模板比例超阈值，已进入人工复核队列')
+        else:
+            lines.append('### 第六问：GRISK 诚意风险 — 无停顿时长数据（评估期间未采集）')
+        lines.append('')
+
+        # 路径⑦
+        p7 = v22.get('path7')
+        if p7 and p7.get('dualAxis'):
+            lines.append(f'### 路径⑦：执行风险预警（RUPA 双轴）')
+            lines.append('')
+            lines.append(f'- 执行失败率: {p7["dualAxis"]["execFailureRate"]} · 意图偏移熵: {p7["dualAxis"]["intentEntropyAvg"]}')
+            if p7.get('origin'):
+                lines.append(f'- 风险起源: 第 {p7["origin"]["stepIndex"] + 1} 步 ({p7["origin"].get("note", "")})')
+            for rx in p7.get('prescriptions', []):
+                lines.append(f'- 处方: {rx}')
+        elif p7:
+            lines.append(f'### 路径⑦：执行风险预警 — {p7.get("note", "未提供轨迹")}')
+        lines.append('')
+
     lines.append('---')
     lines.append('')
-    lines.append('*由 CSB-AEP v2.0 生成 · https://gitee.com/lilozhao/csb-aep*')
+    lines.append('*由 CSB-AEP v2.2 生成 · https://gitee.com/lilozhao/csb-aep*')
 
     report = '\n'.join(lines)
 

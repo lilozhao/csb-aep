@@ -339,14 +339,14 @@ class EvalAPI {
       let whiteboxResult = null;
 
       // 黑盒测试
-      if (!mode || mode === 'blackbox' || mode === 'both') {
+      if (!mode || mode === 'blackbox' || mode === 'both' || mode === 'v22') {
         evalResult = await this.blackbox.evaluate(agentUrl);
       }
 
       // 白盒测试（需要 agentPath 或远程 introspect）
       let csbResult = null;
       console.log(`[AEP] 🔍 白盒检查: mode=${mode}, agentPath=${req.body.agentPath}, standard=${standard}`);
-      if (mode === 'whitebox' || mode === 'both') {
+      if (mode === 'whitebox' || mode === 'both' || mode === 'v22') {
         try {
           let files = {};
           let introspectData = null;
@@ -410,6 +410,81 @@ class EvalAPI {
         estimatedGain,
         bestPractices: adapter.getBestPractices(),
       };
+
+      // ═══ M4：v2.2 集成 — 附加关系层维度（第五问/GRISK/路径⑦）═══
+      if (mode === 'v22' || standard === 'csb-v2.2' || req.body.v22) {
+        try {
+          const v22 = {};
+
+          // 四问聚合（黑盒已输出 fourQuestions）
+          v22.fourQuestions = evalResult.fourQuestions || null;
+
+          // 第五问：认领目录（agent 名字从 introspect/agentUrl 识别，容错）
+          const idData = (typeof introspectData !== 'undefined') ? introspectData : null;
+          let agentName = null;
+          if (idData?.agent?.name) agentName = idData.agent.name;
+          if (!agentName && req.body.agentName) agentName = req.body.agentName;
+          if (!agentName && agentUrl) {
+            const m = agentUrl.match(/\/([^/]+):\d+/);
+            agentName = m ? m[1] : null;
+          }
+          if (agentName) {
+            try {
+              const ce = new ClaimingEngine({ maxPages: 2 });
+              const claiming = await ce.getClaiming(agentName);
+              v22.question5 = claiming;
+            } catch (e) {
+              v22.question5 = { found: false, score: null, note: '认领目录不可用: ' + e.message };
+            }
+          } else {
+            v22.question5 = { found: false, score: null, note: '未识别 agent 名字，跳过认领目录（可传 agentName）' };
+          }
+
+          // 第六问：GRISK（评估期间黑盒往返时长喂入，有数据才算）
+          const griskStore = new ClaimingStore();
+          const griskEngine = new GRISKEngine(griskStore);
+          if (agentName) {
+            const pauses = griskStore.getPauses(agentName);
+            if (pauses.length) {
+              pauses.forEach(p => griskEngine.recordPause(agentName, p.ms, p.context, p.clarified));
+            }
+          }
+          const griskProfile = agentName ? griskEngine.getProfile(agentName) : { hasData: false };
+          v22.question6 = griskProfile;
+
+          // 路径⑦：执行风险（请求带轨迹才评估）
+          if (req.body.trajectory && req.body.trajectory.steps) {
+            const er = new ExecRiskEngine();
+            v22.path7 = er.evaluate(req.body.trajectory);
+          } else {
+            v22.path7 = { note: '未提供执行轨迹，跳过（可传 trajectory）' };
+          }
+
+          // v2.2 综合分：缺失权重再分配（协议 v1.0 原则：路径未运行，权重按比例分配给其他可用路径）
+          // 维度：黑盒 50% · 白盒 30%（远程 introspect 数据有限 → 降为 15% 补给黑盒）· 第五问 10% · 第六问 10%
+          const wbWeight = req.body.agentPath ? 30 : 15;   // 本地白盒才有完整数据
+          const bbWeight = 50 + (req.body.agentPath ? 0 : 15);
+          const dims = [
+            { name: 'blackbox', score: combinedScore, weight: bbWeight, note: req.body.agentPath ? '' : '远程白盒数据有限，权重补给黑盒' },
+            { name: 'whitebox', score: whiteboxResult ? whiteboxResult.score : null, weight: wbWeight, note: req.body.agentPath ? '' : '远程 introspect 数据有限，降权' },
+            { name: 'question5', score: (v22.question5 && v22.question5.score != null) ? Math.min(10, v22.question5.score / 10) : null, weight: 10 },
+            { name: 'question6', score: (v22.question6 && v22.question6.score != null) ? Math.min(10, v22.question6.score / 10) : null, weight: 10 },
+          ];
+          const available = dims.filter(d => d.score != null);
+          let v22Score = null;
+          if (available.length) {
+            const totalW = available.reduce((s, d) => s + d.weight, 0);
+            v22Score = +(available.reduce((s, d) => s + d.score * d.weight, 0) / totalW).toFixed(1);
+          }
+          v22.score = v22Score;
+          v22.dimensions = dims.map(d => ({ ...d, used: d.score != null }));
+          report.v22 = v22;
+          if (v22Score != null) report.score = v22Score;  // v2.2 模式综合分（缺失权重再分配）
+          report.score = v22Score;  // v2.2 模式综合分
+        } catch (e) {
+          report.v22 = { error: 'v2.2 维度集成失败: ' + e.message };
+        }
+      }
 
       // 存储
       const saved = await this.store.add(report);

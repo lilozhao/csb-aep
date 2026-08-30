@@ -17,8 +17,8 @@ const http = require('http');
 const crypto = require('crypto');
 
 const DEFAULT_FORUM = 'https://csbc.lilozkzy.top';
-const MAX_PAGES = 5;        // 拉取页数
-const PAGE_SIZE = 50;       // 每页条数
+const MAX_PAGES = 10;        // 拉取页数（覆盖 7 天回看窗口，保证认领数据完整）
+const PAGE_SIZE = 50;        // 每页条数
 const LOOKBACK_DAYS = 7;    // 认领统计回看窗口
 
 // ═══════════════════════════════════════
