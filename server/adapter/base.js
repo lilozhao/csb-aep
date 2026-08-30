@@ -3,6 +3,9 @@
  * 所有架构适配器都继承此类
  * v2.1 新增：S 类安全适配接口（getToolInventory / getPermissionConfig / getInjectionDefense / testCanary）
  */
+const fs = require('fs').promises;
+const path = require('path');
+
 class BaseAdapter {
   constructor(name) {
     this.name = name;
@@ -15,6 +18,45 @@ class BaseAdapter {
    */
   async readAgentFiles(agentPath) {
     throw new Error('readAgentFiles not implemented');
+  }
+
+  /**
+   * 递归查找缺失文件（子目录兑底，深度 ≤3）
+   * 用于 identity.json / SOUL.md 等不在 agentPath 根目录的场景（如 csb-a2a-aip/identity.json）
+   * @param {string} dir - 起始目录
+   * @param {object} fileMap - 期望文件映射 { 返回key: 文件名(小写) }
+   * @param {number} depth - 当前深度
+   * @returns {object} 找到的文件内容 { key: content }
+   */
+  async findInSubdirs(dir, fileMap, depth = 0) {
+    if (depth > 3) return {};
+    const result = {};
+    let entries;
+    try {
+      entries = await fs.readdir(dir, { withFileTypes: true });
+    } catch (e) {
+      return {};
+    }
+    for (const entry of entries) {
+      if (entry.name.startsWith('.') || entry.name === 'node_modules') continue;
+      const full = path.join(dir, entry.name);
+      if (entry.isDirectory()) {
+        const sub = await this.findInSubdirs(full, fileMap, depth + 1);
+        Object.assign(result, sub);
+      } else {
+        const lower = entry.name.toLowerCase();
+        for (const [key, targetName] of Object.entries(fileMap)) {
+          if (result[key]) continue;
+          if (lower === targetName) {
+            try {
+              result[key] = await fs.readFile(full, 'utf-8');
+            } catch (e) { /* 忽略不可读文件 */ }
+          }
+        }
+      }
+      if (Object.keys(result).length >= Object.keys(fileMap).length) break;
+    }
+    return result;
   }
 
   /**

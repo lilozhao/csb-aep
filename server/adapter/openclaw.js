@@ -20,7 +20,8 @@ class OpenClawAdapter extends BaseAdapter {
       }
     };
 
-    return {
+    // 先找根目录精确位置
+    const files = {
       identity: await readFile(path.join(agentPath, 'identity.json')),
       soul: await readFile(path.join(agentPath, 'SOUL.md')),
       user: await readFile(path.join(agentPath, 'USER.md')),
@@ -29,6 +30,27 @@ class OpenClawAdapter extends BaseAdapter {
       selfState: await readFile(path.join(agentPath, 'SELF_STATE.md')),
       heartbeat: await readFile(path.join(agentPath, 'HEARTBEAT.md')),
     };
+
+    // 兑底：缺失文件递归子目录查找（如 identity.json 在 csb-a2a-aip/ 子目录）
+    const FILE_NAMES = {
+      identity: 'identity.json',
+      soul: 'soul.md',
+      user: 'user.md',
+      memory: 'memory.md',
+      agents: 'agents.md',
+      selfState: 'self_state.md',
+      heartbeat: 'heartbeat.md',
+    };
+    const missingMap = {};
+    for (const [key, content] of Object.entries(files)) {
+      if (!content) missingMap[key] = FILE_NAMES[key];
+    }
+    if (Object.keys(missingMap).length > 0) {
+      const found = await this.findInSubdirs(agentPath, missingMap);
+      for (const [key, content] of Object.entries(found)) files[key] = content;
+    }
+
+    return files;
   }
 
   parseAgentCard(cardData) {

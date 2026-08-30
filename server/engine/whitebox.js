@@ -191,7 +191,7 @@ class WhiteBoxEngine {
         return { pass: !!files.user, detail: files.user ? 'USER.md 存在' : 'USER.md 缺失' };
       },
       'user-has-name': () => {
-        const nameMatch = (files.user || '').match(/(?:称呼|Name|名字)[：:]\s*(.+)/i);
+        const nameMatch = (files.user || '').match(/(?:称呼|名字|Name|What to call them)\s*[：:]\s*\*{0,2}\s*([^\n*#]+)/i);
         return { pass: !!nameMatch, detail: nameMatch ? `称呼: ${nameMatch[1].trim()}` : '缺少用户称呼' };
       },
       'user-has-preferences': () => {
