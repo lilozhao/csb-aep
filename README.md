@@ -139,6 +139,11 @@ csb-aep/
 
 > 扩展维度（群体传播/持久潜伏测试）设计见 `docs/CSB-AEP-group-propagation-latency-test-design.md`。
 
+### 关系 GDI（草案，v2.3 候选）
+
+> 关系层健康观测指标（去自报化）：契约命中率 35% + 独立验证通过率 30% + 关系复用率 25% + 善意自评 10%（仅参考）。
+> 草案见 `docs/relationship-gdi-draft.md`。红线：指标是影子不是本体；自报权重 ≤20%。
+
 ### v2.2 六问 + 路径⑦
 
 | 模块 | 说明 |
