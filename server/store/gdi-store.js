@@ -40,14 +40,16 @@ class GdiStore {
     }
   }
 
-  /** 存入一次观测（L1 摘要；requester 留痕） */
+  /** 存入一次观测（L1 摘要；requester 留痕；自评分数不落盘——L3 敏感） */
   saveObservation(obs) {
     const record = {
       agent: obs.agent,
       observedAt: obs.observedAt,
       requester: obs.requester || 'anonymous',
       dimensions: obs.dimensions,
+      calibration: obs.calibration || null,
       present: obs.present,
+      slices: obs.slices || [],
     };
     this.data.observations.push(record);
     this.save();

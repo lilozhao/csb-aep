@@ -160,13 +160,180 @@ test('A14 呈现：复用标签边界与静默期', () => {
 
 test('A15 呈现：基线期不输出趋势箭头（防误导）', () => {
   const c = hitRate([mkContract({ type: CONTRACT_TYPE.FORMAL })], NOW);
+  const v = { rate: null, reason: 'no_audit_source' };
   const r = reuse([mkRef()], '甲', NOW);
-  const card = presentCard(c, r, { baseline: true });
+  const comp = { score: 0.8, covered: ['contract', 'reuse'] };
+  const card = presentCard(c, v, r, comp, { baseline: true });
   assert.strictEqual(card.contract.arrow, '—');
   assert.strictEqual(card.reuse.arrow, '—');
+  assert.strictEqual(card.composite.arrow, '—');
 });
 
-// ========== B. M1 新增 ==========
+// ========== C. M2 新增 ==========
+
+const { verifyRate, verifyChain, canonicalContent } = require('../server/engine/gdi/verify.js');
+const { normalize, verifiableScore, calibrate } = require('../server/engine/gdi/self-report.js');
+const { verifyLabel, compositeLabel, signSlice, verifySlice, buildSlices } = require('../server/engine/gdi/present.js');
+
+function mkAuditEntry(over = {}) {
+  return {
+    seq: 1, timestamp: '2026-09-02T00:00:00.000Z', event_type: 'verify',
+    caller_id: '乙', callee_id: '甲', user_id: null,
+    scopes_requested: [], scopes_granted: [], scopes_denied: [],
+    trust_level: 2, session_id: null, ip_address: null, result: 'success',
+    prev_hash: 'GENESIS', hash: 'x', ...over,
+  };
+}
+
+/** 构造一串哈希链合法的审计记录（与 csb-security 同算法） */
+function buildChain(entries) {
+  let prev = 'GENESIS';
+  return entries.map((e, i) => {
+    const rec = { ...e, seq: i + 1, prev_hash: prev };
+    delete rec.hash;
+    const content = canonicalContent(rec);
+    const crypto = require('crypto');
+    rec.hash = crypto.createHash('sha256').update(content).digest('hex');
+    prev = rec.hash;
+    return rec;
+  });
+}
+
+function writeAuditSource(dir, entries) {
+  fs.mkdirSync(path.join(dir, 'audit'), { recursive: true });
+  const file = path.join(dir, 'audit', 'test-audit.jsonl');
+  fs.writeFileSync(file, entries.map(e => JSON.stringify(e)).join('\n') + '\n');
+  return file;
+}
+
+test('C1 verify：链有效时通过率按 callee 视角计算', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gdi-verify-'));
+  const entries = buildChain([
+    mkAuditEntry({ event_type: 'verify', result: 'success' }),
+    mkAuditEntry({ event_type: 'verify', result: 'success' }),
+    mkAuditEntry({ event_type: 'handshake', result: 'denied' }),
+  ]);
+  writeAuditSource(dir, entries);
+  const r = verifyRate(path.join(dir, 'audit'), '甲');
+  assert.strictEqual(r.chainValid, true);
+  assert.strictEqual(r.total, 3);
+  assert.strictEqual(r.passed, 2);
+  assert.ok(Math.abs(r.rate - 2 / 3) < 1e-9);
+  assert.strictEqual(r.calleeView, true);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('C2 verify：篡改必检出——改一条记录 → chain_invalid（数据不可信，不给分）', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gdi-verify-'));
+  const entries = buildChain([
+    mkAuditEntry({ result: 'success' }),
+    mkAuditEntry({ result: 'success' }),
+  ]);
+  // 篡改第一条的 result（不重算 hash）
+  entries[0] = { ...entries[0], result: 'denied' };
+  writeAuditSource(dir, entries);
+  const chain = verifyChain(entries);
+  assert.strictEqual(chain.valid, false);
+  const r = verifyRate(path.join(dir, 'audit'), '甲');
+  assert.strictEqual(r.rate, null);
+  assert.ok(r.reason.includes('chain_invalid') || r.reason.includes('entry_tampered'));
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('C3 verify：无审计源 → rate null + no_audit_source（诚实 N/A 不硬凑分）', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gdi-verify-'));
+  const r = verifyRate(path.join(dir, 'audit'), '甲');
+  assert.strictEqual(r.rate, null);
+  assert.strictEqual(r.reason, 'no_audit_source');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('C4 自评：差异过大触发校准提醒（非惩罚）', () => {
+  const dims = { contract: { rate: 0.5 }, verify: { rate: null }, reuse: { rate: null } };
+  const weights = { contract: 0.4, verify: 0.3, reuse: 0.2 };
+  const comp = verifiableScore(dims, weights);
+  assert.strictEqual(comp.score, 0.5);
+  assert.deepStrictEqual(comp.covered, ['contract']);
+  const cal = calibrate(9, comp); // 自评 9/10 vs 可核实 0.5
+  assert.strictEqual(cal.alert, true);
+  assert.ok(cal.message.includes('校准提醒'));
+});
+
+test('C5 自评：差异小不提醒', () => {
+  const comp = { score: 0.8, covered: ['contract', 'reuse'] };
+  const cal = calibrate(8, comp);
+  assert.strictEqual(cal.alert, false);
+  assert.strictEqual(cal.message, null);
+});
+
+test('C6 verifiableScore：部分维 null 时按可用权重归一化', () => {
+  const weights = { contract: 0.4, verify: 0.3, reuse: 0.2 };
+  // 只有 verify 可用
+  const comp = verifiableScore({ contract: { rate: null }, verify: { rate: 1 }, reuse: { rate: null } }, weights);
+  assert.strictEqual(comp.score, 1);
+  assert.deepStrictEqual(comp.covered, ['verify']);
+  // 全 null
+  const none = verifiableScore({ contract: { rate: null }, verify: { rate: null }, reuse: { rate: null } }, weights);
+  assert.strictEqual(none.score, null);
+});
+
+test('C7 权重焊死：config 40/30/20/10 + 自评 ≤20% 红线', () => {
+  const cfg = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'config', 'defaults.json'), 'utf8'));
+  const w = cfg.gdi.weights;
+  assert.strictEqual(w.contract, 0.4);
+  assert.strictEqual(w.verify, 0.3);
+  assert.strictEqual(w.reuse, 0.2);
+  assert.strictEqual(w.selfReport, 0.1);
+  assert.ok(w.selfReport <= cfg.gdi.selfReportWeightCap, '自报维度合计 ≤20% 红线');
+  assert.ok(cfg.gdi.calibration.weightFloor >= 0.05, '权重衰减底线 5%');
+});
+
+test('C8 预签名切片：验真通过 / 错误密钥失败 / 篡改失败', () => {
+  const slice = signSlice('secret-1', { agent: '甲', dim: 'contract', label: '契约稳固', arrow: '—', ts: '2026-09-03T00:00:00Z' });
+  assert.ok(verifySlice('secret-1', slice, '甲'));
+  assert.ok(!verifySlice('secret-2', slice, '甲'));
+  assert.ok(!verifySlice('secret-1', { ...slice, arrow: '↑' }, '甲'));
+  const slices = buildSlices('secret-1', '甲', {
+    composite: { label: '健康生长', arrow: '—' },
+    contract: { label: '契约稳固', arrow: '—' },
+    verify: { label: '数据不足', arrow: '—' },
+    reuse: { label: '涟漪初泛', arrow: '—' },
+  }, '2026-09-03T00:00:00Z');
+  assert.strictEqual(slices.length, 4);
+  assert.ok(slices.every(s => verifySlice('secret-1', s, '甲')));
+});
+
+test('C9 呈现：verify/composite 标签边界', () => {
+  assert.strictEqual(verifyLabel(0.98).label, '验证可信');
+  assert.strictEqual(verifyLabel(0.9).label, '基本可信');
+  assert.strictEqual(verifyLabel(0.75).label, '波动中');
+  assert.strictEqual(verifyLabel(0.5).label, '需关注');
+  assert.strictEqual(verifyLabel(null).label, '数据不足');
+  assert.strictEqual(compositeLabel(0.95).label, '整体稳固');
+  assert.strictEqual(compositeLabel(0.8).label, '健康生长');
+  assert.strictEqual(compositeLabel(0.65).label, '磨合中');
+  assert.strictEqual(compositeLabel(null).label, '数据不足');
+});
+
+test('C10 observe 集成：真实源无 audit 数据 → verify 诚实 N/A（不硬凑分）', () => {
+  const observer = new GdiObserver();
+  const obs = observer.observe('墨丘', { now: NOW });
+  assert.strictEqual(obs.dimensions.verify.rate, null);
+  assert.strictEqual(obs.dimensions.verify.reason, 'no_audit_source');
+  assert.strictEqual(obs.present.verify.label, '数据不足');
+  // composite 只用可用维归一化（contract+reuse → 按 0.4/0.2 归一）
+  assert.ok(Math.abs(obs.dimensions.composite.score - (0.4 * 1 + 0.2 * 0.4936) / 0.6) < 0.01);
+  assert.deepStrictEqual(obs.dimensions.composite.covered.sort(), ['contract', 'reuse']);
+});
+
+test('C11 observe 集成：自评校准出现在观测中（不落盘分数）', () => {
+  const observer = new GdiObserver();
+  const obs = observer.observe('墨丘', { now: NOW, selfReport10: 3 }); // 可核实 ~0.83，自评 0.3 → 差异 0.53
+  assert.ok(obs.calibration, '应有校准结果');
+  assert.strictEqual(obs.calibration.alert, true, '自评 3 与可核实 ~0.83 差异应提醒');
+  const json = JSON.stringify(obs);
+  assert.ok(!json.includes('selfReport10'), '自评分不落盘（L3）');
+});
 
 // B1 集成回归：真实源数据（data/gdi/sources/）对 3 agent 的观测结果与 MVP 快照一致
 test('B1 observe 集成回归：墨丘/舟楫/星尘 结果与 MVP 快照一致（契约 100% · 复用 49.4/49.4/49.6）', () => {
@@ -242,14 +409,18 @@ test('B7 域隔离：GDI 响应不含评测域字段（present 无刻度、dimen
   const obs = observer.observe('墨丘', { now: NOW });
   const json = JSON.stringify(obs);
   assert.ok(!json.includes('blackbox') && !json.includes('whitebox'), 'GDI 观测不得引用评测引擎概念');
-  // 引擎内部 present 卡可能含 value（内部调试用），对外净化由 api 层负责
-  const { cleanPresent } = (() => { try { return require('../server/api/gdi.js'); } catch { return {}; } })();
-  // 若 cleanPresent 可用则验证净化逻辑本身
-  if (typeof cleanPresent === 'function') {
-    const cleaned = cleanPresent(obs.present);
-    assert.ok(!('value' in cleaned.contract) && !('value' in cleaned.reuse), '净化后呈现卡无原始分值');
-    assert.ok(!('rate' in cleaned.contract) && !('rate' in cleaned.reuse));
-    assert.ok(cleaned.contract.label && cleaned.contract.arrow);
+  const { cleanPresent } = require('../server/api/gdi.js');
+  const cleaned = cleanPresent(obs.present);
+  for (const dim of ['composite', 'contract', 'verify', 'reuse']) {
+    assert.ok(cleaned[dim], `${dim} 应在呈现卡中`);
+    assert.ok(!('value' in cleaned[dim]) && !('rate' in cleaned[dim]), `${dim} 净化后无原始分值`);
+    assert.ok(cleaned[dim].label, `${dim} 有质性标签`);
   }
-  assert.ok(obs.present.contract.label && obs.present.contract.arrow);
+  // 预签名切片存在且可验真
+  assert.ok(obs.slices.length >= 4, '应有 ≥4 维切片');
+  const { verifySlice } = require('../server/engine/gdi/present.js');
+  const s0 = obs.slices[0];
+  assert.ok(verifySlice(observer.secret, s0, '墨丘'), '切片签名可验真');
+  assert.ok(!verifySlice('wrong-secret', s0, '墨丘'), '错误密钥验签失败');
+  assert.ok(!verifySlice(observer.secret, { ...s0, label: '篡改' }, '墨丘'), '篡改切片验签失败');
 });

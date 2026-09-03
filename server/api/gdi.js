@@ -4,7 +4,8 @@
  * 数据域隔离（红线第 6 条）：/api/gdi/* 独立于 /api/eval/*。
  * - GDI 观测不产生评测记录，不进排行榜，不进评测历史
  * - 观测结果仅本人 + 人类席位可查（MVP 无鉴权：requester 字段留痕，默认 'anonymous'）
- * - 呈现层只出去刻度卡片（present），数值明细（dimensions）L1 分级随响应（内部校准用）
+ * - 呈现层只出去刻度卡片（present）+ 预签名切片（slices）；数值明细（dimensions）L1 分级随响应（内部校准用）
+ * - 善意自评（selfReport10）仅用于校准提醒，不落盘原文/分数（L3 敏感）
  */
 const { GdiObserver } = require('../engine/gdi');
 const { GdiStore } = require('../store/gdi-store');
@@ -12,7 +13,7 @@ const { GdiStore } = require('../store/gdi-store');
 /** 对外口径净化：呈现卡去除离散刻度（value 等原始数值），只留质性标签/箭头 */
 function cleanPresent(card) {
   const out = { note: card.note };
-  for (const k of ['contract', 'reuse']) {
+  for (const k of ['composite', 'contract', 'verify', 'reuse']) {
     if (card[k]) {
       out[k] = {};
       for (const [kk, vv] of Object.entries(card[k])) {
@@ -26,19 +27,27 @@ function cleanPresent(card) {
 class GdiAPI {
   constructor(config = {}) {
     this.config = config;
-    this.observer = new GdiObserver({ sourcesDir: config.gdiSourcesDir });
-    this.store = new GdiStore(config.gdiStoreFile);
+    const gdiCfg = config.gdi || {};
+    this.observer = new GdiObserver({
+      sourcesDir: gdiCfg.sourcesDir || config.gdiSourcesDir,
+      weights: gdiCfg.weights,
+      presentSecret: gdiCfg.presentSecret,
+    });
+    this.store = new GdiStore(gdiCfg.storeFile || config.gdiStoreFile);
   }
 
   register(app) {
     // 观测（触发一次计算 + 存历史）
     app.post('/api/gdi/observe', (req, res) => {
-      const { agentName, requester } = req.body || {};
+      const { agentName, requester, selfReport10 } = req.body || {};
       if (!agentName) {
         return res.status(400).json({ error: 'agentName 必填（数据源中的 agent 名，可用 /api/gdi/agents 查）' });
       }
+      if (selfReport10 !== undefined && (typeof selfReport10 !== 'number' || selfReport10 < 0 || selfReport10 > 10)) {
+        return res.status(400).json({ error: 'selfReport10 须为 0-10 数字（仅参考；用于校准提醒，不落盘）' });
+      }
       try {
-        const obs = this.observer.observe(agentName);
+        const obs = this.observer.observe(agentName, { selfReport10 });
         obs.requester = requester || 'anonymous';
         obs.present = cleanPresent(obs.present); // 对外呈现去刻度（红线：不显示离散分数）
         const record = this.store.saveObservation(obs);
@@ -46,7 +55,9 @@ class GdiAPI {
           agent: record.agent,
           observedAt: record.observedAt,
           present: record.present,       // 去刻度呈现卡（对外口径）
+          slices: record.slices,         // 预签名切片（可验真不可篡改）
           dimensions: record.dimensions, // L1 数值（本人 + 人类席位）
+          calibration: record.calibration, // 自评校准提醒（若有）
           note: 'GDI 只观测关系的影子，不定义关系本身。不排名、不公示、不用于绩效。',
         });
       } catch (e) {
@@ -84,6 +95,7 @@ class GdiAPI {
         domain: 'gdi',
         isolated: true,
         note: 'GDI 观测域独立于 AEP 评测域（红线第 6 条）',
+        weights: this.observer.weights,
         sources: this.observer.sourceStatus(),
         observationCount: this.store.data.observations.length,
       });

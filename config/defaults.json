@@ -7,6 +7,14 @@
   "timeout": 30000,
   "maxConcurrent": 5,
   "resultsDir": "./data/eval-results",
+  "gdi": {
+    "weights": { "contract": 0.4, "verify": 0.3, "reuse": 0.2, "selfReport": 0.1 },
+    "selfReportWeightCap": 0.2,
+    "presentSecret": "csb-gdi-present-dev-secret",
+    "calibration": { "deepReviewMonths": 6, "lightCheckMonths": 3, "weightFloor": 0.05 },
+    "sourcesDir": "./data/gdi/sources",
+    "storeFile": "./data/gdi/gdi-store.json"
+  },
   "frameworks": {
     "auto": {
       "name": "自动检测",
