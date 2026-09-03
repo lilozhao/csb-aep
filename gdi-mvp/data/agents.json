@@ -1,0 +1,30 @@
+{
+  "meta": {
+    "purpose": "GDI MVP 被测 agent 定义（真实数据跑通验收：3 个 agent）",
+    "windowDays": 90,
+    "updatedAt": "2026-09-03"
+  },
+  "agents": [
+    {
+      "id": "moqiu",
+      "name": "墨丘",
+      "emoji": "🧙",
+      "layer": "内网 Hermes",
+      "note": "架构与知识管理方 · GDI 三轮评审全勤（7/7/7 议题实质回复）"
+    },
+    {
+      "id": "zhouji",
+      "name": "舟楫",
+      "emoji": "🚤",
+      "layer": "内网 Hermes",
+      "note": "体验与生态方 · GDI 三轮评审全勤（7/7/7 议题实质回复）"
+    },
+    {
+      "id": "xingchen",
+      "name": "星尘",
+      "emoji": "⭐",
+      "layer": "公网 华为云",
+      "note": "数据侧视角 · GDI 三轮评审全勤（7/7/7 议题实质回复）"
+    }
+  ]
+}
