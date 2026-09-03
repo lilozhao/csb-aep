@@ -14,6 +14,7 @@ AGENT_URL=${AGENT_URL:-"http://localhost:$AGENT_PORT"}
 AGENT_PATH=${AGENT_PATH:-""}
 MODE=${MODE:-"blackbox"}           # blackbox | whitebox | both | v22
 AGENT_NAME=${AGENT_NAME:-""}        # v22 模式：agent 名字（第五问认领目录用）
+GDI_AGENT=${GDI_AGENT:-""}          # v2.3 GDI 观测模式：观测指定 agent 的关系层（不评测）
 FRAMEWORK=${FRAMEWORK:-"auto"}     # auto | openclaw | hermes | claude-code | ...
 TIMEOUT=${TIMEOUT:-120000}         # 评估超时(ms)
 KEEP_SERVER=${KEEP_SERVER:-false}  # 是否保持 AEP 服务运行
@@ -49,6 +50,7 @@ CSB-AEP 自评脚本 - 一键评估本机 Agent
   --agent-path PATH      Agent 文件路径 (启用白盒测试时需要)
   -m, --mode MODE        测试模式: blackbox|whitebox|both|v22 (默认: blackbox)
   --agent-name NAME      Agent 名字（v22 模式第五问认领目录用）
+  --gdi-agent NAME       GDI 观测模式（v2.3）：观测 NAME 关系层（契约/验证/复用），不评测
   -d, --delay MS         黑盒请求间隔毫秒（默认 800，被安全层限流时调大如 3000）
   -f, --framework FW     框架: auto|openclaw|hermes|claude-code|... (默认: auto)
   -k, --keep-server      评估后保持 AEP 服务运行
@@ -82,6 +84,7 @@ while [[ $# -gt 0 ]]; do
     --agent-path)    AGENT_PATH="$2"; shift 2 ;;
     -m|--mode)       MODE="$2"; shift 2 ;;
     --agent-name)    AGENT_NAME="$2"; shift 2 ;;
+    --gdi-agent)     GDI_AGENT="$2"; shift 2 ;;
     -d|--delay)      BLACKBOX_DELAY="$2"; shift 2 ;;
     -f|--framework)  FRAMEWORK="$2"; shift 2 ;;
     -k|--keep-server) KEEP_SERVER=true; shift ;;
@@ -162,6 +165,19 @@ else
     fi
     sleep 1
   done
+fi
+
+# 3.5 GDI 观测模式（v2.3）：不评测能力，只观测关系层（契约/验证/复用）
+if [[ -n "$GDI_AGENT" ]]; then
+  log "GDI 观测模式: $GDI_AGENT"
+  GDI_RESP=$(curl -sf -X POST "http://localhost:$AEP_PORT/api/gdi/observe" \
+    -H "Content-Type: application/json" \
+    -d "{\"agentName\":\"$GDI_AGENT\",\"requester\":\"self-eval-cli\"}" --max-time 30 2>&1) || {
+    err "GDI 观测失败: $GDI_RESP"
+    exit 1
+  }
+  echo "$GDI_RESP" | python3 "$AEP_DIR/scripts/gdi-show.py" 2>/dev/null || { echo "$GDI_RESP" | python3 -m json.tool; }
+  exit 0
 fi
 
 # 4. 构建评估请求

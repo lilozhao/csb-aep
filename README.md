@@ -4,7 +4,7 @@
 
 **一键评估任何 AI Agent 的碳硅契质量分。**
 
-- **版本**: v2.2（v2.1 安全韧性 + v2.2 六问/路径⑦ + v22 综合评估）
+- **版本**: v2.3（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域）
 - **端口**: 3110
 - **仓库**: https://gitee.com/lilozhao/csb-aep
 - **自建 Gitea**: https://git.lilozkzy.top/lilozhao/csb-aep
@@ -113,7 +113,9 @@ csb-aep/
 │       ├── sources/         ←   数据源（contracts/ + references/，多源 merge）
 │       └── gdi-store.json   ←   观测历史（L1 摘要）
 ├── scripts/
-│   └── gdi-sync-sources.js  ← GDI 数据源同步（采集器 → sources）
+│   ├── gdi-sync-sources.js  ← GDI 数据源同步（采集器 → sources）
+│   ├── gdi-calibrate.js     ← GDI 权重校准（季度轻检/半年深校，仅预警不降权）
+│   └── gdi-show.py          ← GDI 观测卡片展示（self-eval --gdi-agent 用）
 ├── test/
 │   └── gdi-engine.test.js   ← GDI 引擎测试（22 用例：15 MVP 回归 + 7 v2.3 新增）
 └── logs/                    ← 运行日志
@@ -202,6 +204,7 @@ bash self-eval.sh                    # 默认黑盒测试
 bash self-eval.sh -m both            # 黑盒 + 白盒
 bash self-eval.sh -m v22             # v2.2 综合评估（黑盒+白盒+六问/路径⑦）
 bash self-eval.sh -m v22 --agent-name 若兰 --agent-path /path/to/workspace  # 带认领目录的 v22 评估
+bash self-eval.sh --gdi-agent 星尘          # v2.3 GDI 关系层观测（契约/验证/复用，不评测）
 bash self-eval.sh -a 3200            # 指定 Agent 端口
 bash self-eval.sh -k                 # 评估后保持 AEP 服务运行
 ```
@@ -457,6 +460,8 @@ curl http://localhost:3110/api/gdi/history/%E6%98%9F%E5%B0%98
 | 2026-09-02 | v2.3 | 关系 GDI 定稿 v1.0（权重 40/30/20/10，三轮评审 7/7 签字）|
 | 2026-09-03 | v2.3 | GDI MVP 数据采集脚本跑通（契约命中率+复用率 × 3 agent 真实数据，15/15 测试）+ v2.3 落地计划 |
 | 2026-09-03 | v2.3 | M0 文档层 + M1 引擎收编（server/engine/gdi）+ /api/gdi/* 观测域 + 域隔离（22/22 测试）|
+| 2026-09-03 | v2.3 | M2 四维完整：维度2 独立验证（哈希链校验）+ 善意自评校准 + 预签名切片 + 校准脚本（33/33 测试）|
+| 2026-09-03 | v2.3 | M3 集成：版本 2.3.0 + self-eval --gdi-agent + GDI 呈现净化 |
 
 ---
 

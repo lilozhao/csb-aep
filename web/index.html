@@ -184,6 +184,17 @@
       </div>
     </div>
 
+    <!-- GDI 观测（v2.3 · 关系层，与评测域隔离） -->
+    <div class="card" id="gdiCard">
+      <h2>🫂 GDI 关系层观测 <span style="font-size:12px;color:var(--text-secondary);font-weight:400">(v2.3 · 察互动 ≠ 测能力 · 去刻度呈现)</span></h2>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <input type="text" id="gdiAgent" placeholder="agent 名（如：星尘）" value="墨丘" style="flex:1;min-width:160px">
+        <button class="btn" style="flex:0 0 auto" onclick="gdiObserve()">🔭 观测</button>
+        <button class="btn" style="flex:0 0 auto;background:var(--bg);color:var(--text-secondary);border:1px solid var(--border)" onclick="gdiSources()">📂 数据源</button>
+      </div>
+      <div id="gdiResult" style="margin-top:14px"></div>
+    </div>
+
     <!-- 结果 -->
     <div id="resultCard" class="card" style="display:none">
       <div class="score-hero">
@@ -282,6 +293,67 @@
     function setAgent(url, name) {
       document.getElementById('agentUrl').value = url;
     }
+
+    // ===== GDI 关系层观测（v2.3 · 与评测域隔离） =====
+    async function gdiObserve() {
+      const agent = document.getElementById('gdiAgent').value.trim();
+      const box = document.getElementById('gdiResult');
+      if (!agent) { box.innerHTML = '<p style="color:var(--danger)">请输入 agent 名</p>'; return; }
+      box.innerHTML = '<p style="color:var(--text-secondary)">观测中…</p>';
+      try {
+        const resp = await fetch(`${API}/gdi/observe`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ agentName: agent, requester: 'web-ui' }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) { box.innerHTML = `<p style="color:var(--danger)">${data.error || '观测失败'}</p>`; return; }
+        const p = data.present;
+        const dim = data.dimensions;
+        const chip = (label, sub) => `<div style="flex:1;min-width:130px;background:var(--bg);border-radius:10px;padding:12px"><div style="font-size:12px;color:var(--text-secondary)">${sub}</div><div style="font-size:16px;font-weight:700;margin-top:4px">${label}</div></div>`;
+        let l1 = '';
+        if (dim.contract.rate !== null) l1 += `契约命中率 ${(dim.contract.rate * 100).toFixed(1)}%`;
+        if (dim.verify.rate !== null) l1 += ` · 验证通过率 ${(dim.verify.rate * 100).toFixed(1)}%`;
+        if (dim.reuse.rate !== null) l1 += ` · 复用率 ${(dim.reuse.rate * 100).toFixed(1)}%`;
+        if (!l1) l1 = '暂无 L1 数据（检查数据源）';
+        const cal = data.calibration && data.calibration.alert
+          ? `<p style="color:#d97706;font-size:12px;margin-top:8px">📌 ${data.calibration.message}</p>` : '';
+        box.innerHTML = `
+          <div style="font-weight:600;margin-bottom:8px">${data.agent} · ${data.observedAt.slice(0, 10)}</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            ${chip(p.composite.label, '综合 ' + (p.composite.covered || []).join('/'))}
+            ${chip(p.contract.label, '契约')}
+            ${chip(p.verify.label, '验证')}
+            ${chip(p.reuse.label, '复用')}
+          </div>
+          <p style="font-size:12px;color:var(--text-secondary);margin-top:10px">L1（本人+人类席位）：${l1}</p>
+          ${cal}
+          <p style="font-size:11px;color:var(--text-secondary);margin-top:6px">${p.note}</p>`;
+      } catch (e) {
+        box.innerHTML = `<p style="color:var(--danger)">观测失败: ${e.message}</p>`;
+      }
+    }
+
+    async function gdiSources() {
+      const box = document.getElementById('gdiResult');
+      try {
+        const resp = await fetch(`${API}/gdi/sources`);
+        const s = await resp.json();
+        const fmt = list => list.length
+          ? list.map(f => `${f.file} (${f.count}条)`).join('<br>')
+          : '<span style="color:var(--text-secondary)">空</span>';
+        box.innerHTML = `
+          <div style="font-size:13px;line-height:1.7">
+            <b>契约源</b><br>${fmt(s.contracts)}<br><br>
+            <b>引用源</b><br>${fmt(s.references)}<br><br>
+            <b>审计源</b><br>${fmt(s.audit)}<br><br>
+            <span style="font-size:11px;color:var(--text-secondary)">多源按 id 去重 merge；维度 2 依赖审计源（csb-security AuditLog JSONL）</span>
+          </div>`;
+      } catch (e) {
+        box.innerHTML = `<p style="color:var(--danger)">获取数据源失败: ${e.message}</p>`;
+      }
+    }
+
 
     async function startEval() {
       const agentUrl = document.getElementById('agentUrl').value.trim();
