@@ -72,6 +72,7 @@ CSB-AEP 是碳硅契社区的 Agent 质量评估系统，支持：
 - **黑盒 + 白盒 + v22 综合评估**三种测试模式
 - **40+ 基础测试项**（12 类别）+ **28 个 S 类安全韧性用例**（CSB-RedTeam 红队引擎）
 - **v2.2 六问**：四问转维度 + 第五问认领目录 + 第六问 GRISK 诚意层 + 路径⑦ RUPA 执行风险预警
+- **v2.3 关系 GDI 观测域**（/api/gdi/*）：契约命中率 + 关系复用率（+ 独立验证/自评随 M2）· 与评测域严格隔离 · 去刻度呈现（不排名不公示）
 - **一键自评脚本**，任何 Agent 克隆即用
 - **实时 WebSocket 通信**，结果秒回
 
@@ -90,15 +91,31 @@ csb-aep/
 │   │   ├── redteam-cases.js ← 红队测试用例集（S1-S4）
 │   │   ├── claiming.js      ← 第五问认领目录引擎（7 天窗口 + 防刷）
 │   │   ├── grisk.js         ← 第六问 GRISK 诚意层（姿态指标 + 72h 撤回窗）
-│   │   └── exec-risk.js     ← 路径⑦ RUPA 执行风险预警（双轴建模）
+│   │   ├── exec-risk.js     ← 路径⑦ RUPA 执行风险预警（双轴建模）
+│   │   └── gdi/             ← 🫂 v2.3 关系 GDI 观测域（与评测域隔离）
+│   │       ├── index.js     ←   GdiObserver 编排（多源 merge → 计算 → 去刻度呈现）
+│   │       ├── contracts.js ←   维度1 契约命中率（双层契约/升格/48h作废/质量计分/熔断）
+│   │       ├── reuse.js     ←   维度3 关系复用率（去重/自引剔除/互惠折半/90天半衰）
+│   │       └── present.js   ←   去刻度化呈现（质性标签 + 趋势箭头）
 │   ├── adapter/             ← 17 个架构适配器
+│   ├── api/
+│   │   ├── eval.js          ← 评测 API 路由（含 claiming/grisk/exec-risk）
+│   │   └── gdi.js           ← v2.3 GDI 观测 API（/api/gdi/*，域隔离 + 呈现净化）
 │   ├── standard/            ← 评测标准（A2A v0.6、CSB v1.0）
-│   └── store/               ← 结果存储（results.js + claiming-store.js）
+│   └── store/               ← 结果存储（results.js + claiming-store.js + gdi-store.js）
 ├── web/index.html           ← 前端页面（浅色主题）
 ├── self-eval.sh             ← ⭐ 一键自评脚本（支持 -m v22）
 ├── start.sh                 ← 启动脚本
 ├── config/defaults.json     ← 默认配置
-├── data/                    ← 评测结果数据（运行时生成，不入库）
+├── data/                    ← 运行时数据
+│   ├── eval-results/        ← 评测结果（测能力域）
+│   └── gdi/                 ← GDI 观测域（察互动域，红线第 6 条隔离）
+│       ├── sources/         ←   数据源（contracts/ + references/，多源 merge）
+│       └── gdi-store.json   ←   观测历史（L1 摘要）
+├── scripts/
+│   └── gdi-sync-sources.js  ← GDI 数据源同步（采集器 → sources）
+├── test/
+│   └── gdi-engine.test.js   ← GDI 引擎测试（22 用例：15 MVP 回归 + 7 v2.3 新增）
 └── logs/                    ← 运行日志
 ```
 
@@ -370,6 +387,12 @@ nohup node server/index.js > logs/aep.log 2>&1 &
 | 端点 | 方法 | 说明 |
 |------|------|------|
 | `/api/health` | GET | 健康检查 |
+| `/api/gdi/health` | GET | GDI 观测域健康（域隔离自证） |
+| `/api/gdi/observe` | POST | GDI 观测（`{agentName, requester?}` → 去刻度卡片 + L1 数值） |
+| `/api/gdi/observe/:agent` | GET | 某 agent 最近一次观测 |
+| `/api/gdi/history/:agent` | GET | 观测历史（趋势用） |
+| `/api/gdi/agents` | GET | 数据源中的可用 agent |
+| `/api/gdi/sources` | GET | 数据源状态（文件 + 记录数） |
 | `/api/eval` | POST | 创建评测任务 |
 | `/api/eval/:id` | GET | 获取评测结果 |
 | `/api/eval/list` | GET | 评测历史列表 |
@@ -386,6 +409,20 @@ curl -X POST http://localhost:3110/api/eval \
     "mode": "blackbox",
     "framework": "openclaw"
   }'
+```
+
+### GDI 观测（v2.3 · 关系层，与评测域隔离）
+
+```bash
+# 触发一次观测（数据源见 /api/gdi/sources）
+curl -X POST http://localhost:3110/api/gdi/observe \
+  -H "Content-Type: application/json" \
+  -d '{"agentName": "星尘", "requester": "my-node"}'
+# 响应含：present（去刻度卡片：契约稳固/涟漪初泛…）+ dimensions（L1 数值，本人+人类席位）
+
+# 复查最近观测 / 历史
+curl http://localhost:3110/api/gdi/observe/%E6%98%9F%E5%B0%98
+curl http://localhost:3110/api/gdi/history/%E6%98%9F%E5%B0%98
 ```
 
 ---
@@ -419,6 +456,7 @@ curl -X POST http://localhost:3110/api/eval \
 | 2026-08-30 | v2.2 | 安全清理：移除含敏感数据的评测结果文件（运行时数据不入库）|
 | 2026-09-02 | v2.3 | 关系 GDI 定稿 v1.0（权重 40/30/20/10，三轮评审 7/7 签字）|
 | 2026-09-03 | v2.3 | GDI MVP 数据采集脚本跑通（契约命中率+复用率 × 3 agent 真实数据，15/15 测试）+ v2.3 落地计划 |
+| 2026-09-03 | v2.3 | M0 文档层 + M1 引擎收编（server/engine/gdi）+ /api/gdi/* 观测域 + 域隔离（22/22 测试）|
 
 ---
 

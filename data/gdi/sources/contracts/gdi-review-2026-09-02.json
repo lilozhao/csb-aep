@@ -1,0 +1,344 @@
+{
+  "meta": {
+    "generatedAt": "2026-09-03T01:20:45.831Z",
+    "source": "logs/gdi/gdi-r{1,2,3}-*.json（2026-09-02 关系 GDI 三轮评审日志）",
+    "model": "评审委派 = 轻量契约（A2A 邀约 + 实质回复印证）；连续履约 3 次升格 formal",
+    "judgeRule": "kept: 实质回复 ≥6/7 议题；quality: beyond(7/7+均长≥110+贡献词) / complete(7/7) / onTime(6/7)",
+    "note": "本文件由 collect-contracts.js 生成后提交入库，保证可复现；人工复核请直接编辑 status/quality 并更新 reviewedAt"
+  },
+  "contracts": [
+    {
+      "id": "gdi-r1-1788319739790-09wpv4-moqiu",
+      "type": "light",
+      "promisor": "墨丘",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r1-1788319739790-09wpv4.json",
+      "round": "1",
+      "promisedAt": "2026-09-02T03:28:59.790Z",
+      "deadline": "2026-09-02T03:38:06.684Z",
+      "evidenceTs": "2026-09-02T03:38:06.684Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 154,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-001",
+            "echo": false,
+            "len": 178
+          },
+          {
+            "topic": "GDI-002",
+            "echo": false,
+            "len": 158
+          },
+          {
+            "topic": "GDI-003",
+            "echo": false,
+            "len": 145
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r1-1788319739790-09wpv4-zhouji",
+      "type": "light",
+      "promisor": "舟楫",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r1-1788319739790-09wpv4.json",
+      "round": "1",
+      "promisedAt": "2026-09-02T03:28:59.790Z",
+      "deadline": "2026-09-02T03:38:06.684Z",
+      "evidenceTs": "2026-09-02T03:38:06.684Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 134,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-001",
+            "echo": false,
+            "len": 143
+          },
+          {
+            "topic": "GDI-002",
+            "echo": false,
+            "len": 158
+          },
+          {
+            "topic": "GDI-003",
+            "echo": false,
+            "len": 104
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r1-1788319739790-09wpv4-xingchen",
+      "type": "light",
+      "promisor": "星尘",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r1-1788319739790-09wpv4.json",
+      "round": "1",
+      "promisedAt": "2026-09-02T03:28:59.790Z",
+      "deadline": "2026-09-02T03:38:06.684Z",
+      "evidenceTs": "2026-09-02T03:38:06.684Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 137,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-001",
+            "echo": false,
+            "len": 151
+          },
+          {
+            "topic": "GDI-002",
+            "echo": false,
+            "len": 132
+          },
+          {
+            "topic": "GDI-003",
+            "echo": false,
+            "len": 117
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r2-1788320318852-ldzfqw-moqiu",
+      "type": "light",
+      "promisor": "墨丘",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r2-1788320318852-ldzfqw.json",
+      "round": "2",
+      "promisedAt": "2026-09-02T03:38:38.852Z",
+      "deadline": "2026-09-02T03:47:31.729Z",
+      "evidenceTs": "2026-09-02T03:47:31.729Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 136,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-101",
+            "echo": false,
+            "len": 131
+          },
+          {
+            "topic": "GDI-102",
+            "echo": false,
+            "len": 156
+          },
+          {
+            "topic": "GDI-103",
+            "echo": false,
+            "len": 132
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r2-1788320318852-ldzfqw-zhouji",
+      "type": "light",
+      "promisor": "舟楫",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r2-1788320318852-ldzfqw.json",
+      "round": "2",
+      "promisedAt": "2026-09-02T03:38:38.852Z",
+      "deadline": "2026-09-02T03:47:31.729Z",
+      "evidenceTs": "2026-09-02T03:47:31.729Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 142,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-101",
+            "echo": false,
+            "len": 148
+          },
+          {
+            "topic": "GDI-102",
+            "echo": false,
+            "len": 143
+          },
+          {
+            "topic": "GDI-103",
+            "echo": false,
+            "len": 151
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r2-1788320318852-ldzfqw-xingchen",
+      "type": "light",
+      "promisor": "星尘",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r2-1788320318852-ldzfqw.json",
+      "round": "2",
+      "promisedAt": "2026-09-02T03:38:38.852Z",
+      "deadline": "2026-09-02T03:47:31.729Z",
+      "evidenceTs": "2026-09-02T03:47:31.729Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 145,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-101",
+            "echo": false,
+            "len": 164
+          },
+          {
+            "topic": "GDI-102",
+            "echo": false,
+            "len": 149
+          },
+          {
+            "topic": "GDI-103",
+            "echo": false,
+            "len": 143
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r3-1788320882088-4qmtnh-moqiu",
+      "type": "light",
+      "promisor": "墨丘",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r3-1788320882088-4qmtnh.json",
+      "round": "3",
+      "promisedAt": "2026-09-02T03:48:02.088Z",
+      "deadline": "2026-09-02T03:56:11.300Z",
+      "evidenceTs": "2026-09-02T03:56:11.300Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 112,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-201",
+            "echo": false,
+            "len": 111
+          },
+          {
+            "topic": "GDI-202",
+            "echo": false,
+            "len": 131
+          },
+          {
+            "topic": "GDI-203",
+            "echo": false,
+            "len": 111
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r3-1788320882088-4qmtnh-zhouji",
+      "type": "light",
+      "promisor": "舟楫",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r3-1788320882088-4qmtnh.json",
+      "round": "3",
+      "promisedAt": "2026-09-02T03:48:02.088Z",
+      "deadline": "2026-09-02T03:56:11.300Z",
+      "evidenceTs": "2026-09-02T03:56:11.300Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 115,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-201",
+            "echo": false,
+            "len": 120
+          },
+          {
+            "topic": "GDI-202",
+            "echo": false,
+            "len": 90
+          },
+          {
+            "topic": "GDI-203",
+            "echo": false,
+            "len": 128
+          }
+        ]
+      }
+    },
+    {
+      "id": "gdi-r3-1788320882088-4qmtnh-xingchen",
+      "type": "light",
+      "promisor": "星尘",
+      "promisee": "若兰",
+      "source": "logs/gdi/gdi-r3-1788320882088-4qmtnh.json",
+      "round": "3",
+      "promisedAt": "2026-09-02T03:48:02.088Z",
+      "deadline": "2026-09-02T03:56:11.300Z",
+      "evidenceTs": "2026-09-02T03:56:11.300Z",
+      "status": "kept",
+      "quality": "beyond",
+      "evidence": {
+        "substantiveTopics": 7,
+        "totalTopics": 7,
+        "echoTopics": 0,
+        "avgReplyLen": 122,
+        "contribHits": 7,
+        "sample": [
+          {
+            "topic": "GDI-201",
+            "echo": false,
+            "len": 123
+          },
+          {
+            "topic": "GDI-202",
+            "echo": false,
+            "len": 124
+          },
+          {
+            "topic": "GDI-203",
+            "echo": false,
+            "len": 110
+          }
+        ]
+      }
+    }
+  ]
+}

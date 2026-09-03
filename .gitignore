@@ -3,3 +3,4 @@ __pycache__/
 data/eval-results/
 data/results.json
 data/results.v1.backup.json
+data/gdi/gdi-store.json

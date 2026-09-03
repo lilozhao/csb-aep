@@ -117,12 +117,14 @@ gdi-mvp/
 
 ## 七、进入 AEP v2.3 的待办
 
-- [ ] 将 lib/ 三模块接入 csb-aep server（GDI 数据域与 AEP 评测域**严格隔离**，红线第 6 条）
-- [ ] 采集器扩展数据源：A2A delegation-manager 日志、CSB-Memory 溯源链（derived_from）、csb-security audit-log（维度 2 独立验证通过率）
+- [x] 将 lib/ 三模块接入 csb-aep server（`server/engine/gdi/`，2026-09-03 M1 完成）——GDI 数据域与 AEP 评测域**严格隔离**（红线第 6 条：独立路由 /api/gdi/*、独立 store data/gdi/、测试断言）
+- [x] 多源 merge 机制（data/gdi/sources/ 目录约定 + GdiObserver 去重加载）——采集器扩展的适配层就绪
+- [ ] 采集器扩展数据源：A2A delegation-manager 日志、CSB-Memory 溯源链（derived_from）（多源机制已就绪，逐源接入为渐进项）
+- [ ] 维度 2 独立验证通过率（csb-security audit-log）——M2
 - [ ] 轻量契约 48h 闭环的行为印证锚点接入（节点打卡/交付物哈希）
-- [ ] 去刻度呈现层物理隔离（呈现只收预签名切片，杜绝 runtime 解析原始分值——Jeason 建议）
-- [ ] 半年度深校 + 季度轻检的权重校准脚本
-- [ ] 论坛公告（若琢署名，中英双语）——按社区发布规则
+- [x] 去刻度呈现层：API 响应净化（present 卡无原始分值，测试断言）——M2 升级为预签名切片
+- [ ] 半年度深校 + 季度轻检的权重校准脚本（40/30/20/10 写死 config）——M2
+- [ ] 论坛公告（若琢署名，中英双语）——M4 按社区发布规则
 
 ## 八、边界与红线（重申）
 

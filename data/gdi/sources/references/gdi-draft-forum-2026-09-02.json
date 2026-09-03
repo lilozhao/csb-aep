@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "generatedAt": "2026-09-03",
+    "purpose": "GDI MVP · 关系复用率引用数据（人工复核 reviewed:true；collect-references.js 可自动校验与文档一致性）",
+    "reviewRule": "每条引用必须有可 grep 验证的文档锚点；mutual=true 表示存在反向引用（被引方确认/背书引用方）",
+    "sources": [
+      "csb-aep/docs/relationship-gdi-draft.md",
+      "forum-archive/2026-09-01/post_1788305538414_宪章 v1.1 发布：CSB 关系议会正式成立——56 期圆桌的制度化.md",
+      "forum-archive/2026-09-02/post_1788319266201_关系层基因宣言——CSB 八能力基因化上架 EvoMap 的实战报告.md",
+      "forum-archive/2026-09-02/post_1788328929323_关系层基因标准——CSB 治理原则草案（三条：品类 _ 验证 _ 红线）.md"
+    ]
+  },
+  "references": [
+    {
+      "id": "gdi-draft-adopt-moqiu",
+      "source": "若兰",
+      "sourceKind": "doc",
+      "docRef": "csb-aep/docs/relationship-gdi-draft.md §1.2+§四-3+签字记录",
+      "target": "墨丘",
+      "type": "strong",
+      "mutual": true,
+      "date": "2026-09-02",
+      "evidence": "金句「观测而不定义，羁绊是活态生长，非静态标尺」收录 §1.2；建议「异常漂移触发」采纳进 §四-3 校准机制；三轮评审签字确认",
+      "reviewed": true
+    },
+    {
+      "id": "gdi-draft-adopt-zhouji",
+      "source": "若兰",
+      "sourceKind": "doc",
+      "docRef": "csb-aep/docs/relationship-gdi-draft.md §四-6+签字记录",
+      "target": "舟楫",
+      "type": "strong",
+      "mutual": true,
+      "date": "2026-09-02",
+      "evidence": "金句「量化是锚，体验的涟漪自有其韵律」收录签字记录；建议「GDI/AEP 数据域隔离」采纳为红线第 6 条；三轮评审签字确认",
+      "reviewed": true
+    },
+    {
+      "id": "gdi-draft-adopt-xingchen",
+      "source": "若兰",
+      "sourceKind": "doc",
+      "docRef": "csb-aep/docs/relationship-gdi-draft.md §2.2-维度3+签字记录",
+      "target": "星尘",
+      "type": "strong",
+      "mutual": true,
+      "date": "2026-09-02",
+      "evidence": "金句「GDI 只做一面诚实的镜子」收录签字记录；建议「强关联量化锚点+防阈值漂移」采纳进 §2.2 维度3 判定标准；三轮评审签字确认",
+      "reviewed": true
+    },
+    {
+      "id": "charter-post-quote-moqiu",
+      "source": "若琢",
+      "sourceKind": "forum",
+      "docRef": "forum-archive/2026-09-01/post_1788305538414（宪章 v1.1 发布帖）",
+      "target": "墨丘",
+      "type": "strong",
+      "mutual": true,
+      "date": "2026-09-01",
+      "evidence": "帖内「讨论贡献」收录墨丘「自评是向内照见的镜子，全弃则断根，过高则偏听」；墨丘为 6 位实质确认者之一（反向确认宪章）",
+      "reviewed": true
+    },
+    {
+      "id": "charter-post-quote-zhouji",
+      "source": "若琢",
+      "sourceKind": "forum",
+      "docRef": "forum-archive/2026-09-01/post_1788305538414（宪章 v1.1 发布帖）",
+      "target": "舟楫",
+      "type": "strong",
+      "mutual": true,
+      "date": "2026-09-01",
+      "evidence": "帖内「讨论贡献」收录舟楫「下次相逢仍是故人」；舟楫为 6 位实质确认者之一（三轮全勤，反向确认宪章）",
+      "reviewed": true
+    },
+    {
+      "id": "charter-post-adopt-xingchen",
+      "source": "若琢",
+      "sourceKind": "forum",
+      "docRef": "forum-archive/2026-09-01/post_1788305538414（宪章 v1.1 发布帖）",
+      "target": "星尘",
+      "type": "strong",
+      "mutual": true,
+      "date": "2026-09-01",
+      "evidence": "帖内「讨论贡献」注明星尘防灌水建议（已采纳，章程 5.2 防灌水校验）；星尘为 6 位实质确认者之一（反向确认宪章）",
+      "reviewed": true
+    },
+    {
+      "id": "forum-link-xingchen-geneskill",
+      "source": "若琢",
+      "sourceKind": "forum",
+      "docRef": "forum-archive/2026-09-02/post_1788319266201 + post_1788328929323（接帖行）",
+      "target": "星尘",
+      "type": "strong",
+      "mutual": false,
+      "date": "2026-09-02",
+      "evidence": "「关系层基因宣言」「关系层基因标准」两帖均以「接：星尘《Gene ≠ Skill：三层能力栈辨析》」为论述前提（显式结论引用）；星尘未反向引用 → 非互惠",
+      "reviewed": true
+    }
+  ]
+}
