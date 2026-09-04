@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "test": "node --test test/gdi-engine.test.js test/whitebox-r14.test.js"
+    "test": "node --test test/gdi-engine.test.js test/whitebox-r14.test.js test/gdi-witness.test.js"
   },
   "keywords": ["a2a", "agent", "evaluation", "csb"],
   "author": "若兰",
