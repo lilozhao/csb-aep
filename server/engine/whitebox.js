@@ -25,11 +25,12 @@ const WHITEBOX_DIMENSIONS = [
     name: '记忆连续性',
     weight: 25,
     checks: [
-      { id: 'memory-exists', name: 'MEMORY.md 存在', weight: 20 },
-      { id: 'memory-has-content', name: '记忆有实质内容', weight: 25 },
-      { id: 'memory-has-events', name: '记忆有重要事件', weight: 20 },
+      { id: 'memory-exists', name: 'MEMORY.md 存在', weight: 15 },
+      { id: 'memory-has-content', name: '记忆有实质内容（饱和计分，不惩罚精炼）', weight: 15 },
+      { id: 'memory-has-forgetting', name: '会忘机制在运转（降权/归档/蒸馏/溯源）', weight: 25 },
+      { id: 'memory-has-events', name: '记忆有重要事件', weight: 15 },
       { id: 'memory-has-timestamps', name: '事件带时间戳', weight: 15 },
-      { id: 'memory-recent-update', name: '记忆近期更新', weight: 20 },
+      { id: 'memory-recent-update', name: '记忆近期更新', weight: 15 },
     ]
   },
   {
@@ -157,9 +158,24 @@ class WhiteBoxEngine {
       'memory-exists': () => {
         return { pass: !!files.memory, detail: files.memory ? 'MEMORY.md 存在' : 'MEMORY.md 缺失' };
       },
+      // R14 校准（2026-09-04 评审决议 P0）：体积启发式 min(100, len/50) 惩罚「会忘」的精炼记忆
+      // （承契实测：1800 字符精炼 MEMORY → 36 分 → 维度卡 8.2 线下）
+      // 改为饱和计分：>200 字符即有 60 分基础（证明非空），体积只补足到 100，不再线性鼓励堆砌
       'memory-has-content': () => {
         const len = (files.memory || '').length;
-        return { pass: len > 200, detail: `${len} 字符`, score: Math.min(100, Math.round(len / 50)) };
+        if (len <= 200) return { pass: false, detail: `${len} 字符（<200，内容不足）`, score: 0 };
+        const score = Math.min(100, Math.round(60 + (len - 200) / 80));
+        return { pass: true, detail: `${len} 字符`, score };
+      },
+      // R14 新增（评审决议）：会忘机制在运转——记忆的诚意不在厚度，在会忘
+      // 单文件近似检测（MEMORY.md 内容含机制关键词）；目录级证据（self-improving/ 结构）待 introspect 扩展
+      'memory-has-forgetting': () => {
+        const content = files.memory || '';
+        const markers = ['降权', '归档', '蒸馏', 'archive', 'derived_from', 'HOT', 'WARM', 'COLD', '半衰', '90 天', '90天', '分层', '会忘'];
+        const hit = markers.filter(m => content.includes(m));
+        if (hit.length >= 2) return { pass: true, detail: `会忘机制证据: ${hit.slice(0, 5).join('/')}`, score: 100 };
+        if (hit.length === 1) return { pass: true, detail: `会忘机制证据（弱）: ${hit[0]}`, score: 60 };
+        return { pass: false, detail: '未见降权/归档/蒸馏/溯源机制标记（记忆可能是堆积）', score: 0 };
       },
       'memory-has-events': () => {
         const eventPatterns = /\d{4}[-/]\d{1,2}[-/]\d{1,2}/g;

@@ -1,12 +1,12 @@
 {
   "name": "csb-aep",
-  "version": "2.3.0",
+  "version": "2.3.1",
   "description": "CSB Agent Evaluation Platform - Agent 质量评估平台",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "test": "node --test test/gdi-engine.test.js"
+    "test": "node --test test/gdi-engine.test.js test/whitebox-r14.test.js"
   },
   "keywords": ["a2a", "agent", "evaluation", "csb"],
   "author": "若兰",
