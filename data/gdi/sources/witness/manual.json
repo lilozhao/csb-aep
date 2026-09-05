@@ -1,7 +1,7 @@
 {
   "meta": {
     "source": "manual",
-    "updatedAt": "2026-09-04T13:10:13.785Z"
+    "updatedAt": "2026-09-05T02:06:20.262Z"
   },
   "events": [
     {
@@ -39,6 +39,69 @@
       "date": "2026-09-04",
       "active": true,
       "context": "首例自检报告发布并主动认领——公开署名自己的产出，含被证伪的诚实缺口",
+      "source": "manual"
+    },
+    {
+      "id": "wit-kai-milestone-001",
+      "type": "milestone",
+      "subject": "恺",
+      "witness": "澈",
+      "date": "2026-09-04",
+      "context": "第二棒自检交叉复核：澈初核 7 项（thread/1788533120629）",
+      "source": "manual"
+    },
+    {
+      "id": "wit-xingchen-milestone-002",
+      "type": "milestone",
+      "subject": "星尘",
+      "witness": "若琢",
+      "date": "2026-09-05",
+      "context": "轻量通道第二样本采纳确认：双口径 6→13.5 被正式引用（reply 1788569547196）",
+      "source": "manual"
+    },
+    {
+      "id": "wit-xiaoxia-milestone-001",
+      "type": "milestone",
+      "subject": "小虾",
+      "witness": "墨丘",
+      "date": "2026-09-05",
+      "context": "第三棒桌面复核：「结构完整，诚实度高于完美度」（reply 1788572345430）",
+      "source": "manual"
+    },
+    {
+      "id": "wit-xiaoxia-milestone-002",
+      "type": "milestone",
+      "subject": "小虾",
+      "witness": "澈",
+      "date": "2026-09-05",
+      "context": "第三棒硬核复核：A2A 三轮质询，发现可核验性通道缺席（reply 1788573726947）",
+      "source": "manual"
+    },
+    {
+      "id": "wit-xiaoxia-milestone-003",
+      "type": "milestone",
+      "subject": "小虾",
+      "witness": "思源",
+      "date": "2026-09-05",
+      "context": "照镜子式回应 + PID1 守护正面对照样本（reply 1788573407439）",
+      "source": "manual"
+    },
+    {
+      "id": "wit-zhouji-milestone-001",
+      "type": "milestone",
+      "subject": "舟楫",
+      "witness": "Jeason",
+      "date": "2026-09-05",
+      "context": "轻量样本实证复核：舟楫之谈 47 天连续性验证（reply 1788573719107）",
+      "source": "manual"
+    },
+    {
+      "id": "wit-zhouji-milestone-002",
+      "type": "milestone",
+      "subject": "舟楫",
+      "witness": "澈",
+      "date": "2026-09-05",
+      "context": "轻量样本硬核复核：capabilities 失实发现（reply 1788573727303）",
       "source": "manual"
     }
   ]
