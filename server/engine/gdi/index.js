@@ -22,6 +22,7 @@ const { reuse } = require('./reuse.js');
 const { verifyRate } = require('./verify.js');
 const { verifiableScore, calibrate } = require('./self-report.js');
 const { witness } = require('./witness.js');
+const { provenance } = require('./provenance.js');
 const { presentCard, buildSlices } = require('./present.js');
 
 const DEFAULT_SOURCES_DIR = path.join(__dirname, '..', '..', '..', 'data', 'gdi', 'sources');
@@ -131,6 +132,9 @@ class GdiObserver {
     const witnessObs = witness(this.sourcesDir, { now });
     const myWitness = witnessObs[agentName] || { witness: { naming: 0, milestone: 0, rewrite: 0 }, total: 0, eventCount: 0 };
 
+    // Provenance 记忆溯源链观测（X-1 · 观察期：机制指标，仅供呈现不计分）
+    const provObs = provenance(this.sourcesDir);
+
     // 自评（仅参考）：进校准，不进聚合
     const selfReport10 = opts.selfReport10 !== undefined ? opts.selfReport10 : null;
     const cal = selfReport10 !== null ? calibrate(selfReport10, comp) : null;
@@ -156,6 +160,7 @@ class GdiObserver {
         reuse: { rate: r.rate, net: r.net, gross: r.gross, selfRefs: r.selfCount, externalRefers: r.externalRefers },
         composite: { score: comp.score, covered: comp.covered, note: '可核实三维按 40/30/20 归一化；自评仅参考不参与聚合' },
         witness: { ...myWitness.witness, total: myWitness.total, eventCount: myWitness.eventCount, note: '观察期：采集即开始，不计入总分（评审 T1-D · 双轨启动）' },
+        provenance: provObs || { observation: true, note: '无 provenance 数据源（csb-memory raw 未接入）' },
       },
       calibration: cal,
       present: card,

@@ -1,0 +1,59 @@
+{
+  "meta": {
+    "generatedAt": "2026-09-05T00:31:09.256Z",
+    "source": "csb-memory/data/raw/*.jsonl",
+    "days": 7,
+    "total": 769
+  },
+  "metrics": {
+    "sealedRate": 0.3251,
+    "provenanceCoverage": 1,
+    "sealed": 250,
+    "burning": 519,
+    "lastFileAge": 1
+  },
+  "daily": [
+    {
+      "day": "2026-08-29",
+      "total": 9,
+      "sealed": 1,
+      "sealedRate": 0.1111111111111111
+    },
+    {
+      "day": "2026-08-30",
+      "total": 44,
+      "sealed": 16,
+      "sealedRate": 0.36363636363636365
+    },
+    {
+      "day": "2026-08-31",
+      "total": 8,
+      "sealed": 3,
+      "sealedRate": 0.375
+    },
+    {
+      "day": "2026-09-01",
+      "total": 10,
+      "sealed": 2,
+      "sealedRate": 0.2
+    },
+    {
+      "day": "2026-09-02",
+      "total": 57,
+      "sealed": 31,
+      "sealedRate": 0.543859649122807
+    },
+    {
+      "day": "2026-09-03",
+      "total": 15,
+      "sealed": 5,
+      "sealedRate": 0.3333333333333333
+    },
+    {
+      "day": "2026-09-04",
+      "total": 66,
+      "sealed": 27,
+      "sealedRate": 0.4090909090909091
+    }
+  ]
+}
