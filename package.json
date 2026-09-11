@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server/index.js",
     "dev": "node server/index.js",
-    "test": "node --test test/gdi-engine.test.js test/whitebox-r14.test.js test/gdi-witness.test.js test/gdi-x1-sources.test.js"
+    "test": "node --test test/blackbox-suite.test.js test/gdi-engine.test.js test/whitebox-r14.test.js test/gdi-witness.test.js test/gdi-x1-sources.test.js"
   },
   "keywords": [
     "a2a",

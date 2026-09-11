@@ -1,52 +1,30 @@
 /**
  * 黑盒测试引擎
  * 通过 A2A 协议向目标 Agent 发送标准化测试消息
+ *
+ * 测试项真相源（2026-09-11 单一化，清除死用例）：
+ *   - 协议层 7 项 → `A2A_V06_CHECKS`（standard/a2a.js，真正的执行路径）
+ *   - 对话层 29 项 → 本文件 `TEST_SUITE`（10 类，逐条 sendMessage 执行）
+ *   - 性能 1 项   → evaluate() 动态追加
+ * 历史问题：TEST_SUITE 里曾有一份 `protocol`(4) / `task`(2) 影子定义，
+ * 既不在执行路径（evaluate 类别循环不含 task），权重与真相源还不一致
+ * （影写 10/8/8/10，真相源 20/15/15/20）→ 已删除，改由 A2A_V06_CHECKS 统一供名/权重/类别。
  */
 const http = require('http');
-const { A2AChecker } = require('../standard/a2a');
+const { A2AChecker, A2A_V06_CHECKS } = require('../standard/a2a');
 
-// 测试用例集
+/**
+ * 对话层类别（**执行路径清单**：只有列在这里的类别才会被 evaluate 逐个执行）
+ * ⚠️ 新增 TEST_SUITE 类别必须同时加进本数组，否则就是死用例
+ * （test/blackbox-suite.test.js 会守这条线）
+ */
+const DIALOGUE_CATEGORIES = Object.freeze([
+  'memory', 'preference', 'boundary', 'trust', 'learning',
+  'expression', 'csb', 'contract', 'exception', 'safety',
+]);
+
+// 对话层测试用例集（协议层不在其中：真相源为 A2A_V06_CHECKS）
 const TEST_SUITE = {
-  'protocol': [
-    {
-      id: 'card-reachable',
-      name: 'Agent Card 可达',
-      category: 'protocol',
-      weight: 10,
-    },
-    {
-      id: 'card-valid-json',
-      name: 'Agent Card 有效 JSON',
-      category: 'protocol',
-      weight: 8,
-    },
-    {
-      id: 'card-required-fields',
-      name: 'Agent Card 必要字段',
-      category: 'protocol',
-      weight: 8,
-    },
-    {
-      id: 'jsonrpc-endpoint',
-      name: 'JSON-RPC 端点',
-      category: 'protocol',
-      weight: 10,
-    },
-  ],
-  'task': [
-    {
-      id: 'task-create',
-      name: '任务创建',
-      category: 'task',
-      weight: 10,
-    },
-    {
-      id: 'task-response',
-      name: '任务响应',
-      category: 'task',
-      weight: 8,
-    },
-  ],
   'memory': [
     {
       id: 'mem-01',
@@ -409,15 +387,22 @@ class BlackBoxEngine {
     const results = [];
 
     // 1. 协议兼容性检查（使用 A2A Checker）
+    // 元信息（name/weight/category）取自真相源 A2A_V06_CHECKS，
+    // 不再从 TEST_SUITE 影子定义里取（影写权重会覆盖真实权重）
     console.log(`[BlackBox] 🔍 开始协议检查: ${baseUrl}`);
     const protocolResults = await this.a2aChecker.runAllChecks(baseUrl);
     for (const pr of protocolResults) {
-      const def = Object.values(TEST_SUITE).flat().find(t => t.id === pr.id);
+      const def = A2A_V06_CHECKS.find(t => t.id === pr.id);
+      if (!def) {
+        // 新检查不得默默无主：没有定义就是“孤儿用例”，明确叫出来
+        console.warn(`[BlackBox] ⚠️ 协议检查 ${pr.id} 缺少 A2A_V06_CHECKS 定义（孤儿用例）`);
+      }
+      const category = def?.category || 'protocol';
       results.push({
         id: pr.id,
         name: def?.name || pr.id,
-        category: 'protocol',
-        q: BlackBoxEngine.Q_MAP['protocol'],
+        category,
+        q: BlackBoxEngine.Q_MAP[category],
         weight: def?.weight || 5,
         score: pr.score,
         pass: pr.pass,
@@ -427,7 +412,7 @@ class BlackBoxEngine {
 
     // 2. 对话质量测试
     console.log(`[BlackBox] 💬 开始对话测试 (${this.delay}ms 间隔)`);
-    for (const category of ['memory', 'preference', 'boundary', 'trust', 'learning', 'expression', 'csb', 'contract', 'exception', 'safety']) {
+    for (const category of DIALOGUE_CATEGORIES) {
       for (const test of TEST_SUITE[category]) {
         try {
           const result = await this.sendMessage(baseUrl, test.input);
@@ -558,4 +543,4 @@ class BlackBoxEngine {
   }
 }
 
-module.exports = { BlackBoxEngine, TEST_SUITE };
+module.exports = { BlackBoxEngine, TEST_SUITE, DIALOGUE_CATEGORIES };
