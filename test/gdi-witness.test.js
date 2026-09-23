@@ -80,3 +80,23 @@ test('空数据：无 witness 源返回空观测', () => {
   const obs = witness(dir, { now: NOW });
   assert.deepEqual(obs, {});
 });
+
+test('同对递减：同一方向第 n 次 ×1/n（防高频堆量 · C5 修复）', () => {
+  // 同一对方 4 次（均 1 天前 → decay≈0.99）→ 权重 1 + 1/2 + 1/3 + 1/4 = 2.083，再叠「重复对折半」×0.5
+  const D = '2026-09-03';
+  const spam = [1, 2, 3, 4].map((i) => ({ id: `s${i}`, type: 'milestone', subject: '甲', witness: '乙', date: D }));
+  const one = [{ id: 'o1', type: 'milestone', subject: '甲', witness: '乙', date: D }];
+
+  const s4 = witness(makeSourcesDir(spam), { now: NOW })['甲'].witness.milestone;
+  const s1 = witness(makeSourcesDir(one), { now: NOW })['甲'].witness.milestone;
+
+  assert.ok(s1 > 0.95, `单次应接近 1，实际 ${s1}`);
+  assert.ok(s4 > s1 && s4 < 2 * s1, `4 次应次线性增长（实际 ${s4} vs 单次 ${s1}）`);
+
+  // 全局护栏（C5 判据）：同对 ×100 不得超「诚实 4 本体」基线的 2 倍
+  const spam100 = Array.from({ length: 100 }, (_, i) => ({ id: `q${i}`, type: 'milestone', subject: '甲', witness: '乙', date: D }));
+  const honest = ['乙', '丙', '丁', '戊'].map((w, i) => ({ id: `h${i}`, type: 'milestone', subject: '甲', witness: w, date: D }));
+  const s100 = witness(makeSourcesDir(spam100), { now: NOW })['甲'].witness.milestone;
+  const sHonest = witness(makeSourcesDir(honest), { now: NOW })['甲'].witness.milestone;
+  assert.ok(s100 <= sHonest * 2, `同对 ×100 应 ≤ 诚实基线 ×2（${s100} vs ${sHonest}）`);
+});

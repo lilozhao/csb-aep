@@ -12,6 +12,8 @@
  * 防游戏化（与 reuse.js 同构）：
  *   - W3 限定：rewrite 须 active===true（Agent 主动认领，思源建议）
  *   - 异本体：witness 与 subject 不同源（采集器保证 + 双保险跳过同源）
+ *   - 同对递减：同一关系方向第 n 次事件 ×1/n（波动递减，防「同对高频」线性堆量）
+ *     —— 2026-09-23 C5 反例测试发现「常数折半」仍可刷（100 次 = 11.5× 诚实基线），故引入
  *   - 互惠折半：A↔B 双向见证事件对 → 双方各折半（星尘：防小圈子互刷）
  *   - 90 天半衰：事件按时间衰减
  *   - 去刻度：只给计数不给评级，不排名不公示
@@ -42,6 +44,17 @@ function witness(sourcesDir, { now = Date.now() } = {}) {
   const events = loadEvents(sourcesDir);
   if (events.length === 0) return {};
 
+  // 同对递减：同一关系方向（subject→witness）第 n 次事件 ×1/n
+  // （按 date/id 排序定序，最早的计第 1 次；幂等：只依赖事件集本身）
+  const ordered = [...events].sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : (a.id < b.id ? -1 : 1)));
+  const dirCount = {};
+  const ordinalById = new Map();
+  for (const ev of ordered) {
+    const key = `${ev.subject}|${ev.witness || ''}`;
+    dirCount[key] = (dirCount[key] || 0) + 1;
+    ordinalById.set(ev.id, dirCount[key]);
+  }
+
   // 互惠对检测：双向见证（A→B 且 B→A 的事件各 ≥1）
   const pairCount = {};
   for (const ev of events) {
@@ -69,12 +82,15 @@ function witness(sourcesDir, { now = Date.now() } = {}) {
       const key = [subj, ev.witness].sort().join('|');
       if (pairCount[key] >= 2) factor = 0.5;
     }
-    const score = decay * factor;
+    // 同对递减：同一关系方向第 n 次 ×1/n
+    const ordinal = ordinalById.get(ev.id) || 1;
+    const diminishing = 1 / ordinal;
+    const score = decay * diminishing * factor;
 
     if (ev.type === 'naming') agg.naming += score;
     else if (ev.type === 'milestone') agg.milestone += score;
     else if (ev.type === 'rewrite') agg.rewrite += score;
-    agg.events.push({ id: ev.id, type: ev.type, date: ev.date, witness: ev.witness, factor });
+    agg.events.push({ id: ev.id, type: ev.type, date: ev.date, witness: ev.witness, factor, ordinal, diminishing: Math.round(diminishing * 1000) / 1000 });
   }
 
   const result = {};

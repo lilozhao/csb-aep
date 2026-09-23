@@ -1,9 +1,9 @@
 {
   "meta": {
-    "generatedAt": "2026-09-23T01:42:09.847Z",
+    "generatedAt": "2026-09-23T01:45:26.043Z",
     "kind": "c5-game-resistance",
     "engine": "server/engine/gdi/witness.js",
-    "now": "2026-09-23T01:42:09.842Z"
+    "now": "2026-09-23T01:45:26.038Z"
   },
   "threshold": {
     "rule": "同对高频得分 ≤ 诚实基线 ×2",
@@ -15,15 +15,15 @@
       "eventCount": 4
     },
     "samePairSpam_100": {
-      "total": 45.14,
+      "total": 2.17,
       "eventCount": 100
     },
     "mutualPairSpam_100x2": {
-      "total": 45.14,
+      "total": 2.17,
       "eventCount": 100
     },
     "staleSpam_100_400daysAgo": {
-      "total": 1.61,
+      "total": 0.07,
       "eventCount": 100
     },
     "unclaimedRewrite_20": {
@@ -31,8 +31,8 @@
       "eventCount": 0
     }
   },
-  "ratio_spam_over_honest": 11.52,
-  "verdict": "fail",
-  "finding": "同对高频仍可堆量：45.14 vs 诚实基线 3.92 = 11.52× —— 互惠折半是「常数 0.5」而非「边际递减」，重复次数仍线性累加",
-  "suggestion": "建议在 witness.js 引入 per-pair 递减（如同一关系对第 n 次 ×1/n）或 ≥3 次起设上限；否则「同对高频」可无限堆量"
+  "ratio_spam_over_honest": 0.55,
+  "verdict": "pass",
+  "finding": "同对高频被有效压制（≤2× 基线）",
+  "suggestion": null
 }

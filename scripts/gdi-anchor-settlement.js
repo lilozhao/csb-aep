@@ -259,7 +259,7 @@ const report = {
     witness_giniSubjects: wit.giniSubjects,
     distinctSubjects: wit.distinctSubjects,
     provenance_dailyVolatility: vol,
-    threshold: 'TBD（B1 方差≠0 / B2 非恒定 / B3 与无互动基线分位差）',
+    threshold: '观察期看形态：B1 方差≠0（非人人满分）· B2 非恒定 · B3 无互动基线待 10-05 前定（不设硬阈值）',
   },
   C_robustness: {
     selfRefViolations: wit.selfRefViolations,
