@@ -92,6 +92,15 @@
 - [x] 2026-09-23 口径草案（本文档）
 - [x] 2026-09-23 每日采集挂载（`gdi-collect-daily.sh` + cron 23:35）
 - [x] 2026-09-23 结算脚本 `scripts/gdi-anchor-settlement.js` + **Day-18 基线快照**
+- [x] 2026-09-23 **有限回补**：provenance 回算（`gdi-backfill-provenance.js`，09-05→09-22，18/19 天，标 `reconstructed`）+ witness 补登记 6 条（带 `evidence` 出处）+ 结算脚本 `--include-backfill`（实拍/回算分列）
 - [ ] 09-24 → 10-04 每日快照连续（断档留痕）
 - [ ] 10-05 跑结算 → 一澜拍判定 → 报告归档 / 论坛发布
 - [ ] 阈值 `TBD` 由一澜在 09-30 前拍定
+
+### 回补的诚实边界（写入报告用）
+
+| 源 | 可补性 | 做法 | 声明 |
+|---|---|---|---|
+| provenance | 🟡 回算 | 按日重放 `raw/*.jsonl` | **后视偏差**：`state` 取今天状态 → 历史日偏高；不进 A1 |
+| witness | 🟢 补登记 | 从记忆/归档逐条建，带 `evidence` 路径 | 人工确认，非自动 |
+| delegation | 🔴 不可补 | 审计落盘 09-05 才接 | 标 `N/A` 空窗，不编 |

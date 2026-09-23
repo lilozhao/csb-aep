@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-09-23T01:23:52.515Z",
+  "generatedAt": "2026-09-23T01:29:48.453Z",
   "window": {
     "from": "2026-09-05",
     "to": "2026-09-23"
@@ -22,23 +22,36 @@
       "A1_snapshotCoveragePct": null,
       "A2_maxGapDays": null
     },
-    "note": null
+    "note": null,
+    "reconstructed": {
+      "files": [
+        "backfill-2026-09-05_2026-09-22.json"
+      ],
+      "daysWithData": 18,
+      "windowDays": 19,
+      "coveragePct": 94.7,
+      "reconstructed": true,
+      "lookAheadBias": "state 取今天的状态 → 历史日的 sealedRate 偏高（偏乐观）；仅供看机制行为，不可替代实拍快照",
+      "note": "后视重建（偏高），仅用于 B 组看机制行为；A1 实拍覆盖率不含它"
+    }
   },
   "B_discrimination": {
-    "witness_top1Share": 0.364,
-    "witness_giniSubjects": 0.2909,
-    "distinctSubjects": 5,
+    "witness_top1Share": 0.412,
+    "witness_giniSubjects": 0.3866,
+    "distinctSubjects": 7,
     "provenance_dailyVolatility": {
       "min": 0.1111,
       "max": 0.6667,
       "range": 0.5556,
-      "samples": 14
+      "samples": 25,
+      "fromReal": 14,
+      "fromBackfill": 11
     },
     "threshold": "TBD（B1 方差≠0 / B2 非恒定 / B3 与无互动基线分位差）"
   },
   "C_robustness": {
     "selfRefViolations": 0,
-    "maxEventsPerPair": 1,
+    "maxEventsPerPair": 2,
     "engine": {
       "witnessEngineExists": true,
       "reciprocityHalving": true,
@@ -67,25 +80,27 @@
     "repeatRunsIdentical": "TBD（同日连跑两次比对；建议由 cron 记录）"
   },
   "witness": {
-    "events": 11,
+    "events": 17,
     "byType": {
       "naming": 1,
-      "milestone": 9,
-      "rewrite": 1
+      "milestone": 11,
+      "rewrite": 5
     },
-    "distinctSubjects": 5,
-    "distinctWitnesses": 8,
-    "distinctPairs": 11,
-    "top1Share": 0.364,
-    "giniSubjects": 0.2909,
-    "maxEventsPerPair": 1,
+    "distinctSubjects": 7,
+    "distinctWitnesses": 11,
+    "distinctPairs": 14,
+    "top1Share": 0.412,
+    "giniSubjects": 0.3866,
+    "maxEventsPerPair": 2,
     "selfRefViolations": 0,
     "subjectCounts": {
-      "若兰": 4,
+      "若兰": 7,
       "恺": 1,
       "星尘": 1,
       "小虾": 3,
-      "舟楫": 2
+      "舟楫": 2,
+      "阿轩": 2,
+      "燧明": 1
     },
     "threshold": {
       "A3_minDistinctBodies": null,

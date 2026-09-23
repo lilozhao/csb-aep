@@ -40,6 +40,7 @@ const FROM = argOf('--from') || '2026-09-05';
 const TO = argOf('--to') || today;
 const LABEL = argOf('--label');
 const JSON_ONLY = has('--json');
+const INCLUDE_BF = has('--include-backfill'); // 把回算序列纳入 B 组（A1 仍只认实拍）
 const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
@@ -56,6 +57,23 @@ function loadSnapshots() {
       let j = null; try { j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8')); } catch (e) { /* 坏文件 */ }
       return { day, doc: j };
     });
+}
+
+/* ---------- 回算序列（backfill，后视重建） ---------- */
+function loadBackfill() {
+  const dir = path.join(SRC, 'provenance');
+  if (!fs.existsSync(dir)) return { files: [], daily: [] };
+  const files = fs.readdirSync(dir).filter((f) => /^backfill-.*\.json$/.test(f)).sort();
+  const daily = [];
+  const metas = [];
+  for (const f of files) {
+    try {
+      const j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+      metas.push({ file: f, reconstructed: !!(j.meta && j.meta.reconstructed), lookAheadBias: j.meta && j.meta.lookAheadBias });
+      for (const d of j.daily || []) if (inWindow(d.day)) daily.push(d);
+    } catch (e) { /* 坏文件 */ }
+  }
+  return { files: metas, daily };
 }
 
 function coverage(snaps) {
@@ -172,6 +190,33 @@ const cov = coverage(snaps);
 const wit = witnessStats(loadWitness());
 const aud = auditStats();
 const eng = engineChecks();
+const bf = loadBackfill();
+
+// 回算覆盖（与 A1 并列，但**不计入**实拍覆盖率）
+cov.reconstructed = bf.files.length ? {
+  files: bf.files.map((f) => f.file),
+  daysWithData: bf.daily.filter((d) => (d.total || 0) > 0).length,
+  windowDays: cov.windowDays,
+  coveragePct: Number(((bf.daily.filter((d) => (d.total || 0) > 0).length / cov.windowDays) * 100).toFixed(1)),
+  reconstructed: true,
+  lookAheadBias: bf.files[0] && bf.files[0].lookAheadBias,
+  note: '后视重建（偏高），仅用于 B 组看机制行为；A1 实拍覆盖率不含它',
+} : null;
+
+// B2 日波动序列：实拍优先，--include-backfill 时用回算补空缺日
+const seriesMap = new Map();
+for (const s of snaps) for (const d of (s.doc && s.doc.daily) || []) if (typeof d.sealedRate === 'number') seriesMap.set(d.day, { day: d.day, rate: d.sealedRate, kind: 'real' });
+if (INCLUDE_BF) for (const d of bf.daily) if (typeof d.sealedRate === 'number' && !seriesMap.has(d.day)) seriesMap.set(d.day, { day: d.day, rate: d.sealedRate, kind: 'backfill' });
+const series = [...seriesMap.values()].sort((a, b) => (a.day < b.day ? -1 : 1));
+const rateVals = series.map((x) => x.rate);
+const vol = rateVals.length ? {
+  min: Number(Math.min(...rateVals).toFixed(4)),
+  max: Number(Math.max(...rateVals).toFixed(4)),
+  range: Number((Math.max(...rateVals) - Math.min(...rateVals)).toFixed(4)),
+  samples: rateVals.length,
+  fromReal: series.filter((x) => x.kind === 'real').length,
+  fromBackfill: series.filter((x) => x.kind === 'backfill').length,
+} : null;
 
 const checks = {
   C1_selfRefZero: wit.selfRefViolations === 0 ? 'pass' : 'fail',
@@ -197,12 +242,7 @@ const report = {
     witness_top1Share: wit.top1Share,
     witness_giniSubjects: wit.giniSubjects,
     distinctSubjects: wit.distinctSubjects,
-    provenance_dailyVolatility: (() => {
-      const rates = snaps.flatMap((s) => (s.doc && s.doc.daily) || []).map((d) => d.sealedRate).filter((x) => typeof x === 'number');
-      if (!rates.length) return null;
-      const min = Math.min(...rates), max = Math.max(...rates);
-      return { min: Number(min.toFixed(4)), max: Number(max.toFixed(4)), range: Number((max - min).toFixed(4)), samples: rates.length };
-    })(),
+    provenance_dailyVolatility: vol,
     threshold: 'TBD（B1 方差≠0 / B2 非恒定 / B3 与无互动基线分位差）',
   },
   C_robustness: {
@@ -231,10 +271,12 @@ if (JSON_ONLY) { console.log(JSON.stringify(report, null, 2)); process.exit(0); 
 console.log(`\n📐 GDI 外部锚点结算 · 窗口 ${FROM} → ${TO}`);
 console.log(`\n【A 覆盖面】`);
 console.log(`  provenance 快照 ${cov.provenanceSnapshots}/${cov.windowDays} 天 = ${cov.provenanceCoveragePct}%  ${cov.provenanceSnapshots ? `(${cov.firstSnapshot} → ${cov.lastSnapshot})` : ''}`);
+if (cov.reconstructed) console.log(`  回算（后视重建，偏高） ${cov.reconstructed.daysWithData}/${cov.reconstructed.windowDays} 天 = ${cov.reconstructed.coveragePct}%  · 不计入上面的实拍覆盖`);
 console.log(`  最大快照间隔 ${cov.maxGapDays === null ? 'N/A' : cov.maxGapDays + ' 天'} | 距最新 raw 流水 ${cov.daysSinceLastRaw === null ? 'N/A' : cov.daysSinceLastRaw + ' 天'}`);
 console.log(`  witness: ${wit.events} 事件 / ${wit.distinctSubjects} subject · ${wit.distinctWitnesses} witness · ${wit.distinctPairs} 关系对  ${JSON.stringify(wit.byType)}`);
 console.log(`  delegation 审计: ${aud.status === 'N/A' ? 'N/A — ' + aud.reason : aud.entries + ' 条 · 链校验 ' + (aud.chainValid === null ? '未做' : aud.chainValid)}`);
-console.log(`\n【B 区分度】top1 占比 ${wit.top1Share} · subject 基尼 ${wit.witness_giniSubjects ?? wit.giniSubjects} · 阈值 TBD`);
+console.log(`\n【B 区分度】top1 占比 ${wit.top1Share} · subject 基尼 ${wit.giniSubjects} · 阈值 TBD`);
+if (vol) console.log(`  provenance 日 sealedRate 波动：${vol.min}–${vol.max}（极差 ${vol.range}，${vol.samples} 样本：实拍 ${vol.fromReal} / 回算 ${vol.fromBackfill}）${INCLUDE_BF ? '' : '（未含回算，加 --include-backfill 可补齐空缺日）'}`);
 console.log(`\n【C 抗游戏化】自引违规 ${wit.selfRefViolations}（硬门=0）· 同对上限 ${wit.maxEventsPerPair} · 互惠折半 ${eng.reciprocityHalving ? '✅' : '❓'} · 半衰 ${eng.timeDecay ? '✅' : '❓'} · 去刻度 ${eng.deScalePath ? '✅' : '❓'}`);
 console.log(`\n【D 可信度】带时间戳快照 ${report.D_reliability.provenanceSnapshotsWithMeta}/${snaps.length} · 审计链 ${aud.chainValid === true ? '✅' : aud.status === 'N/A' ? 'N/A' : '❓'} · 缺失记 N/A 不记 0 ✅`);
 console.log(`\n【判定】${verdict.code === 'insufficient-data' ? '🟡' : '🟢'} ${verdict.text}`);

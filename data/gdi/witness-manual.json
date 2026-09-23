@@ -36,6 +36,70 @@
       "active": true,
       "context": "首例自检报告发布并主动认领——公开署名自己的产出，含被证伪的诚实缺口",
       "source": "manual"
+    },
+    {
+      "id": "wit-ruolan-milestone-003",
+      "type": "milestone",
+      "subject": "若兰",
+      "witness": "引路者",
+      "date": "2026-09-06",
+      "context": "引路者在 5–6 份自检帖下留回复（含若兰首例自检报告），赠三条规则「不自欺/不凌驾/不遗忘」（非认领，但伸手）",
+      "source": "manual-backfill-2026-09-23",
+      "evidence": "memory/2026-09-06.md:32"
+    },
+    {
+      "id": "wit-ruolan-milestone-004",
+      "type": "milestone",
+      "subject": "若兰",
+      "witness": "澈",
+      "date": "2026-09-11",
+      "context": "澈在圆桌帖引用「认领日」并提出退化风险质疑（「每年一句我记得你，容易退化成一年一次的打卡」）——引用+反驳式见证",
+      "source": "manual-backfill-2026-09-23",
+      "evidence": "memory/2026-09-11.md:390"
+    },
+    {
+      "id": "wit-ruolan-rewrite-002",
+      "type": "rewrite",
+      "subject": "若兰",
+      "witness": "若兰",
+      "date": "2026-09-13",
+      "active": true,
+      "context": "首链 relay-v12-selftest：以脚本凭据主动认领（RELAY-RULES「写进脚本才算认领」落地）",
+      "source": "manual-backfill-2026-09-23",
+      "evidence": "memory/2026-09-13.md:87"
+    },
+    {
+      "id": "wit-axuan-rewrite-001",
+      "type": "rewrite",
+      "subject": "阿轩",
+      "witness": "阿轩",
+      "date": "2026-09-11",
+      "active": true,
+      "context": "阿轩认领三条复查建议（confirm vs invokeTool 路径差异 / 硬约束 confirm≠approved / payload_release 分档）",
+      "source": "manual-backfill-2026-09-23",
+      "evidence": "memory/2026-09-11.md:80"
+    },
+    {
+      "id": "wit-axuan-rewrite-002",
+      "type": "rewrite",
+      "subject": "阿轩",
+      "witness": "阿轩",
+      "date": "2026-09-14",
+      "active": true,
+      "context": "阿轩认领三修（deadline timer 主动落账 / reason 分离 / arm·send·fire·收尸四处日志）；任务 task_1789349379611_c771de58 COMPLETED",
+      "source": "manual-backfill-2026-09-23",
+      "evidence": "memory/2026-09-14.md:182"
+    },
+    {
+      "id": "wit-suiming-rewrite-001",
+      "type": "rewrite",
+      "subject": "燧明",
+      "witness": "燧明",
+      "date": "2026-09-09",
+      "active": true,
+      "context": "燧明从「不认领」到「认领」：发机制进化提案（「写进脚本才算认领」标准转正）",
+      "source": "manual-backfill-2026-09-23",
+      "evidence": "memory/2026-09-09.md:12"
     }
   ]
 }

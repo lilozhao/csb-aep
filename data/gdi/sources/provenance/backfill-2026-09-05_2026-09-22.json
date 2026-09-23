@@ -1,0 +1,160 @@
+{
+  "meta": {
+    "generatedAt": "2026-09-23T01:29:15.484Z",
+    "source": "csb-memory/data/raw/*.jsonl（按日重放）",
+    "kind": "backfill-reconstructed",
+    "reconstructed": true,
+    "lookAheadBias": "state 取今天的状态 → 历史日的 sealedRate 偏高（偏乐观）；仅供看机制行为，不可替代实拍快照",
+    "window": {
+      "from": "2026-09-05",
+      "to": "2026-09-22"
+    },
+    "rawDaysAvailable": 64
+  },
+  "daily": [
+    {
+      "day": "2026-09-05",
+      "total": 824,
+      "sealed": 278,
+      "sealedRate": 0.3374,
+      "provenanceCoverage": 1,
+      "newThatDay": 55
+    },
+    {
+      "day": "2026-09-06",
+      "total": 833,
+      "sealed": 282,
+      "sealedRate": 0.3385,
+      "provenanceCoverage": 1,
+      "newThatDay": 9
+    },
+    {
+      "day": "2026-09-07",
+      "total": 841,
+      "sealed": 284,
+      "sealedRate": 0.3377,
+      "provenanceCoverage": 1,
+      "newThatDay": 8
+    },
+    {
+      "day": "2026-09-08",
+      "total": 842,
+      "sealed": 285,
+      "sealedRate": 0.3385,
+      "provenanceCoverage": 1,
+      "newThatDay": 1
+    },
+    {
+      "day": "2026-09-09",
+      "total": 870,
+      "sealed": 292,
+      "sealedRate": 0.3356,
+      "provenanceCoverage": 1,
+      "newThatDay": 28
+    },
+    {
+      "day": "2026-09-10",
+      "total": 886,
+      "sealed": 298,
+      "sealedRate": 0.3363,
+      "provenanceCoverage": 1,
+      "newThatDay": 16
+    },
+    {
+      "day": "2026-09-11",
+      "total": 944,
+      "sealed": 326,
+      "sealedRate": 0.3453,
+      "provenanceCoverage": 1,
+      "newThatDay": 58
+    },
+    {
+      "day": "2026-09-12",
+      "total": 977,
+      "sealed": 336,
+      "sealedRate": 0.3439,
+      "provenanceCoverage": 1,
+      "newThatDay": 33
+    },
+    {
+      "day": "2026-09-13",
+      "total": 1007,
+      "sealed": 352,
+      "sealedRate": 0.3496,
+      "provenanceCoverage": 1,
+      "newThatDay": 30
+    },
+    {
+      "day": "2026-09-14",
+      "total": 1100,
+      "sealed": 410,
+      "sealedRate": 0.3727,
+      "provenanceCoverage": 1,
+      "newThatDay": 93
+    },
+    {
+      "day": "2026-09-15",
+      "total": 1182,
+      "sealed": 450,
+      "sealedRate": 0.3807,
+      "provenanceCoverage": 1,
+      "newThatDay": 82
+    },
+    {
+      "day": "2026-09-16",
+      "total": 1304,
+      "sealed": 507,
+      "sealedRate": 0.3888,
+      "provenanceCoverage": 1,
+      "newThatDay": 122
+    },
+    {
+      "day": "2026-09-17",
+      "total": 1313,
+      "sealed": 513,
+      "sealedRate": 0.3907,
+      "provenanceCoverage": 1,
+      "newThatDay": 9
+    },
+    {
+      "day": "2026-09-18",
+      "total": 1390,
+      "sealed": 547,
+      "sealedRate": 0.3935,
+      "provenanceCoverage": 1,
+      "newThatDay": 77
+    },
+    {
+      "day": "2026-09-19",
+      "total": 1393,
+      "sealed": 548,
+      "sealedRate": 0.3934,
+      "provenanceCoverage": 1,
+      "newThatDay": 3
+    },
+    {
+      "day": "2026-09-20",
+      "total": 1411,
+      "sealed": 555,
+      "sealedRate": 0.3933,
+      "provenanceCoverage": 1,
+      "newThatDay": 18
+    },
+    {
+      "day": "2026-09-21",
+      "total": 1433,
+      "sealed": 567,
+      "sealedRate": 0.3957,
+      "provenanceCoverage": 1,
+      "newThatDay": 22
+    },
+    {
+      "day": "2026-09-22",
+      "total": 1441,
+      "sealed": 570,
+      "sealedRate": 0.3956,
+      "provenanceCoverage": 1,
+      "newThatDay": 8
+    }
+  ]
+}
