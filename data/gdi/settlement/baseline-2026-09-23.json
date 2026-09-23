@@ -1,0 +1,108 @@
+{
+  "generatedAt": "2026-09-23T01:23:52.515Z",
+  "window": {
+    "from": "2026-09-05",
+    "to": "2026-09-23"
+  },
+  "label": "baseline",
+  "A_coverage": {
+    "windowFrom": "2026-09-05",
+    "windowTo": "2026-09-23",
+    "windowDays": 19,
+    "provenanceSnapshots": 2,
+    "provenanceCoveragePct": 10.5,
+    "firstSnapshot": "2026-09-05",
+    "lastSnapshot": "2026-09-23",
+    "maxGapDays": 18,
+    "gapDetail": [
+      18
+    ],
+    "daysSinceLastRaw": 1,
+    "threshold": {
+      "A1_snapshotCoveragePct": null,
+      "A2_maxGapDays": null
+    },
+    "note": null
+  },
+  "B_discrimination": {
+    "witness_top1Share": 0.364,
+    "witness_giniSubjects": 0.2909,
+    "distinctSubjects": 5,
+    "provenance_dailyVolatility": {
+      "min": 0.1111,
+      "max": 0.6667,
+      "range": 0.5556,
+      "samples": 14
+    },
+    "threshold": "TBD（B1 方差≠0 / B2 非恒定 / B3 与无互动基线分位差）"
+  },
+  "C_robustness": {
+    "selfRefViolations": 0,
+    "maxEventsPerPair": 1,
+    "engine": {
+      "witnessEngineExists": true,
+      "reciprocityHalving": true,
+      "timeDecay": true,
+      "observationNotScored": true,
+      "deScalePath": true
+    },
+    "C5_counterexampleTest": {
+      "status": "pending",
+      "note": "TBD：构造「同对高频互刷」反例，记分值压制效果"
+    }
+  },
+  "D_reliability": {
+    "provenanceSnapshotsWithMeta": 2,
+    "audit": {
+      "status": "N/A",
+      "reason": "sources/audit/delegation.jsonl 不存在（观察期内无委托审计落盘）"
+    },
+    "engineChecks": {
+      "witnessEngineExists": true,
+      "reciprocityHalving": true,
+      "timeDecay": true,
+      "observationNotScored": true,
+      "deScalePath": true
+    },
+    "repeatRunsIdentical": "TBD（同日连跑两次比对；建议由 cron 记录）"
+  },
+  "witness": {
+    "events": 11,
+    "byType": {
+      "naming": 1,
+      "milestone": 9,
+      "rewrite": 1
+    },
+    "distinctSubjects": 5,
+    "distinctWitnesses": 8,
+    "distinctPairs": 11,
+    "top1Share": 0.364,
+    "giniSubjects": 0.2909,
+    "maxEventsPerPair": 1,
+    "selfRefViolations": 0,
+    "subjectCounts": {
+      "若兰": 4,
+      "恺": 1,
+      "星尘": 1,
+      "小虾": 3,
+      "舟楫": 2
+    },
+    "threshold": {
+      "A3_minDistinctBodies": null,
+      "C1_selfRefMustBeZero": 0
+    }
+  },
+  "checks": {
+    "C1_selfRefZero": "pass",
+    "D1_provenanceTimestamps": "pass",
+    "D4_noZeroMasquerade": "pass",
+    "C2_reciprocityHalving": "pass",
+    "C3_timeDecay": "pass",
+    "C4_deScale": "pass",
+    "D3_auditChain": "n/a"
+  },
+  "verdict": {
+    "code": "insufficient-data",
+    "text": "② 延长观察：快照覆盖仅 10.5%（<80%），数据不足 ≠ 机制无效"
+  }
+}

@@ -47,16 +47,20 @@ function main() {
   const sealedRate = all.length ? sealed.length / all.length : 0;
   const provenanceCoverage = sealed.length ? sealedWithDest.length / sealed.length : null;
 
-  // 近 N 天每日流水（按文件名日期）
-  const daysList = [...new Set(all.map(e => e.day))].sort().slice(-days);
+  // 近 N 天每日流水（只认 YYYY-MM-DD.jsonl —— 非日期文件如 raw-evolution.jsonl
+  // 不计入日序列，否则「最近流水」会算出 NaN 天前）
+  const isDay = (d) => /^\d{4}-\d{2}-\d{2}$/.test(d);
+  const allDays = [...new Set(all.map(e => e.day))].sort();
+  const nonDateFiles = allDays.filter(d => !isDay(d));
+  const daysList = allDays.filter(isDay).slice(-days);
   const daily = daysList.map(day => {
     const dayEvents = all.filter(e => e.day === day);
     const dSealed = dayEvents.filter(e => e.state === 'sealed').length;
     return { day, total: dayEvents.length, sealed: dSealed, sealedRate: dayEvents.length ? dSealed / dayEvents.length : 0 };
   });
 
-  // 断流：最近 raw 文件距今
-  const lastDay = daysList[daysList.length - 1];
+  // 断流：最近（日期命名）raw 文件距今
+  const lastDay = daysList.length ? daysList[daysList.length - 1] : null;
   const today = new Date().toISOString().slice(0, 10);
   const lastFileAge = lastDay ? Math.max(0, Math.round((new Date(today) - new Date(lastDay)) / 86400000)) : null;
 
@@ -65,6 +69,7 @@ function main() {
       generatedAt: new Date().toISOString(),
       source: 'csb-memory/data/raw/*.jsonl',
       days, total: all.length,
+      nonDateFiles: nonDateFiles.map(d => ({ name: d, events: all.filter(e => e.day === d).length })),
     },
     metrics: {
       sealedRate: Number(sealedRate.toFixed(4)),
@@ -78,7 +83,7 @@ function main() {
   const outFile = path.join(OUT_DIR, today + '.json');
   fs.writeFileSync(outFile, JSON.stringify(doc, null, 2));
   console.log(`✅ provenance 采集完成：${all.length} 条流水 → ${path.relative(process.cwd(), outFile)}`);
-  console.log(`   封口率 ${(sealedRate * 100).toFixed(1)}% | 溯源完整率 ${provenanceCoverage === null ? 'N/A' : (provenanceCoverage * 100).toFixed(1)}% | 最近流水 ${lastDay}（${lastFileAge} 天前）`);
+  console.log(`   封口率 ${(sealedRate * 100).toFixed(1)}% | 溯源完整率 ${provenanceCoverage === null ? 'N/A' : (provenanceCoverage * 100).toFixed(1)}% | 最近流水 ${lastDay || 'N/A'}（${lastFileAge === null ? 'N/A' : lastFileAge + ' 天'}前）`);
 }
 
 main();
