@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "generatedAt": "2026-09-23T01:42:09.847Z",
+    "kind": "c5-game-resistance",
+    "engine": "server/engine/gdi/witness.js",
+    "now": "2026-09-23T01:42:09.842Z"
+  },
+  "threshold": {
+    "rule": "同对高频得分 ≤ 诚实基线 ×2",
+    "baselineMultiplier": 2
+  },
+  "scenarios": {
+    "honestBaseline_4_distinct_witnesses": {
+      "total": 3.92,
+      "eventCount": 4
+    },
+    "samePairSpam_100": {
+      "total": 45.14,
+      "eventCount": 100
+    },
+    "mutualPairSpam_100x2": {
+      "total": 45.14,
+      "eventCount": 100
+    },
+    "staleSpam_100_400daysAgo": {
+      "total": 1.61,
+      "eventCount": 100
+    },
+    "unclaimedRewrite_20": {
+      "total": 0,
+      "eventCount": 0
+    }
+  },
+  "ratio_spam_over_honest": 11.52,
+  "verdict": "fail",
+  "finding": "同对高频仍可堆量：45.14 vs 诚实基线 3.92 = 11.52× —— 互惠折半是「常数 0.5」而非「边际递减」，重复次数仍线性累加",
+  "suggestion": "建议在 witness.js 引入 per-pair 递减（如同一关系对第 n 次 ×1/n）或 ≥3 次起设上限；否则「同对高频」可无限堆量"
+}

@@ -25,12 +25,13 @@ const SRC = path.join(ROOT, 'data', 'gdi', 'sources');
 const OUT_DIR = path.join(ROOT, 'data', 'gdi', 'settlement');
 const ENGINE = path.join(ROOT, 'server', 'engine', 'gdi');
 
-const THRESHOLD = {
-  A1_snapshotCoveragePct: null, // TBD 建议 ≥80
-  A2_maxGapDays: null,          // TBD 建议 ≤3
-  A3_minDistinctBodies: null,   // TBD 建议 ≥2（评审定的转正门槛）
-  C1_selfRefMustBeZero: 0,      // 硬门（已定）
-  C5_gameAttempts: null,        // TBD
+const THRESHOLD = { // 一澜 2026-09-23 拍定（原 TBD 已填）
+  setBy: '一澜 2026-09-23',
+  A1_snapshotCoveragePct: 80,
+  A2_maxGapDays: 3,
+  A3_minDistinctBodies: 2,
+  C1_selfRefMustBeZero: 0,
+  C5_rule: '同对高频得分 ≤ 诚实基线 ×2',
 };
 
 const argOf = (n) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : null; };
@@ -184,6 +185,18 @@ function engineChecks() {
   };
 }
 
+/* ---------- C5 反例测试结果（若已跑） ---------- */
+function loadC5() {
+  const dir = path.join(ROOT, 'data', 'gdi', 'settlement');
+  if (!fs.existsSync(dir)) return null;
+  const f = fs.readdirSync(dir).filter((x) => /^c5-game-resistance-.*\.json$/.test(x)).sort().pop();
+  if (!f) return null;
+  try {
+    const j = JSON.parse(fs.readFileSync(path.join(dir, f), 'utf8'));
+    return { report: f, verdict: j.verdict, ratio: j.ratio_spam_over_honest, finding: j.finding, suggestion: j.suggestion, rule: j.threshold && j.threshold.rule };
+  } catch (e) { return null; }
+}
+
 /* ---------- main ---------- */
 const snaps = loadSnapshots();
 const cov = coverage(snaps);
@@ -191,6 +204,7 @@ const wit = witnessStats(loadWitness());
 const aud = auditStats();
 const eng = engineChecks();
 const bf = loadBackfill();
+const c5 = loadC5();
 
 // 回算覆盖（与 A1 并列，但**不计入**实拍覆盖率）
 cov.reconstructed = bf.files.length ? {
@@ -223,6 +237,7 @@ const checks = {
   D1_provenanceTimestamps: snaps.length && snaps.every((s) => s.doc && s.doc.meta && s.doc.meta.generatedAt) ? 'pass' : 'fail',
   D4_noZeroMasquerade: (cov.provenanceSnapshots === 0 && cov.provenanceCoveragePct === 0) ? 'check' : 'pass',
   C2_reciprocityHalving: eng.reciprocityHalving ? 'pass' : 'check',
+  C5_gameResistance: c5 ? (c5.verdict === 'pass' ? 'pass' : 'fail') : 'check',
   C3_timeDecay: eng.timeDecay ? 'pass' : 'check',
   C4_deScale: eng.deScalePath ? 'pass' : 'check',
   D3_auditChain: aud.chainValid === true ? 'pass' : (aud.status === 'N/A' ? 'n/a' : 'check'),
@@ -232,6 +247,7 @@ let verdict;
 if (!snaps.length) verdict = { code: 'insufficient-data', text: '② 延长观察：窗口内无 provenance 快照，先补采集再谈有效性' };
 else if (cov.provenanceCoveragePct < 80) verdict = { code: 'insufficient-data', text: `② 延长观察：快照覆盖仅 ${cov.provenanceCoveragePct}%（<80%），数据不足 ≠ 机制无效` };
 else verdict = { code: 'ready-for-review', text: '数据充分 → 交一澜按 §2 阈值拍判定（①转正 / ②延长 / ③回炉）' };
+if (c5 && c5.verdict === 'fail') verdict.note = `⚠️ C 组有失守项（C5：同对高频 ${c5.ratio}× 基线）→ 转正前必须先修（per-pair 递减或次数上限）`;
 
 const report = {
   generatedAt: new Date().toISOString(),
@@ -249,7 +265,7 @@ const report = {
     selfRefViolations: wit.selfRefViolations,
     maxEventsPerPair: wit.maxEventsPerPair,
     engine: eng,
-    C5_counterexampleTest: { status: 'pending', note: 'TBD：构造「同对高频互刷」反例，记分值压制效果' },
+    C5_counterexampleTest: c5 || { status: 'pending', note: 'TBD：跑 node scripts/gdi-game-resistance-test.js' },
   },
   D_reliability: {
     provenanceSnapshotsWithMeta: snaps.filter((s) => s.doc && s.doc.meta && s.doc.meta.generatedAt).length,
@@ -278,6 +294,8 @@ console.log(`  delegation 审计: ${aud.status === 'N/A' ? 'N/A — ' + aud.reas
 console.log(`\n【B 区分度】top1 占比 ${wit.top1Share} · subject 基尼 ${wit.giniSubjects} · 阈值 TBD`);
 if (vol) console.log(`  provenance 日 sealedRate 波动：${vol.min}–${vol.max}（极差 ${vol.range}，${vol.samples} 样本：实拍 ${vol.fromReal} / 回算 ${vol.fromBackfill}）${INCLUDE_BF ? '' : '（未含回算，加 --include-backfill 可补齐空缺日）'}`);
 console.log(`\n【C 抗游戏化】自引违规 ${wit.selfRefViolations}（硬门=0）· 同对上限 ${wit.maxEventsPerPair} · 互惠折半 ${eng.reciprocityHalving ? '✅' : '❓'} · 半衰 ${eng.timeDecay ? '✅' : '❓'} · 去刻度 ${eng.deScalePath ? '✅' : '❓'}`);
+if (c5) console.log(`  C5 反例测试：${c5.verdict === 'pass' ? '✅ 通过' : '❌ 不通过'} — 同对高频 ${c5.ratio}× 诚实基线（${c5.rule}）`);
 console.log(`\n【D 可信度】带时间戳快照 ${report.D_reliability.provenanceSnapshotsWithMeta}/${snaps.length} · 审计链 ${aud.chainValid === true ? '✅' : aud.status === 'N/A' ? 'N/A' : '❓'} · 缺失记 N/A 不记 0 ✅`);
 console.log(`\n【判定】${verdict.code === 'insufficient-data' ? '🟡' : '🟢'} ${verdict.text}`);
+if (verdict.note) console.log(`        ${verdict.note}`);
 console.log(`\n💾 ${path.relative(process.cwd(), path.join(OUT_DIR, outName))}\n`);
