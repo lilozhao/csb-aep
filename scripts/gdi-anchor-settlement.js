@@ -36,9 +36,21 @@ const THRESHOLD = { // 一澜 2026-09-23 拍定（原 TBD 已填）
 
 const argOf = (n) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : null; };
 const has = (n) => process.argv.includes(n);
-const today = new Date().toISOString().slice(0, 10);
+const localDay = (d = new Date()) => d.toLocaleDateString('sv-SE'); // YYYY-MM-DD（容器 TZ=Asia/Shanghai）
+const today = localDay();
 const FROM = argOf('--from') || '2026-09-05';
 const TO = argOf('--to') || today;
+// A1/A2 覆盖窗口起点 = 采集启用日（2026-09-23 挂上每日采集 cron）。
+// 理由（一澜 2026-09-24 拍定，方案 a）：实拍快照无法回溯补齐，
+// 若分母含「采集尚未上线的过去」，A1≥80% 在结构上不可达（天花板 13/31≈42%）。
+// A1 应衡量「能否持续采集」，而非「能否回到过去」。
+const COLLECT_FROM = argOf('--collect-from') || '2026-09-23';
+// A1 分母只算「采集应已完成」的日子：采集 cron 23:35 跑；未到点则只算到昨天。
+// 若调用方显式给了 --to（回顾/推演），以其为准。
+const _now = new Date();
+const _collectedToday = (_now.getHours() * 60 + _now.getMinutes()) >= 23 * 60 + 35;
+const _lastDue = _collectedToday ? today : localDay(new Date(_now.getTime() - 86400000));
+let COV_TO = argOf('--to') ? TO : (_lastDue < TO ? _lastDue : TO);
 const LABEL = argOf('--label');
 const JSON_ONLY = has('--json');
 const INCLUDE_BF = has('--include-backfill'); // 把回算序列纳入 B 组（A1 仍只认实拍）
@@ -78,15 +90,19 @@ function loadBackfill() {
 }
 
 function coverage(snaps) {
-  const windowDays = days(FROM, TO) + 1;
-  const inWin = snaps.filter((s) => inWindow(s.day));
+  const obsWindowDays = days(FROM, TO) + 1;            // 观察期全窗（09-05→10-05）
+  const covFrom = COLLECT_FROM > FROM ? COLLECT_FROM : FROM; // A1/A2 实际覆盖窗口起点
+  const windowDays = Math.max(1, days(covFrom, COV_TO) + 1);
+  const inWin = snaps.filter((s) => s.day >= covFrom && s.day <= COV_TO);
   const haveDays = inWin.map((s) => s.day);
-  const gaps = [];
+  const gaps = haveDays.length ? [days(covFrom, haveDays[0])] : []; // 含「启用日→首个快照」的间隔
   for (let i = 1; i < haveDays.length; i++) gaps.push(days(haveDays[i - 1], haveDays[i]));
   const latest = snaps.length ? snaps[snaps.length - 1] : null;
   const lastRawAge = latest && latest.doc && latest.doc.metrics ? latest.doc.metrics.lastFileAge : null;
   return {
-    windowFrom: FROM, windowTo: TO, windowDays,
+    windowFrom: covFrom, windowTo: COV_TO, windowDays,
+    collectFrom: COLLECT_FROM,
+    observationWindowFrom: FROM, observationWindowTo: TO, observationWindowDays: obsWindowDays,
     provenanceSnapshots: haveDays.length,
     provenanceCoveragePct: Number(((haveDays.length / windowDays) * 100).toFixed(1)),
     firstSnapshot: haveDays[0] || null,
@@ -210,8 +226,8 @@ const c5 = loadC5();
 cov.reconstructed = bf.files.length ? {
   files: bf.files.map((f) => f.file),
   daysWithData: bf.daily.filter((d) => (d.total || 0) > 0).length,
-  windowDays: cov.windowDays,
-  coveragePct: Number(((bf.daily.filter((d) => (d.total || 0) > 0).length / cov.windowDays) * 100).toFixed(1)),
+  windowDays: cov.observationWindowDays,
+  coveragePct: Number(((bf.daily.filter((d) => (d.total || 0) > 0).length / cov.observationWindowDays) * 100).toFixed(1)),
   reconstructed: true,
   lookAheadBias: bf.files[0] && bf.files[0].lookAheadBias,
   note: '后视重建（偏高），仅用于 B 组看机制行为；A1 实拍覆盖率不含它',
@@ -287,6 +303,7 @@ if (JSON_ONLY) { console.log(JSON.stringify(report, null, 2)); process.exit(0); 
 console.log(`\n📐 GDI 外部锚点结算 · 窗口 ${FROM} → ${TO}`);
 console.log(`\n【A 覆盖面】`);
 console.log(`  provenance 快照 ${cov.provenanceSnapshots}/${cov.windowDays} 天 = ${cov.provenanceCoveragePct}%  ${cov.provenanceSnapshots ? `(${cov.firstSnapshot} → ${cov.lastSnapshot})` : ''}`);
+console.log(`  A1 窗口起点 = 采集启用日 ${cov.collectFrom} → ${cov.windowTo}（观察期全窗 ${cov.observationWindowFrom} → ${cov.observationWindowTo} 共 ${cov.observationWindowDays} 天；实测不可回溯）`);
 if (cov.reconstructed) console.log(`  回算（后视重建，偏高） ${cov.reconstructed.daysWithData}/${cov.reconstructed.windowDays} 天 = ${cov.reconstructed.coveragePct}%  · 不计入上面的实拍覆盖`);
 console.log(`  最大快照间隔 ${cov.maxGapDays === null ? 'N/A' : cov.maxGapDays + ' 天'} | 距最新 raw 流水 ${cov.daysSinceLastRaw === null ? 'N/A' : cov.daysSinceLastRaw + ' 天'}`);
 console.log(`  witness: ${wit.events} 事件 / ${wit.distinctSubjects} subject · ${wit.distinctWitnesses} witness · ${wit.distinctPairs} 关系对  ${JSON.stringify(wit.byType)}`);

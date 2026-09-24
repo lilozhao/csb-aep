@@ -1,9 +1,9 @@
 {
   "meta": {
-    "generatedAt": "2026-09-23T01:23:55.024Z",
+    "generatedAt": "2026-09-23T15:35:05.832Z",
     "source": "csb-memory/data/raw/*.jsonl",
     "days": 7,
-    "total": 1762,
+    "total": 1787,
     "nonDateFiles": [
       {
         "name": "raw-evolution",
@@ -12,19 +12,13 @@
     ]
   },
   "metrics": {
-    "sealedRate": 0.3235,
+    "sealedRate": 0.319,
     "provenanceCoverage": 1,
     "sealed": 570,
-    "burning": 871,
-    "lastFileAge": 1
+    "burning": 896,
+    "lastFileAge": 0
   },
   "daily": [
-    {
-      "day": "2026-09-16",
-      "total": 122,
-      "sealed": 57,
-      "sealedRate": 0.4672131147540984
-    },
     {
       "day": "2026-09-17",
       "total": 9,
@@ -60,6 +54,12 @@
       "total": 8,
       "sealed": 3,
       "sealedRate": 0.375
+    },
+    {
+      "day": "2026-09-23",
+      "total": 25,
+      "sealed": 0,
+      "sealedRate": 0
     }
   ]
 }
