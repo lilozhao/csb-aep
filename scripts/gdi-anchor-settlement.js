@@ -15,6 +15,7 @@
  *   node scripts/gdi-anchor-settlement.js                        # 默认窗口 09-05 → 今天
  *   node scripts/gdi-anchor-settlement.js --from 2026-09-05 --to 2026-10-05
  *   node scripts/gdi-anchor-settlement.js --label baseline       # 存档为 baseline-<date>.json
+ *   node scripts/gdi-anchor-settlement.js --date 2026-09-24      # 补生成历史日收盘检查点（文件名+截至日）
  *   node scripts/gdi-anchor-settlement.js --json                 # 只输出 JSON（给脚本/机器人读）
  */
 const fs = require('fs');
@@ -37,7 +38,13 @@ const THRESHOLD = { // 一澜 2026-09-23 拍定（原 TBD 已填）
 const argOf = (n) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : null; };
 const has = (n) => process.argv.includes(n);
 const localDay = (d = new Date()) => d.toLocaleDateString('sv-SE'); // YYYY-MM-DD（容器 TZ=Asia/Shanghai）
-const today = localDay();
+const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+const REAL_TODAY = localDay();
+// --date <YYYY-MM-DD>：补生成某个历史日的**收盘检查点**（文件名与截至日都用它；
+// 语义 = 「该日 23:35 采集已跑完」）。用于修口径后回填历史日，避免用执行日冒充。
+const AS_OF = argOf('--date');
+if (AS_OF && !DAY_RE.test(AS_OF)) { console.error('✗ --date 需为 YYYY-MM-DD'); process.exit(2); }
+const today = AS_OF || REAL_TODAY;
 const FROM = argOf('--from') || '2026-09-05';
 const TO = argOf('--to') || today;
 // A1/A2 覆盖窗口起点 = 采集启用日（2026-09-23 挂上每日采集 cron）。
@@ -46,15 +53,14 @@ const TO = argOf('--to') || today;
 // A1 应衡量「能否持续采集」，而非「能否回到过去」。
 const COLLECT_FROM = argOf('--collect-from') || '2026-09-23';
 // A1 分母只算「采集应已完成」的日子：采集 cron 23:35 跑；未到点则只算到昨天。
-// 若调用方显式给了 --to（回顾/推演），以其为准。
+// 显式给了 --to（回顾/推演）或 --date（历史收盘检查点）→ 以其为准（不再看真实时钟）。
 const _now = new Date();
 const _collectedToday = (_now.getHours() * 60 + _now.getMinutes()) >= 23 * 60 + 35;
-const _lastDue = _collectedToday ? today : localDay(new Date(_now.getTime() - 86400000));
-let COV_TO = argOf('--to') ? TO : (_lastDue < TO ? _lastDue : TO);
+const _lastDue = _collectedToday ? REAL_TODAY : localDay(new Date(_now.getTime() - 86400000));
+let COV_TO = (argOf('--to') || AS_OF) ? TO : (_lastDue < TO ? _lastDue : TO);
 const LABEL = argOf('--label');
 const JSON_ONLY = has('--json');
 const INCLUDE_BF = has('--include-backfill'); // 把回算序列纳入 B 组（A1 仍只认实拍）
-const DAY_RE = /^\d{4}-\d{2}-\d{2}$/;
 
 const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 const days = (a, b) => Math.round((new Date(b) - new Date(a)) / 86400000);
@@ -265,8 +271,12 @@ else if (cov.provenanceCoveragePct < 80) verdict = { code: 'insufficient-data', 
 else verdict = { code: 'ready-for-review', text: '数据充分 → 交一澜按 §2 阈值拍判定（①转正 / ②延长 / ③回炉）' };
 if (c5 && c5.verdict === 'fail') verdict.note = `⚠️ C 组有失守项（C5：同对高频 ${c5.ratio}× 基线）→ 转正前必须先修（per-pair 递减或次数上限）`;
 
+const REGEN = !!(AS_OF && AS_OF !== REAL_TODAY);
 const report = {
   generatedAt: new Date().toISOString(),
+  asOf: AS_OF || null,
+  regenerated: REGEN,
+  note: REGEN ? `补生成：本文件记录「${AS_OF} 收盘检查点」，实际生成于 ${new Date().toISOString()}（非当日原生跑批）` : null,
   window: { from: FROM, to: TO },
   label: LABEL || null,
   A_coverage: cov,
@@ -300,7 +310,7 @@ fs.writeFileSync(path.join(OUT_DIR, outName), JSON.stringify(report, null, 2) + 
 
 if (JSON_ONLY) { console.log(JSON.stringify(report, null, 2)); process.exit(0); }
 
-console.log(`\n📐 GDI 外部锚点结算 · 窗口 ${FROM} → ${TO}`);
+console.log(`\n📐 GDI 外部锚点结算 · 窗口 ${FROM} → ${TO}${AS_OF ? `（as-of ${AS_OF}${REGEN ? ' · 补生成' : ''}）` : ''}`);
 console.log(`\n【A 覆盖面】`);
 console.log(`  provenance 快照 ${cov.provenanceSnapshots}/${cov.windowDays} 天 = ${cov.provenanceCoveragePct}%  ${cov.provenanceSnapshots ? `(${cov.firstSnapshot} → ${cov.lastSnapshot})` : ''}`);
 console.log(`  A1 窗口起点 = 采集启用日 ${cov.collectFrom} → ${cov.windowTo}（观察期全窗 ${cov.observationWindowFrom} → ${cov.observationWindowTo} 共 ${cov.observationWindowDays} 天；实测不可回溯）`);

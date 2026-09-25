@@ -1,26 +1,29 @@
 {
-  "generatedAt": "2026-09-24T00:54:42.718Z",
+  "generatedAt": "2026-09-25T00:39:07.649Z",
+  "asOf": "2026-09-24",
+  "regenerated": true,
+  "note": "补生成：本文件记录「2026-09-24 收盘检查点」，实际生成于 2026-09-25T00:39:07.649Z（非当日原生跑批）",
   "window": {
     "from": "2026-09-05",
     "to": "2026-09-24"
   },
   "label": null,
   "A_coverage": {
-    "windowFrom": "2026-09-05",
-    "windowTo": "2026-09-23",
-    "windowDays": 19,
-    "collectFrom": "2026-09-05",
+    "windowFrom": "2026-09-23",
+    "windowTo": "2026-09-24",
+    "windowDays": 2,
+    "collectFrom": "2026-09-23",
     "observationWindowFrom": "2026-09-05",
     "observationWindowTo": "2026-09-24",
     "observationWindowDays": 20,
     "provenanceSnapshots": 2,
-    "provenanceCoveragePct": 10.5,
-    "firstSnapshot": "2026-09-05",
-    "lastSnapshot": "2026-09-23",
-    "maxGapDays": 18,
+    "provenanceCoveragePct": 100,
+    "firstSnapshot": "2026-09-23",
+    "lastSnapshot": "2026-09-24",
+    "maxGapDays": 1,
     "gapDetail": [
       0,
-      18
+      1
     ],
     "daysSinceLastRaw": 0,
     "threshold": {
@@ -48,8 +51,8 @@
       "min": 0,
       "max": 0.6667,
       "range": 0.6667,
-      "samples": 14,
-      "fromReal": 14,
+      "samples": 15,
+      "fromReal": 15,
       "fromBackfill": 0
     },
     "threshold": "观察期看形态：B1 方差≠0（非人人满分）· B2 非恒定 · B3 无互动基线待 10-05 前定（不设硬阈值）"
@@ -74,7 +77,7 @@
     }
   },
   "D_reliability": {
-    "provenanceSnapshotsWithMeta": 2,
+    "provenanceSnapshotsWithMeta": 3,
     "audit": {
       "status": "N/A",
       "reason": "sources/audit/delegation.jsonl 不存在（观察期内无委托审计落盘）"
@@ -127,7 +130,7 @@
     "D3_auditChain": "n/a"
   },
   "verdict": {
-    "code": "insufficient-data",
-    "text": "② 延长观察：快照覆盖仅 10.5%（<80%），数据不足 ≠ 机制无效"
+    "code": "ready-for-review",
+    "text": "数据充分 → 交一澜按 §2 阈值拍判定（①转正 / ②延长 / ③回炉）"
   }
 }
