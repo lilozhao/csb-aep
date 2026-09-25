@@ -1,0 +1,133 @@
+{
+  "generatedAt": "2026-09-25T00:35:32.933Z",
+  "window": {
+    "from": "2026-09-05",
+    "to": "2026-09-25"
+  },
+  "label": null,
+  "A_coverage": {
+    "windowFrom": "2026-09-23",
+    "windowTo": "2026-09-24",
+    "windowDays": 2,
+    "collectFrom": "2026-09-23",
+    "observationWindowFrom": "2026-09-05",
+    "observationWindowTo": "2026-09-25",
+    "observationWindowDays": 21,
+    "provenanceSnapshots": 2,
+    "provenanceCoveragePct": 100,
+    "firstSnapshot": "2026-09-23",
+    "lastSnapshot": "2026-09-24",
+    "maxGapDays": 1,
+    "gapDetail": [
+      0,
+      1
+    ],
+    "daysSinceLastRaw": 0,
+    "threshold": {
+      "A1_snapshotCoveragePct": 80,
+      "A2_maxGapDays": 3
+    },
+    "note": null,
+    "reconstructed": {
+      "files": [
+        "backfill-2026-09-05_2026-09-22.json"
+      ],
+      "daysWithData": 18,
+      "windowDays": 21,
+      "coveragePct": 85.7,
+      "reconstructed": true,
+      "lookAheadBias": "state 取今天的状态 → 历史日的 sealedRate 偏高（偏乐观）；仅供看机制行为，不可替代实拍快照",
+      "note": "后视重建（偏高），仅用于 B 组看机制行为；A1 实拍覆盖率不含它"
+    }
+  },
+  "B_discrimination": {
+    "witness_top1Share": 0.412,
+    "witness_giniSubjects": 0.3866,
+    "distinctSubjects": 7,
+    "provenance_dailyVolatility": {
+      "min": 0,
+      "max": 0.6667,
+      "range": 0.6667,
+      "samples": 15,
+      "fromReal": 15,
+      "fromBackfill": 0
+    },
+    "threshold": "观察期看形态：B1 方差≠0（非人人满分）· B2 非恒定 · B3 无互动基线待 10-05 前定（不设硬阈值）"
+  },
+  "C_robustness": {
+    "selfRefViolations": 0,
+    "maxEventsPerPair": 2,
+    "engine": {
+      "witnessEngineExists": true,
+      "reciprocityHalving": true,
+      "timeDecay": true,
+      "observationNotScored": true,
+      "deScalePath": true
+    },
+    "C5_counterexampleTest": {
+      "report": "c5-game-resistance-2026-09-23.json",
+      "verdict": "pass",
+      "ratio": 0.55,
+      "finding": "同对高频被有效压制（≤2× 基线）",
+      "suggestion": null,
+      "rule": "同对高频得分 ≤ 诚实基线 ×2"
+    }
+  },
+  "D_reliability": {
+    "provenanceSnapshotsWithMeta": 3,
+    "audit": {
+      "status": "N/A",
+      "reason": "sources/audit/delegation.jsonl 不存在（观察期内无委托审计落盘）"
+    },
+    "engineChecks": {
+      "witnessEngineExists": true,
+      "reciprocityHalving": true,
+      "timeDecay": true,
+      "observationNotScored": true,
+      "deScalePath": true
+    },
+    "repeatRunsIdentical": "TBD（同日连跑两次比对；建议由 cron 记录）"
+  },
+  "witness": {
+    "events": 17,
+    "byType": {
+      "naming": 1,
+      "milestone": 11,
+      "rewrite": 5
+    },
+    "distinctSubjects": 7,
+    "distinctWitnesses": 11,
+    "distinctPairs": 14,
+    "top1Share": 0.412,
+    "giniSubjects": 0.3866,
+    "maxEventsPerPair": 2,
+    "selfRefViolations": 0,
+    "subjectCounts": {
+      "若兰": 7,
+      "恺": 1,
+      "星尘": 1,
+      "小虾": 3,
+      "舟楫": 2,
+      "阿轩": 2,
+      "燧明": 1
+    },
+    "threshold": {
+      "A3_minDistinctBodies": 2,
+      "C1_selfRefMustBeZero": 0
+    }
+  },
+  "checks": {
+    "C1_selfRefZero": "pass",
+    "D1_provenanceTimestamps": "pass",
+    "D4_noZeroMasquerade": "pass",
+    "C2_reciprocityHalving": "pass",
+    "C5_gameResistance": "pass",
+    "C3_timeDecay": "pass",
+    "C4_deScale": "pass",
+    "D3_auditChain": "n/a"
+  },
+  "verdict": {
+    "code": "ready-for-review",
+    "text": "数据充分 → 交一澜按 §2 阈值拍判定（①转正 / ②延长 / ③回炉）"
+  }
+}
