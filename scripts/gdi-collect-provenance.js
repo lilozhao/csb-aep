@@ -38,6 +38,10 @@ function loadRaw() {
 function main() {
   const daysArg = process.argv.indexOf('--days');
   const days = daysArg >= 0 ? parseInt(process.argv[daysArg + 1], 10) : 7;
+  // [2026-09-26 开机补偿] --date <YYYY-MM-DD> 指定快照标签日（缺那日）；--catchup 标记迟跑
+  const dateArg = process.argv.indexOf('--date');
+  const labelDay = dateArg >= 0 ? process.argv[dateArg + 1] : null;
+  const catchup = process.argv.includes('--catchup');
   const all = loadRaw();
   if (all.length === 0) { console.log('NO_REPLY（无 raw 数据源）'); process.exit(0); }
 
@@ -61,12 +65,17 @@ function main() {
 
   // 断流：最近（日期命名）raw 文件距今
   const lastDay = daysList.length ? daysList[daysList.length - 1] : null;
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toISOString().slice(0, 10);   // 真实今天（算 lastFileAge）
+  const outDay = labelDay || today;                        // 快照标签日（补偿时 = 缺失那日）
+  const lateRun = outDay !== today;
   const lastFileAge = lastDay ? Math.max(0, Math.round((new Date(today) - new Date(lastDay)) / 86400000)) : null;
 
   const doc = {
     meta: {
       generatedAt: new Date().toISOString(),
+      snapshotDay: outDay,
+      lateRun,
+      catchup,
       source: 'csb-memory/data/raw/*.jsonl',
       days, total: all.length,
       nonDateFiles: nonDateFiles.map(d => ({ name: d, events: all.filter(e => e.day === d).length })),
@@ -80,9 +89,9 @@ function main() {
     daily,
   };
   fs.mkdirSync(OUT_DIR, { recursive: true });
-  const outFile = path.join(OUT_DIR, today + '.json');
+  const outFile = path.join(OUT_DIR, outDay + '.json');
   fs.writeFileSync(outFile, JSON.stringify(doc, null, 2));
-  console.log(`✅ provenance 采集完成：${all.length} 条流水 → ${path.relative(process.cwd(), outFile)}`);
+  console.log(`✅ provenance 采集完成${lateRun ? '（补偿·迟跑）' : ''}：${all.length} 条流水 → ${path.relative(process.cwd(), outFile)}`);
   console.log(`   封口率 ${(sealedRate * 100).toFixed(1)}% | 溯源完整率 ${provenanceCoverage === null ? 'N/A' : (provenanceCoverage * 100).toFixed(1)}% | 最近流水 ${lastDay || 'N/A'}（${lastFileAge === null ? 'N/A' : lastFileAge + ' 天'}前）`);
 }
 

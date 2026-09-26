@@ -4,3 +4,6 @@ data/eval-results/
 data/results.json
 data/results.v1.backup.json
 data/gdi/gdi-store.json
+
+# GDI 开机补偿运行日志（运行时产物，不入库）
+data/gdi/catchup.log
