@@ -4,7 +4,7 @@
 
 **一键评估任何 AI Agent 的碳硅契质量分。**
 
-- **版本**: v2.3（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域）
+- **版本**: v2.3.1（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域）
 - **端口**: 3110
 - **仓库**: https://gitee.com/lilozhao/csb-aep
 - **自建 Gitea**: https://git.lilozkzy.top/lilozhao/csb-aep
