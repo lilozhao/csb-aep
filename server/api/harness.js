@@ -71,12 +71,14 @@ class HarnessAPI {
 
     // 创建评测
     app.post('/api/harness/eval', (req, res) => {
-      const { manifest = null, traces = [], ttftMs = [], traps = [], runs = [], traceFormat } = req.body || {};
+      const { manifest = null, traces = [], ttftMs = [], traps = [], runs = [], traceFormat,
+        peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec } = req.body || {};
       if (!manifest) {
         return res.status(400).json({ error: 'manifest 必填（协议 §7.2 前置条件）' });
       }
       try {
-        const result = this.evaluator.evaluate({ manifest, traces, ttftMs, traps, runs, traceFormat });
+        const result = this.evaluator.evaluate({ manifest, traces, ttftMs, traps, runs, traceFormat,
+          peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec });
         const rec = this.store.add({ id: this._id(), ...result });
         res.json({ ok: true, id: rec.id, result: rec });
       } catch (e) {
@@ -101,9 +103,18 @@ class HarnessAPI {
       res.json(this.evaluator.capabilities());
     });
 
+    // 探针定义（M2：loop-trap / tool-fault，只返回定义不执行）
+    app.get('/api/harness/probes', (req, res) => {
+      const { loopTrap, toolFault, sideEffect } = require('../engine/harness/probes');
+      res.json({
+        probes: [loopTrap(), toolFault(), sideEffect()],
+        note: '探针仅返回定义；执行须在容器化沙箱内（破坏性探针绑定一次性环境）',
+      });
+    });
+
     // 健康
     app.get('/api/harness/health', (req, res) => {
-      res.json({ status: 'ok', domain: 'harness', version: '2.4.0-M1', implemented: IMPLEMENTED, planned: PLANNED });
+      res.json({ status: 'ok', domain: 'harness', version: '2.4.0-M2', implemented: IMPLEMENTED, planned: PLANNED });
     });
   }
 }

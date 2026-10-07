@@ -18,15 +18,29 @@ const { validateManifest, extractConfig } = require('./manifest.js');
 const { parseTraces } = require('./trace.js');
 const { normalize } = require('./adapters');
 const { a3, a9 } = require('./robustness.js');
-const { b1 } = require('./cost.js');
+const { b1, b2, b3, b4, b5 } = require('./cost.js');
+const { loopTrap, toolFault } = require('./probes');
 
-// M1 已实现指标（供 /api/harness/capabilities 报告）
-const IMPLEMENTED = ['A3', 'A9', 'B1'];
+// 已实现指标（供 /api/harness/capabilities 报告）
+const IMPLEMENTED = ['A3', 'A9', 'B1', 'B2', 'B3', 'B4', 'B5'];
 const PLANNED = [
   'A1', 'A2', 'A4', 'A5', 'A6', 'A7', 'A8',   // M3
-  'B2', 'B3', 'B4', 'B5',                       // M2
   'C1', 'C2',                                   // M4
 ];
+
+/**
+ * 从 traces 推导循环陷阱判定（当未直接传 traps 时）：
+ * 用 loopTrap 探针的默认判据扫描每条 trace，判定是否出现同工具同参数重复。
+ */
+function deriveTraps(traces, trapSpec) {
+  if (!Array.isArray(traces) || !traces.length) return [];
+  const spec = trapSpec || {};
+  const probe = loopTrap(spec);
+  return traces.map(t => {
+    const j = probe.judge(t);
+    return { id: t.task_id || 'derived', steps: probe.payload.steps, detected: j.detected, detectedAtStep: j.detectedAtStep };
+  });
+}
 
 class HarnessEvaluator {
   constructor({ now } = {}) {
@@ -57,11 +71,16 @@ class HarnessEvaluator {
     });
 
     const metrics = [];
-    // A3 / A9（健壮性）
-    metrics.push(a3(cfg, { traps: input.traps }));
+    // A3 循环（若有 traps 则用之；否则尝试用 loopTrap 探针判据从 traces 推导）
+    metrics.push(a3(cfg, { traps: input.traps || deriveTraps(input.traces, input.trapSpec) }));
+    // A9 确定性
     metrics.push(a9(cfg, { runs: input.runs }));
-    // B1（成本性能）
+    // B 群全量（M2）
     metrics.push(b1(cfg, { traces, ttftMs: input.ttftMs }));
+    metrics.push(b2(cfg, { traces, peerValues: input.peerTokens }));
+    metrics.push(b3(cfg, { traces, bestSteps: input.bestSteps }));
+    metrics.push(b4(cfg, { traces, unitPrice: input.unitPrice, toolCost: input.toolCost, peerCosts: input.peerCosts }));
+    metrics.push(b5(cfg, { loads: input.loads }));
 
     const scored = metrics.filter(m => m.score !== null);
     const naList = metrics.filter(m => m.score === null).map(m => m.id);
@@ -84,7 +103,7 @@ class HarnessEvaluator {
         scoredCount: scored.length,
         average: scored.length ? +(scored.reduce((a, m) => a + m.score, 0) / scored.length).toFixed(2) : null,
         naMetrics: naList,
-        note: 'M1 试点：仅 A3/A9/B1 三项；完整 15 项待 M2/M3。Δ 基线（§7.3）待 M3。',
+        note: 'M2：A3/A9 + B1-B5 共 7 项；A 群余项与 Δ 基线待 M3，C 群待 M4。',
       },
       dataSource: traces.length || input.traps || input.runs ? 'local' : 'unavailable',
     };
@@ -94,9 +113,10 @@ class HarnessEvaluator {
   capabilities() {
     return {
       domain: 'harness',
-      version: '2.4.0-M1',
+      version: '2.4.0-M2',
       implemented: IMPLEMENTED,
       planned: PLANNED,
+      probes: ['loop-trap', 'tool-fault'],
       requires: {
         manifest: true,
         trace: true,
