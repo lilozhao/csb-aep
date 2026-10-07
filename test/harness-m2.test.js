@@ -122,8 +122,8 @@ t('侧效应探针 M2 不启用', () => {
   assert.strictEqual(p.enabled, false);
 });
 
-console.log('\n=== 编排回归（M2 七项）===');
-t('evaluate 出 7 项指标', () => {
+console.log('\n=== 编排回归（B 群已落）===');
+t('evaluate 包含 B 群全量', () => {
   const ev = new HarnessEvaluator();
   const out = ev.evaluate({
     manifest: { harness: { name: 'h' }, loop: { max_iterations: 50, loop_guard: 'j' },
@@ -132,14 +132,15 @@ t('evaluate 出 7 项指标', () => {
     peerTokens: [100, 200, 300, 400], bestSteps: 5,
     loads: [{ concurrency: 1, successRate: 1, p95_ms: 100 }, { concurrency: 20, successRate: 0.95, p95_ms: 150 }],
   });
-  assert.strictEqual(out.partial.implemented.length, 7);
-  assert.deepStrictEqual(out.partial.implemented, ['A3', 'A9', 'B1', 'B2', 'B3', 'B4', 'B5']);
+  for (const id of ['B1', 'B2', 'B3', 'B4', 'B5']) {
+    assert.ok(out.partial.implemented.includes(id), `缺 ${id}`);
+  }
 });
-t('capabilities 报告 M2（含探针）', () => {
+t('capabilities 含 B 群与探针', () => {
   const c = new HarnessEvaluator().capabilities();
-  assert.strictEqual(c.version, '2.4.0-M2');
-  assert.deepStrictEqual(c.probes, ['loop-trap', 'tool-fault']);
-  assert.ok(!c.planned.includes('B2'), 'B2 已落地，不应在 planned');
+  for (const id of ['B1', 'B2', 'B3', 'B4', 'B5']) assert.ok(c.implemented.includes(id));
+  assert.ok(c.probes.includes('loop-trap'));
+  assert.ok(c.probes.includes('tool-fault'));
 });
 t('deriveTraps：从 trace 自动推导循环判定', () => {
   const ev = new HarnessEvaluator();

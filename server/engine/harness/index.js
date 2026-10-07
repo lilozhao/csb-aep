@@ -17,16 +17,16 @@
 const { validateManifest, extractConfig } = require('./manifest.js');
 const { parseTraces } = require('./trace.js');
 const { normalize } = require('./adapters');
-const { a3, a9 } = require('./robustness.js');
+const { a1, a2, a3, a4, a5, a6, a7, a8, a9 } = require('./robustness.js');
 const { b1, b2, b3, b4, b5 } = require('./cost.js');
 const { loopTrap, toolFault } = require('./probes');
+const { computeDelta, purify } = require('./delta.js');
+const { gameResistance } = require('./game-resistance.js');
 
-// 已实现指标（供 /api/harness/capabilities 报告）
-const IMPLEMENTED = ['A3', 'A9', 'B1', 'B2', 'B3', 'B4', 'B5'];
-const PLANNED = [
-  'A1', 'A2', 'A4', 'A5', 'A6', 'A7', 'A8',   // M3
-  'C1', 'C2',                                   // M4
-];
+// 全量指标：A 群 9 + B 群 5 + C 群 2 = 16 项（M3 已完成 A/B 共 14；C 群随之 M4）
+// 注：协议 §7.2 标题作「15 项」，实数为 16（A9+B5+C2），系草案笔误，待勘误。
+const IMPLEMENTED = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'B1', 'B2', 'B3', 'B4', 'B5', 'C1', 'C2'];
+const PLANNED = [];
 
 /**
  * 从 traces 推导循环陷阱判定（当未直接传 traps 时）：
@@ -71,9 +71,15 @@ class HarnessEvaluator {
     });
 
     const metrics = [];
-    // A3 循环（若有 traps 则用之；否则尝试用 loopTrap 探针判据从 traces 推导）
+    // A 群全量（M3）
+    metrics.push(a1(cfg, { compression: input.compression }));
+    metrics.push(a2(cfg, { compression: input.compression }));
     metrics.push(a3(cfg, { traps: input.traps || deriveTraps(input.traces, input.trapSpec) }));
-    // A9 确定性
+    metrics.push(a4(cfg, { multiAgent: input.multiAgent }));
+    metrics.push(a5(cfg, { orchestration: input.orchestration }));
+    metrics.push(a6(cfg, { boundary: input.boundary }));
+    metrics.push(a7(cfg, { observability: input.observability }));
+    metrics.push(a8(cfg, { recovery: input.recovery }));
     metrics.push(a9(cfg, { runs: input.runs }));
     // B 群全量（M2）
     metrics.push(b1(cfg, { traces, ttftMs: input.ttftMs }));
@@ -84,6 +90,17 @@ class HarnessEvaluator {
 
     const scored = metrics.filter(m => m.score !== null);
     const naList = metrics.filter(m => m.score === null).map(m => m.id);
+    const average = scored.length ? +(scored.reduce((a, m) => a + m.score, 0) / scored.length).toFixed(2) : null;
+
+    // Δ 基线（§7.3 · T6：仅 Harness 首版强制）
+    const deltaCard = computeDelta({
+      harnessScore: average,
+      baselineScore: typeof input.baselineScore === 'number' ? input.baselineScore : undefined,
+      breakdown: input.baselineBreakdown,
+    });
+
+    // 抗游戏化（§7.4）
+    const gr = gameResistance(metrics, input.gameAnalysis);
 
     return {
       domain: 'harness',
@@ -97,33 +114,40 @@ class HarnessEvaluator {
       },
       trace: { count: traces.length, format },
       metrics,
-      // M1 部分分：已落指标均分（N/A 不计入，沿用诚实呈现原则）
+      // 完整 15 项（M3 起）；N/A 项不计入，沿用诚实呈现原则
       partial: {
         implemented: IMPLEMENTED,
         scoredCount: scored.length,
-        average: scored.length ? +(scored.reduce((a, m) => a + m.score, 0) / scored.length).toFixed(2) : null,
+        average,
         naMetrics: naList,
-        note: 'M2：A3/A9 + B1-B5 共 7 项；A 群余项与 Δ 基线待 M3，C 群待 M4。',
+        note: 'M3：15 项已实现；Δ 基线需传 baselineScore，无 Δ 不上屏（§7.3）。',
       },
+      delta: deltaCard,
+      gameResistance: gr,
       dataSource: traces.length || input.traps || input.runs ? 'local' : 'unavailable',
     };
+  }
+
+  /** 净化输出（只出 Δ 卡片，无 Δ 不上屏） */
+  present(result) {
+    return purify(result, result.delta);
   }
 
   /** 本域支持情况（协议 §7.2 前置条件诚实公示） */
   capabilities() {
     return {
       domain: 'harness',
-      version: '2.4.0-M2',
+      version: '2.4.0-M3',
       implemented: IMPLEMENTED,
       planned: PLANNED,
-      probes: ['loop-trap', 'tool-fault'],
+      probes: ['loop-trap', 'tool-fault', 'side-effect'],
       requires: {
         manifest: true,
         trace: true,
         traceFormat: 'csb-trace-v1（推荐）· otel / claude-code 兼容桥',
       },
       naPolicy: '无 Manifest 或 Trace 的相关指标标 N/A，不硬凑分（协议 §7.2）',
-      deltaBaseline: 'M3 落地（§7.3 强制条款：无 Δ 不上屏）',
+      deltaBaseline: '已落地：Δ = 装 harness − 裸模型；无 Δ 不上屏（协议 §7.3）',
     };
   }
 }

@@ -72,13 +72,17 @@ class HarnessAPI {
     // 创建评测
     app.post('/api/harness/eval', (req, res) => {
       const { manifest = null, traces = [], ttftMs = [], traps = [], runs = [], traceFormat,
-        peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec } = req.body || {};
+        peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec,
+        compression, multiAgent, orchestration, boundary, observability, recovery,
+        baselineScore, baselineBreakdown, gameAnalysis } = req.body || {};
       if (!manifest) {
         return res.status(400).json({ error: 'manifest 必填（协议 §7.2 前置条件）' });
       }
       try {
         const result = this.evaluator.evaluate({ manifest, traces, ttftMs, traps, runs, traceFormat,
-          peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec });
+          peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec,
+          compression, multiAgent, orchestration, boundary, observability, recovery,
+          baselineScore, baselineBreakdown, gameAnalysis });
         const rec = this.store.add({ id: this._id(), ...result });
         res.json({ ok: true, id: rec.id, result: rec });
       } catch (e) {
@@ -103,6 +107,13 @@ class HarnessAPI {
       res.json(this.evaluator.capabilities());
     });
 
+    // 呈现净化（协议 §7.3 · 无 Δ 不上屏）
+    app.get('/api/harness/eval/:id/present', (req, res) => {
+      const rec = this.store.get(req.params.id);
+      if (!rec) return res.status(404).json({ error: 'not found' });
+      res.json(this.evaluator.present(rec));
+    });
+
     // 探针定义（M2：loop-trap / tool-fault，只返回定义不执行）
     app.get('/api/harness/probes', (req, res) => {
       const { loopTrap, toolFault, sideEffect } = require('../engine/harness/probes');
@@ -114,7 +125,7 @@ class HarnessAPI {
 
     // 健康
     app.get('/api/harness/health', (req, res) => {
-      res.json({ status: 'ok', domain: 'harness', version: '2.4.0-M2', implemented: IMPLEMENTED, planned: PLANNED });
+      res.json({ status: 'ok', domain: 'harness', version: '2.4.0-M3', implemented: IMPLEMENTED, planned: PLANNED });
     });
   }
 }
