@@ -292,6 +292,10 @@ class BlackBoxEngine {
   constructor(options = {}) {
     this.timeout = options.timeout || 60000;  // 60秒，给 LLM-Router 足够时间
     this.delay = options.delay || 800;        // 请求间隔(ms)，降低触发安全层防刷的概率
+    // 【2026-10-07 修复】敲门必带 sender：A2A v5 self-guard 会把不带 sender 的请求
+    //   判为 SELF_MESSAGE_IGNORED 而拒（言直先例）。sender 名/URL 可由调用方注入。
+    this.senderName = options.senderName || 'CSB-AEP';
+    this.senderUrl = options.senderUrl || 'http://aep.local';
     this.a2aChecker = new A2AChecker(this.timeout);
   }
 
@@ -332,16 +336,22 @@ class BlackBoxEngine {
   async _sendOnce(baseUrl, message) {
     return new Promise((resolve, reject) => {
       const url = new URL('/a2a/json-rpc', baseUrl);
+      const sb = { name: this.senderName, url: this.senderUrl };
       const payload = JSON.stringify({
         jsonrpc: '2.0',
         id: `eval_${Date.now()}`,
         method: 'tasks/send',
+        sender: sb,
         params: {
           id: `eval_task_${Date.now()}`,
           message: {
             role: 'user',
             parts: [{ text: message }],
           },
+          // v5 self-guard 读 params.sender（与 message 平级）—— 必带，防 SELF_MESSAGE_IGNORED
+          sender: sb,
+          senderUrl: this.senderUrl,
+          configuration: { metadata: { sender: sb, senderUrl: this.senderUrl } },
         },
       });
 

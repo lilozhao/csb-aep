@@ -7,6 +7,10 @@
   "timeout": 30000,
   "maxConcurrent": 5,
   "resultsDir": "./data/eval-results",
+  "eval": {
+    "senderName": "CSB-AEP",
+    "senderUrl": "http://aep.local"
+  },
   "gdi": {
     "weights": { "contract": 0.4, "verify": 0.3, "reuse": 0.2, "selfReport": 0.1 },
     "selfReportWeightCap": 0.2,

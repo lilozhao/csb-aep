@@ -52,7 +52,9 @@ const adapters = {
 class EvalAPI {
   constructor(config) {
     this.config = config;
-    this.blackbox = new BlackBoxEngine({ timeout: config.timeout, delay: config.delay });
+    this.blackbox = new BlackBoxEngine({ timeout: config.timeout, delay: config.delay,
+      senderName: (config.eval && config.eval.senderName) || 'CSB-AEP',
+      senderUrl: (config.eval && config.eval.senderUrl) || 'http://aep.local' });
     this.whitebox = new WhiteBoxEngine();
     this.csbChecker = new CSBChecker();
     this.recommender = new Recommender();
