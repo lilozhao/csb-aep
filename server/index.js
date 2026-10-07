@@ -6,6 +6,7 @@ const http = require('http');
 const path = require('path');
 const { EvalAPI } = require('./api/eval');
 const { GdiAPI } = require('./api/gdi'); // v2.3 关系 GDI 观测域（与评测域隔离，红线第 6 条）
+const { HarnessAPI } = require('./api/harness'); // v2.4 Harness 工程域（与评测域/GDI 域隔离，协议 §7）
 const config = require('../config/defaults.json');
 
 // 简易路由
@@ -90,6 +91,10 @@ async function main() {
   const gdiApi = new GdiAPI(config);
   gdiApi.register(app);
 
+  // v2.4 Harness 工程域：独立实例 + 独立路由前缀（/api/harness/*），与评测域/GDI 域隔离（协议 §7）
+  const harnessApi = new HarnessAPI(config);
+  harnessApi.register(app);
+
   // 静态文件服务
   const fs = require('fs');
   const webDir = path.join(__dirname, '../web');
@@ -112,10 +117,11 @@ async function main() {
   server.listen(port, '0.0.0.0', () => {
     let version = '2.x';
     try { version = require('../package.json').version; } catch { /* ignore */ }
-    console.log(`\n🚀 CSB-AEP v${version} 已启动（含 v2.3 GDI 观测域 /api/gdi/*）`);
+    console.log(`\n🚀 CSB-AEP v${version} 已启动（含 v2.3 GDI 观测域 /api/gdi/* · v2.4 Harness 工程域 /api/harness/*）`);
     console.log(`   端口: ${port}`);
     console.log(`   API: http://localhost:${port}/api/health`);
     console.log(`   GDI: http://localhost:${port}/api/gdi/health`);
+    console.log(`   Harness: http://localhost:${port}/api/harness/health`);
     console.log(`   Web: http://localhost:${port}/`);
     console.log('');
   });
