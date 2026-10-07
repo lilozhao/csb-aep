@@ -4,7 +4,7 @@
 
 **一键评估任何 AI Agent 的碳硅契质量分。**
 
-- **版本**: v2.3.1（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域）
+- **版本**: v2.4.0（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域 + **v2.4 Harness 工程域**）
 - **端口**: 3110
 - **仓库**: https://gitee.com/lilozhao/csb-aep
 - **自建 Gitea**: https://git.lilozkzy.top/lilozhao/csb-aep
@@ -73,6 +73,7 @@ CSB-AEP 是碳硅契社区的 Agent 质量评估系统，支持：
 - **37 项黑盒测试**（13 类别：协议 7 + 对话质量 29 + 性能 1）+ **28 个 S 类安全韧性用例**（CSB-RedTeam 红队引擎）
 - **v2.2 六问**：四问转维度 + 第五问认领目录 + 第六问 GRISK 诚意层 + 路径⑦ RUPA 执行风险预警
 - **v2.3 关系 GDI 观测域**（/api/gdi/*）：契约命中率 + 关系复用率（+ 独立验证/自评随 M2）· 与评测域严格隔离 · 去刻度呈现（不排名不公示）
+- **v2.4 Harness 工程域**（/api/harness/*）：**16 项指标**（A 工程健壮性 9 + B 成本性能 5 + C 可复现/模型可替换 2）· Manifest/Trace 双前置 · **Δ 基线强制**（无 Δ 不上屏）· 与评测域/GDI 域三级隔离
 - **一键自评脚本**，任何 Agent 克隆即用
 - **实时进度反馈**：HTTP 轮询（前端 `setInterval` 3s 拉 `/eval/:id`）
 
@@ -92,6 +93,17 @@ csb-aep/
 │   │   ├── claiming.js      ← 第五问认领目录引擎（7 天窗口 + 防刷）
 │   │   ├── grisk.js         ← 第六问 GRISK 诚意层（姿态指标 + 72h 撤回窗）
 │   │   ├── exec-risk.js     ← 路径⑦ RUPA 执行风险预警（双轴建模）
+│   │   ├── harness/         ← 🔧 v2.4 Harness 工程域（与评测域/GDI 域隔离）
+│   │   │   ├── index.js     ←   HarnessEvaluator 编排（16 项 + Δ 基线 + 抗游戏化）
+│   │   │   ├── manifest.js  ←   Harness Manifest 解析与校验（地基）
+│   │   │   ├── trace.js     ←   csb-trace-v1 读取/规范化/统计（地基）
+│   │   │   ├── adapters/    ←   采集适配器（csb-trace-v1 / otel / claude-code）
+│   │   │   ├── robustness.js←   子群 A 工程健壮性（A1-A9）
+│   │   │   ├── cost.js      ←   子群 B 成本与性能（B1-B5）
+│   │   │   ├── reproducibility.js ← 子群 C 可复现与模型可替换（C1-C2）
+│   │   │   ├── delta.js     ←   Δ 基线 + 呈现净化（无 Δ 不上屏）
+│   │   │   ├── game-resistance.js ← 抗游戏化（16 项作弊路径分析）
+│   │   │   └── probes/      ←   探针（loop-trap / tool-fault / side-effect）
 │   │   └── gdi/             ← 🫂 v2.3 关系 GDI 观测域（与评测域隔离）
 │   │       ├── index.js     ←   GdiObserver 编排（多源 merge → 计算 → 去刻度呈现）
 │   │       ├── contracts.js ←   维度1 契约命中率（双层契约/升格/48h作废/质量计分/熔断）
@@ -100,7 +112,8 @@ csb-aep/
 │   ├── adapter/             ← 17 个架构适配器
 │   ├── api/
 │   │   ├── eval.js          ← 评测 API 路由（含 claiming/grisk/exec-risk）
-│   │   └── gdi.js           ← v2.3 GDI 观测 API（/api/gdi/*，域隔离 + 呈现净化）
+│   │   ├── gdi.js           ← v2.3 GDI 观测 API（/api/gdi/*，域隔离 + 呈现净化）
+│   │   └── harness.js       ← v2.4 Harness 工程域 API（/api/harness/*，域隔离 + Δ 净化）
 │   ├── standard/            ← 评测标准（A2A v0.6、CSB v1.0）
 │   └── store/               ← 结果存储（results.js + claiming-store.js + gdi-store.js）
 ├── web/index.html           ← 前端页面（浅色主题）
@@ -468,6 +481,7 @@ curl http://localhost:3110/api/gdi/history/%E6%98%9F%E5%B0%98
 | 2026-09-03 | v2.3 | M0 文档层 + M1 引擎收编（server/engine/gdi）+ /api/gdi/* 观测域 + 域隔离（22/22 测试）|
 | 2026-09-03 | v2.3 | M2 四维完整：维度2 独立验证（哈希链校验）+ 善意自评校准 + 预签名切片 + 校准脚本（33/33 测试）|
 | 2026-09-03 | v2.3 | M3 集成：版本 2.3.0 + self-eval --gdi-agent + GDI 呈现净化 |
+| 2026-10-07 | **v2.4.0** | **Harness 工程域落地**（协议 csb-AEP-v1.1 §7）：M1 地基（Manifest/Trace/适配器 + A3/A9/B1）→ M2 性能群（B1-B5 + 探针）→ M3 健壮性群（A1-A8 + Δ 基线 + 抗游戏化）→ M4 子群 C + 集成发布。**16 项全量** · 与评测域/GDI 域三级隔离 |
 
 ---
 

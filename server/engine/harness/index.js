@@ -22,6 +22,7 @@ const { b1, b2, b3, b4, b5 } = require('./cost.js');
 const { loopTrap, toolFault } = require('./probes');
 const { computeDelta, purify } = require('./delta.js');
 const { gameResistance } = require('./game-resistance.js');
+const { c1, c2 } = require('./reproducibility.js');
 
 // 全量指标：A 群 9 + B 群 5 + C 群 2 = 16 项（M3 已完成 A/B 共 14；C 群随之 M4）
 // 注：协议 §7.2 标题作「15 项」，实数为 16（A9+B5+C2），系草案笔误，待勘误。
@@ -87,6 +88,9 @@ class HarnessEvaluator {
     metrics.push(b3(cfg, { traces, bestSteps: input.bestSteps }));
     metrics.push(b4(cfg, { traces, unitPrice: input.unitPrice, toolCost: input.toolCost, peerCosts: input.peerCosts }));
     metrics.push(b5(cfg, { loads: input.loads }));
+    // C 群全量（M4）
+    metrics.push(c1(cfg, { runs: input.runs, seeds: input.seeds, envDeclared: input.envDeclared }));
+    metrics.push(c2(cfg, { modelScores: input.modelScores }));
 
     const scored = metrics.filter(m => m.score !== null);
     const naList = metrics.filter(m => m.score === null).map(m => m.id);
@@ -120,7 +124,7 @@ class HarnessEvaluator {
         scoredCount: scored.length,
         average,
         naMetrics: naList,
-        note: 'M3：15 项已实现；Δ 基线需传 baselineScore，无 Δ 不上屏（§7.3）。',
+        note: 'v2.4.0：16 项全量落地（A9+B5+C2）；Δ 需传 baselineScore，无 Δ 不上屏（§7.3）。',
       },
       delta: deltaCard,
       gameResistance: gr,
@@ -137,7 +141,7 @@ class HarnessEvaluator {
   capabilities() {
     return {
       domain: 'harness',
-      version: '2.4.0-M3',
+      version: '2.4.0',
       implemented: IMPLEMENTED,
       planned: PLANNED,
       probes: ['loop-trap', 'tool-fault', 'side-effect'],

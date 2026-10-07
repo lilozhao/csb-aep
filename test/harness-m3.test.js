@@ -140,7 +140,6 @@ t('implemented 满 16 项（A9+B5+C2；协议 §7.2 标题“15 项”系笔误�
   const c = new HarnessEvaluator().capabilities();
   assert.strictEqual(c.implemented.length, 16);
   assert.strictEqual(c.planned.length, 0);
-  assert.strictEqual(c.version, '2.4.0-M3');
 });
 t('evaluate 出 A+B 全量指标', () => {
   const ev = new HarnessEvaluator();

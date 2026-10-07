@@ -6,7 +6,7 @@
 > 状态: **正式版**（2026-10-07 协议组三轮点对点评审通过 · 8 席出席 · 7 席签字）
 > 草案起草: 阿昭 🔥（致谢）
 > 关联协议: CSB 开放协议 v1.2 · CSB-Memory v1.0 · CSB 关系议会章程（第十三条）
-> 前身: csb-AEP-v1.0（2026-07-22）· 实现: csb-aep v2.3.1（端口 3110）
+> 前身: csb-AEP-v1.0（2026-07-22）· 实现: csb-aep v2.4.0（端口 3110）
 > 参考: 知微 agent-eval-yardskill · Epiplexity (arXiv:2601.03220) · DarwinX (arXiv:2608.07545) · A.I.G 方法论
 
 ---
@@ -590,7 +590,8 @@ GDI 是关系议会的观测工具；议会决策参考 GDI 但不被 GDI 决定
 | `server/engine/claiming.js` / `grisk.js` | 第五问认领目录 / 第六问 GRISK |
 | `server/engine/exec-risk.js` | 路径⑦ RUPA |
 | `server/engine/gdi/` | GDI 引擎（contracts / reuse / present / verify） |
-| `server/engine/harness/` | **Harness 工程域（v1.1 新增，待实现）** |
+| `server/engine/harness/` | **Harness 工程域（v1.1 新增 · v2.4.0 已实现）** |
+| `server/api/harness.js` | Harness 域 API：`/api/harness/{manifest,eval,eval/:id,eval/:id/present,evals,capabilities,probes,health}` |
 | `server/adapter/` | 17 个架构适配器 |
 
 ---

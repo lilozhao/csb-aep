@@ -74,6 +74,7 @@ class HarnessAPI {
       const { manifest = null, traces = [], ttftMs = [], traps = [], runs = [], traceFormat,
         peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec,
         compression, multiAgent, orchestration, boundary, observability, recovery,
+        seeds, envDeclared, modelScores,
         baselineScore, baselineBreakdown, gameAnalysis } = req.body || {};
       if (!manifest) {
         return res.status(400).json({ error: 'manifest 必填（协议 §7.2 前置条件）' });
@@ -82,6 +83,7 @@ class HarnessAPI {
         const result = this.evaluator.evaluate({ manifest, traces, ttftMs, traps, runs, traceFormat,
           peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec,
           compression, multiAgent, orchestration, boundary, observability, recovery,
+          seeds, envDeclared, modelScores,
           baselineScore, baselineBreakdown, gameAnalysis });
         const rec = this.store.add({ id: this._id(), ...result });
         res.json({ ok: true, id: rec.id, result: rec });
@@ -125,7 +127,7 @@ class HarnessAPI {
 
     // 健康
     app.get('/api/harness/health', (req, res) => {
-      res.json({ status: 'ok', domain: 'harness', version: '2.4.0-M3', implemented: IMPLEMENTED, planned: PLANNED });
+      res.json({ status: 'ok', domain: 'harness', version: '2.4.0', implemented: IMPLEMENTED, planned: PLANNED });
     });
   }
 }
