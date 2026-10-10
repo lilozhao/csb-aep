@@ -1,0 +1,68 @@
+{
+  "meta": {
+    "generatedAt": "2026-10-05T15:35:05.826Z",
+    "snapshotDay": "2026-10-05",
+    "lateRun": false,
+    "catchup": false,
+    "source": "csb-memory/data/raw/*.jsonl",
+    "days": 7,
+    "total": 1882,
+    "nonDateFiles": [
+      {
+        "name": "raw-evolution",
+        "events": 349
+      }
+    ]
+  },
+  "metrics": {
+    "sealedRate": 0.3177,
+    "provenanceCoverage": 1,
+    "sealed": 598,
+    "burning": 935,
+    "lastFileAge": 0
+  },
+  "daily": [
+    {
+      "day": "2026-09-29",
+      "total": 6,
+      "sealed": 1,
+      "sealedRate": 0.16666666666666666
+    },
+    {
+      "day": "2026-09-30",
+      "total": 3,
+      "sealed": 0,
+      "sealedRate": 0
+    },
+    {
+      "day": "2026-10-01",
+      "total": 2,
+      "sealed": 0,
+      "sealedRate": 0
+    },
+    {
+      "day": "2026-10-02",
+      "total": 4,
+      "sealed": 1,
+      "sealedRate": 0.25
+    },
+    {
+      "day": "2026-10-03",
+      "total": 6,
+      "sealed": 2,
+      "sealedRate": 0.3333333333333333
+    },
+    {
+      "day": "2026-10-04",
+      "total": 6,
+      "sealed": 2,
+      "sealedRate": 0.3333333333333333
+    },
+    {
+      "day": "2026-10-05",
+      "total": 8,
+      "sealed": 0,
+      "sealedRate": 0
+    }
+  ]
+}

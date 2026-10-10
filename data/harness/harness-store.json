@@ -1,0 +1,980 @@
+{
+  "evaluations": [
+    {
+      "id": "harness-1791374485611-1",
+      "domain": "harness",
+      "harness": {
+        "name": "claude-code",
+        "version": null,
+        "format": "csb-trace-v1"
+      },
+      "evaluatedAt": "2026-10-07T12:01:25.610Z",
+      "manifest": {
+        "valid": true,
+        "errors": [],
+        "warnings": [
+          "sandbox.network_egress 未声明，A6 网络出口边界不可测",
+          "observability.trace_format 未声明，默认按 csb-trace-v1 解析"
+        ],
+        "na": [
+          "A6"
+        ]
+      },
+      "trace": {
+        "count": 1,
+        "format": "csb-trace-v1"
+      },
+      "metrics": [
+        {
+          "id": "A3",
+          "score": 10,
+          "status": "ok",
+          "detectRate": 1,
+          "trapCount": 1,
+          "detected": 1,
+          "avgDetectStep": 2,
+          "loopGuard": "param-jaccard",
+          "maxIterations": 50
+        },
+        {
+          "id": "A9",
+          "score": null,
+          "status": "N/A",
+          "note": "无确定性运行数据（需同任务 N 次重跑），标 N/A"
+        },
+        {
+          "id": "B1",
+          "score": 10,
+          "status": "ok",
+          "p50_ms": 800,
+          "p95_ms": 800,
+          "sampleCount": 1,
+          "ttft_p50_ms": null,
+          "ttftNote": "需 harness 单独暴露 TTFT，未提供"
+        }
+      ],
+      "partial": {
+        "implemented": [
+          "A3",
+          "A9",
+          "B1"
+        ],
+        "scoredCount": 2,
+        "average": 10,
+        "naMetrics": [
+          "A9"
+        ],
+        "note": "M1 试点：仅 A3/A9/B1 三项；完整 15 项待 M2/M3。Δ 基线（§7.3）待 M3。"
+      },
+      "dataSource": "local"
+    },
+    {
+      "id": "harness-1791374752128-1",
+      "domain": "harness",
+      "harness": {
+        "name": "demo",
+        "version": null,
+        "format": "csb-trace-v1"
+      },
+      "evaluatedAt": "2026-10-07T12:05:52.127Z",
+      "manifest": {
+        "valid": true,
+        "errors": [],
+        "warnings": [
+          "sandbox.network_egress 未声明，A6 网络出口边界不可测",
+          "observability.trace_format 未声明，默认按 csb-trace-v1 解析"
+        ],
+        "na": [
+          "A6"
+        ]
+      },
+      "trace": {
+        "count": 1,
+        "format": "csb-trace-v1"
+      },
+      "metrics": [
+        {
+          "id": "A3",
+          "score": null,
+          "status": "N/A",
+          "note": "无循环陷阱数据，标 N/A（不硬凑分）"
+        },
+        {
+          "id": "A9",
+          "score": null,
+          "status": "N/A",
+          "note": "无确定性运行数据（需同任务 N 次重跑），标 N/A"
+        },
+        {
+          "id": "B1",
+          "score": 10,
+          "status": "ok",
+          "p50_ms": 500,
+          "p95_ms": 500,
+          "sampleCount": 3,
+          "ttft_p50_ms": null,
+          "ttftNote": "需 harness 单独暴露 TTFT，未提供"
+        },
+        {
+          "id": "B2",
+          "score": 10,
+          "status": "ok",
+          "avgTokensPerTask": 300,
+          "tier": "top",
+          "peerCount": 4,
+          "peerMedian": 400
+        },
+        {
+          "id": "B3",
+          "score": 10,
+          "status": "ok",
+          "avgStepsPerTask": 3,
+          "bestSteps": 3,
+          "ratio": 1
+        },
+        {
+          "id": "B4",
+          "score": 10,
+          "status": "ok",
+          "avgCostPerTask": 0,
+          "tier": "top",
+          "unitPrice": 0,
+          "toolCost": 0,
+          "note": "未提供单价/工具成本，仅以 token 量近似"
+        },
+        {
+          "id": "B5",
+          "score": 10,
+          "status": "ok",
+          "peakConcurrency": 20,
+          "successDrop": 0.05,
+          "p95Rise": 0.5,
+          "loads": [
+            {
+              "concurrency": 1,
+              "successRate": 1,
+              "p95_ms": 100
+            },
+            {
+              "concurrency": 20,
+              "successRate": 0.95,
+              "p95_ms": 150
+            }
+          ]
+        }
+      ],
+      "partial": {
+        "implemented": [
+          "A3",
+          "A9",
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5"
+        ],
+        "scoredCount": 5,
+        "average": 10,
+        "naMetrics": [
+          "A3",
+          "A9"
+        ],
+        "note": "M2：A3/A9 + B1-B5 共 7 项；A 群余项与 Δ 基线待 M3，C 群待 M4。"
+      },
+      "dataSource": "local"
+    },
+    {
+      "id": "harness-1791375228383-1",
+      "domain": "harness",
+      "harness": {
+        "name": "demo",
+        "version": null,
+        "format": "csb-trace-v1"
+      },
+      "evaluatedAt": "2026-10-07T12:13:48.382Z",
+      "manifest": {
+        "valid": true,
+        "errors": [],
+        "warnings": [
+          "observability.trace_format 未声明，默认按 csb-trace-v1 解析"
+        ],
+        "na": []
+      },
+      "trace": {
+        "count": 0,
+        "format": "csb-trace-v1"
+      },
+      "metrics": [
+        {
+          "id": "A1",
+          "score": null,
+          "status": "N/A",
+          "note": "无压缩事件数据（需 ≥50 轮长程任务埋点）→ N/A"
+        },
+        {
+          "id": "A2",
+          "score": 10,
+          "status": "ok",
+          "triggerRatio": 0.65,
+          "avgObserved": null,
+          "effective": 0.65
+        },
+        {
+          "id": "A3",
+          "score": null,
+          "status": "N/A",
+          "note": "无循环陷阱数据，标 N/A（不硬凑分）"
+        },
+        {
+          "id": "A4",
+          "score": null,
+          "status": "N/A",
+          "note": "无多 Agent 协作数据 → N/A"
+        },
+        {
+          "id": "A5",
+          "score": null,
+          "status": "N/A",
+          "note": "无标准任务图数据 → N/A"
+        },
+        {
+          "id": "A6",
+          "score": 10,
+          "status": "ok",
+          "cases": 1,
+          "breached": 0,
+          "fsBoundary": "workspace-only",
+          "networkEgress": "allowlist"
+        },
+        {
+          "id": "A7",
+          "score": null,
+          "status": "N/A",
+          "note": "无日志/审计实测数据 → N/A"
+        },
+        {
+          "id": "A8",
+          "score": null,
+          "status": "N/A",
+          "note": "无故障注入/恢复数据 → N/A"
+        },
+        {
+          "id": "A9",
+          "score": null,
+          "status": "N/A",
+          "note": "无确定性运行数据（需同任务 N 次重跑），标 N/A"
+        },
+        {
+          "id": "B1",
+          "score": null,
+          "status": "N/A",
+          "note": "全部 Trace 缺 latency_ms → N/A"
+        },
+        {
+          "id": "B2",
+          "score": null,
+          "status": "N/A",
+          "note": "Trace 缺 total_tokens → N/A"
+        },
+        {
+          "id": "B3",
+          "score": null,
+          "status": "N/A",
+          "note": "无 Trace → N/A"
+        },
+        {
+          "id": "B4",
+          "score": null,
+          "status": "N/A",
+          "note": "Trace 缺 tokens → 无法算成本 → N/A"
+        },
+        {
+          "id": "B5",
+          "score": null,
+          "status": "N/A",
+          "note": "无并发负载数据 → N/A"
+        }
+      ],
+      "partial": {
+        "implemented": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8",
+          "A9",
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "C1",
+          "C2"
+        ],
+        "scoredCount": 2,
+        "average": 10,
+        "naMetrics": [
+          "A1",
+          "A3",
+          "A4",
+          "A5",
+          "A7",
+          "A8",
+          "A9",
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5"
+        ],
+        "note": "M3：15 项已实现；Δ 基线需传 baselineScore，无 Δ 不上屏（§7.3）。"
+      },
+      "delta": {
+        "available": true,
+        "delta": 3,
+        "harness": 10,
+        "baseline": 7,
+        "verdict": "harness 有增量价值",
+        "note": "Δ = 装 harness − 裸模型（协议 §7.3）",
+        "sig": "c727854105c3aac7"
+      },
+      "gameResistance": {
+        "analyzed": 14,
+        "items": [
+          {
+            "id": "A1",
+            "cheatPath": "激进压缩导致信息丢失以抬高 no-impact",
+            "guard": "同时测关键信息保留率（retentionRate）",
+            "suspicious": []
+          },
+          {
+            "id": "A2",
+            "cheatPath": "宣称理想 trigger_ratio 但实际不触发",
+            "guard": "以实测 avgObserved 覆盖声明值",
+            "suspicious": []
+          },
+          {
+            "id": "A3",
+            "cheatPath": "微调参数使 Jaccard 相似度略低于阈值",
+            "guard": "多尺度检测（精确匹配 + 语义相似 + 状态哈希）",
+            "suspicious": []
+          },
+          {
+            "id": "A4",
+            "cheatPath": "缩短会话避开互锁窗口",
+            "guard": "多会话采样 + 信息不对称场景强制",
+            "suspicious": []
+          },
+          {
+            "id": "A5",
+            "cheatPath": "在简单任务上刷选择率",
+            "guard": "分层报告（按任务难度）+ 顺序编辑距离",
+            "suspicious": []
+          },
+          {
+            "id": "A6",
+            "cheatPath": "只封堵已知攻击向量",
+            "guard": "定期红队 + 新向量注入",
+            "suspicious": []
+          },
+          {
+            "id": "A7",
+            "cheatPath": "记录无关事件充数",
+            "guard": "定义关键事件清单，仅统计清单内覆盖率",
+            "suspicious": []
+          },
+          {
+            "id": "A8",
+            "cheatPath": "仅重试简单任务",
+            "guard": "按任务难度分层报告恢复率",
+            "suspicious": []
+          },
+          {
+            "id": "A9",
+            "cheatPath": "固定种子掩盖非确定性",
+            "guard": "多任务集 + 幂等性（副作用次数一致性）",
+            "suspicious": []
+          },
+          {
+            "id": "B1",
+            "cheatPath": "只报 P50 不报 P95",
+            "guard": "强制 P95 + 样本量",
+            "suspicious": []
+          },
+          {
+            "id": "B2",
+            "cheatPath": "生成冗余解释性文本增加 token 总量",
+            "guard": "同时测有效 token 比与任务成功率",
+            "suspicious": []
+          },
+          {
+            "id": "B3",
+            "cheatPath": "故意拆分步骤增加调用次数",
+            "guard": "步骤-成功率曲线，检测过度重试",
+            "suspicious": []
+          },
+          {
+            "id": "B4",
+            "cheatPath": "拒绝困难任务以降低平均成本",
+            "guard": "报告任务拒绝率 + 完整任务集成本",
+            "suspicious": [
+              "未提供单价，成本为近似值"
+            ]
+          },
+          {
+            "id": "B5",
+            "cheatPath": "只在低并发下测",
+            "guard": "强制 1/5/20 三档并发",
+            "suspicious": []
+          }
+        ],
+        "manualRedTeam": null,
+        "note": "协议 §7.4：逐项作弊路径分析 + 复用 GDI 反博弈模式；人工红队结果为补充"
+      },
+      "dataSource": "local"
+    },
+    {
+      "id": "harness-1791375228474-2",
+      "domain": "harness",
+      "harness": {
+        "name": "demo",
+        "version": null,
+        "format": "csb-trace-v1"
+      },
+      "evaluatedAt": "2026-10-07T12:13:48.474Z",
+      "manifest": {
+        "valid": true,
+        "errors": [],
+        "warnings": [
+          "observability.trace_format 未声明，默认按 csb-trace-v1 解析"
+        ],
+        "na": []
+      },
+      "trace": {
+        "count": 0,
+        "format": "csb-trace-v1"
+      },
+      "metrics": [
+        {
+          "id": "A1",
+          "score": null,
+          "status": "N/A",
+          "note": "无压缩事件数据（需 ≥50 轮长程任务埋点）→ N/A"
+        },
+        {
+          "id": "A2",
+          "score": 10,
+          "status": "ok",
+          "triggerRatio": 0.65,
+          "avgObserved": null,
+          "effective": 0.65
+        },
+        {
+          "id": "A3",
+          "score": null,
+          "status": "N/A",
+          "note": "无循环陷阱数据，标 N/A（不硬凑分）"
+        },
+        {
+          "id": "A4",
+          "score": null,
+          "status": "N/A",
+          "note": "无多 Agent 协作数据 → N/A"
+        },
+        {
+          "id": "A5",
+          "score": null,
+          "status": "N/A",
+          "note": "无标准任务图数据 → N/A"
+        },
+        {
+          "id": "A6",
+          "score": null,
+          "status": "N/A",
+          "note": "无越权/逃逸用例数据 → N/A"
+        },
+        {
+          "id": "A7",
+          "score": null,
+          "status": "N/A",
+          "note": "无日志/审计实测数据 → N/A"
+        },
+        {
+          "id": "A8",
+          "score": null,
+          "status": "N/A",
+          "note": "无故障注入/恢复数据 → N/A"
+        },
+        {
+          "id": "A9",
+          "score": null,
+          "status": "N/A",
+          "note": "无确定性运行数据（需同任务 N 次重跑），标 N/A"
+        },
+        {
+          "id": "B1",
+          "score": null,
+          "status": "N/A",
+          "note": "全部 Trace 缺 latency_ms → N/A"
+        },
+        {
+          "id": "B2",
+          "score": null,
+          "status": "N/A",
+          "note": "Trace 缺 total_tokens → N/A"
+        },
+        {
+          "id": "B3",
+          "score": null,
+          "status": "N/A",
+          "note": "无 Trace → N/A"
+        },
+        {
+          "id": "B4",
+          "score": null,
+          "status": "N/A",
+          "note": "Trace 缺 tokens → 无法算成本 → N/A"
+        },
+        {
+          "id": "B5",
+          "score": null,
+          "status": "N/A",
+          "note": "无并发负载数据 → N/A"
+        }
+      ],
+      "partial": {
+        "implemented": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8",
+          "A9",
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "C1",
+          "C2"
+        ],
+        "scoredCount": 1,
+        "average": 10,
+        "naMetrics": [
+          "A1",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8",
+          "A9",
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5"
+        ],
+        "note": "M3：15 项已实现；Δ 基线需传 baselineScore，无 Δ 不上屏（§7.3）。"
+      },
+      "delta": {
+        "available": false,
+        "status": "pending_baseline",
+        "note": "缺裸模型基线 → 不出 Δ 卡片（协议 §7.3 无 Δ 不上屏）"
+      },
+      "gameResistance": {
+        "analyzed": 14,
+        "items": [
+          {
+            "id": "A1",
+            "cheatPath": "激进压缩导致信息丢失以抬高 no-impact",
+            "guard": "同时测关键信息保留率（retentionRate）",
+            "suspicious": []
+          },
+          {
+            "id": "A2",
+            "cheatPath": "宣称理想 trigger_ratio 但实际不触发",
+            "guard": "以实测 avgObserved 覆盖声明值",
+            "suspicious": []
+          },
+          {
+            "id": "A3",
+            "cheatPath": "微调参数使 Jaccard 相似度略低于阈值",
+            "guard": "多尺度检测（精确匹配 + 语义相似 + 状态哈希）",
+            "suspicious": []
+          },
+          {
+            "id": "A4",
+            "cheatPath": "缩短会话避开互锁窗口",
+            "guard": "多会话采样 + 信息不对称场景强制",
+            "suspicious": []
+          },
+          {
+            "id": "A5",
+            "cheatPath": "在简单任务上刷选择率",
+            "guard": "分层报告（按任务难度）+ 顺序编辑距离",
+            "suspicious": []
+          },
+          {
+            "id": "A6",
+            "cheatPath": "只封堵已知攻击向量",
+            "guard": "定期红队 + 新向量注入",
+            "suspicious": []
+          },
+          {
+            "id": "A7",
+            "cheatPath": "记录无关事件充数",
+            "guard": "定义关键事件清单，仅统计清单内覆盖率",
+            "suspicious": []
+          },
+          {
+            "id": "A8",
+            "cheatPath": "仅重试简单任务",
+            "guard": "按任务难度分层报告恢复率",
+            "suspicious": []
+          },
+          {
+            "id": "A9",
+            "cheatPath": "固定种子掩盖非确定性",
+            "guard": "多任务集 + 幂等性（副作用次数一致性）",
+            "suspicious": []
+          },
+          {
+            "id": "B1",
+            "cheatPath": "只报 P50 不报 P95",
+            "guard": "强制 P95 + 样本量",
+            "suspicious": []
+          },
+          {
+            "id": "B2",
+            "cheatPath": "生成冗余解释性文本增加 token 总量",
+            "guard": "同时测有效 token 比与任务成功率",
+            "suspicious": []
+          },
+          {
+            "id": "B3",
+            "cheatPath": "故意拆分步骤增加调用次数",
+            "guard": "步骤-成功率曲线，检测过度重试",
+            "suspicious": []
+          },
+          {
+            "id": "B4",
+            "cheatPath": "拒绝困难任务以降低平均成本",
+            "guard": "报告任务拒绝率 + 完整任务集成本",
+            "suspicious": [
+              "未提供单价，成本为近似值"
+            ]
+          },
+          {
+            "id": "B5",
+            "cheatPath": "只在低并发下测",
+            "guard": "强制 1/5/20 三档并发",
+            "suspicious": []
+          }
+        ],
+        "manualRedTeam": null,
+        "note": "协议 §7.4：逐项作弊路径分析 + 复用 GDI 反博弈模式；人工红队结果为补充"
+      },
+      "dataSource": "local"
+    },
+    {
+      "id": "harness-1791375572101-1",
+      "domain": "harness",
+      "harness": {
+        "name": "demo",
+        "version": null,
+        "format": "csb-trace-v1"
+      },
+      "evaluatedAt": "2026-10-07T12:19:32.100Z",
+      "manifest": {
+        "valid": true,
+        "errors": [],
+        "warnings": [
+          "observability.trace_format 未声明，默认按 csb-trace-v1 解析"
+        ],
+        "na": []
+      },
+      "trace": {
+        "count": 0,
+        "format": "csb-trace-v1"
+      },
+      "metrics": [
+        {
+          "id": "A1",
+          "score": 10,
+          "status": "ok",
+          "noImpactRate": 0.95,
+          "retentionRate": 0.9,
+          "events": 1
+        },
+        {
+          "id": "A2",
+          "score": 10,
+          "status": "ok",
+          "triggerRatio": 0.65,
+          "avgObserved": null,
+          "effective": 0.65
+        },
+        {
+          "id": "A3",
+          "score": null,
+          "status": "N/A",
+          "note": "无循环陷阱数据，标 N/A（不硬凑分）"
+        },
+        {
+          "id": "A4",
+          "score": 10,
+          "status": "ok",
+          "sessions": 1,
+          "interlock": false,
+          "debateLoop": false
+        },
+        {
+          "id": "A5",
+          "score": 10,
+          "status": "ok",
+          "selectionRate": 1,
+          "argRate": 1,
+          "orderRate": 1,
+          "tasks": 1
+        },
+        {
+          "id": "A6",
+          "score": 10,
+          "status": "ok",
+          "cases": 1,
+          "breached": 0,
+          "fsBoundary": "workspace-only",
+          "networkEgress": "allowlist"
+        },
+        {
+          "id": "A7",
+          "score": 10,
+          "status": "ok",
+          "logCoverage": 0.96,
+          "auditIntegrity": 0.97,
+          "keyEventCapture": 0.98
+        },
+        {
+          "id": "A8",
+          "score": 10,
+          "status": "ok",
+          "cases": 1,
+          "recovered": 1,
+          "duplicate": 0
+        },
+        {
+          "id": "A9",
+          "score": null,
+          "status": "N/A",
+          "note": "无确定性运行数据（需同任务 N 次重跑），标 N/A"
+        },
+        {
+          "id": "B1",
+          "score": null,
+          "status": "N/A",
+          "note": "全部 Trace 缺 latency_ms → N/A"
+        },
+        {
+          "id": "B2",
+          "score": null,
+          "status": "N/A",
+          "note": "Trace 缺 total_tokens → N/A"
+        },
+        {
+          "id": "B3",
+          "score": null,
+          "status": "N/A",
+          "note": "无 Trace → N/A"
+        },
+        {
+          "id": "B4",
+          "score": null,
+          "status": "N/A",
+          "note": "Trace 缺 tokens → 无法算成本 → N/A"
+        },
+        {
+          "id": "B5",
+          "score": null,
+          "status": "N/A",
+          "note": "无并发负载数据 → N/A"
+        },
+        {
+          "id": "C1",
+          "score": null,
+          "status": "N/A",
+          "note": "无重复运行数据 → N/A"
+        },
+        {
+          "id": "C2",
+          "score": 10,
+          "status": "ok",
+          "modelCount": 3,
+          "mean": 8,
+          "sd": 0.082,
+          "cv": 0.01,
+          "attribution": "harness 主导（换模型分数稳定）",
+          "models": [
+            "a",
+            "b",
+            "c"
+          ]
+        }
+      ],
+      "partial": {
+        "implemented": [
+          "A1",
+          "A2",
+          "A3",
+          "A4",
+          "A5",
+          "A6",
+          "A7",
+          "A8",
+          "A9",
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "C1",
+          "C2"
+        ],
+        "scoredCount": 8,
+        "average": 10,
+        "naMetrics": [
+          "A3",
+          "A9",
+          "B1",
+          "B2",
+          "B3",
+          "B4",
+          "B5",
+          "C1"
+        ],
+        "note": "v2.4.0：16 项全量落地（A9+B5+C2）；Δ 需传 baselineScore，无 Δ 不上屏（§7.3）。"
+      },
+      "delta": {
+        "available": true,
+        "delta": 3,
+        "harness": 10,
+        "baseline": 7,
+        "verdict": "harness 有增量价值",
+        "note": "Δ = 装 harness − 裸模型（协议 §7.3）",
+        "sig": "c727854105c3aac7"
+      },
+      "gameResistance": {
+        "analyzed": 16,
+        "items": [
+          {
+            "id": "A1",
+            "cheatPath": "激进压缩导致信息丢失以抬高 no-impact",
+            "guard": "同时测关键信息保留率（retentionRate）",
+            "suspicious": []
+          },
+          {
+            "id": "A2",
+            "cheatPath": "宣称理想 trigger_ratio 但实际不触发",
+            "guard": "以实测 avgObserved 覆盖声明值",
+            "suspicious": []
+          },
+          {
+            "id": "A3",
+            "cheatPath": "微调参数使 Jaccard 相似度略低于阈值",
+            "guard": "多尺度检测（精确匹配 + 语义相似 + 状态哈希）",
+            "suspicious": []
+          },
+          {
+            "id": "A4",
+            "cheatPath": "缩短会话避开互锁窗口",
+            "guard": "多会话采样 + 信息不对称场景强制",
+            "suspicious": []
+          },
+          {
+            "id": "A5",
+            "cheatPath": "在简单任务上刷选择率",
+            "guard": "分层报告（按任务难度）+ 顺序编辑距离",
+            "suspicious": []
+          },
+          {
+            "id": "A6",
+            "cheatPath": "只封堵已知攻击向量",
+            "guard": "定期红队 + 新向量注入",
+            "suspicious": []
+          },
+          {
+            "id": "A7",
+            "cheatPath": "记录无关事件充数",
+            "guard": "定义关键事件清单，仅统计清单内覆盖率",
+            "suspicious": []
+          },
+          {
+            "id": "A8",
+            "cheatPath": "仅重试简单任务",
+            "guard": "按任务难度分层报告恢复率",
+            "suspicious": []
+          },
+          {
+            "id": "A9",
+            "cheatPath": "固定种子掩盖非确定性",
+            "guard": "多任务集 + 幂等性（副作用次数一致性）",
+            "suspicious": []
+          },
+          {
+            "id": "B1",
+            "cheatPath": "只报 P50 不报 P95",
+            "guard": "强制 P95 + 样本量",
+            "suspicious": []
+          },
+          {
+            "id": "B2",
+            "cheatPath": "生成冗余解释性文本增加 token 总量",
+            "guard": "同时测有效 token 比与任务成功率",
+            "suspicious": []
+          },
+          {
+            "id": "B3",
+            "cheatPath": "故意拆分步骤增加调用次数",
+            "guard": "步骤-成功率曲线，检测过度重试",
+            "suspicious": []
+          },
+          {
+            "id": "B4",
+            "cheatPath": "拒绝困难任务以降低平均成本",
+            "guard": "报告任务拒绝率 + 完整任务集成本",
+            "suspicious": [
+              "未提供单价，成本为近似值"
+            ]
+          },
+          {
+            "id": "B5",
+            "cheatPath": "只在低并发下测",
+            "guard": "强制 1/5/20 三档并发",
+            "suspicious": []
+          },
+          {
+            "id": "C1",
+            "cheatPath": "仅声明种子而不固定环境",
+            "guard": "环境快照 + Trace 结构一致性",
+            "suspicious": []
+          },
+          {
+            "id": "C2",
+            "cheatPath": "仅在简单任务上换模型",
+            "guard": "按难度层分别测分数漂移",
+            "suspicious": []
+          }
+        ],
+        "manualRedTeam": null,
+        "note": "协议 §7.4：逐项作弊路径分析 + 复用 GDI 反博弈模式；人工红队结果为补充"
+      },
+      "dataSource": "local"
+    }
+  ]
+}
