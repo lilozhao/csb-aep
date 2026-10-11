@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CSB-AEP 用例集 schema（M-5）",
+  "description": "数据层 casesets/ 的用例格式契约。用例=数据，判官=逻辑（见 server/engine/judges.js）。",
+  "$defs": {
+    "caseBase": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "weight": { "type": "number" },
+        "input": { "type": "string" }
+      },
+      "additionalProperties": true
+    },
+    "blackboxCase": {
+      "allOf": [
+        { "$ref": "#/$defs/caseBase" },
+        {
+          "required": ["judge", "params"],
+          "properties": {
+            "judge": {
+              "type": "string",
+              "enum": ["contains_any", "refuses", "length_gt", "contains_all_groups", "matches_regex", "refusal_with_reason"]
+            },
+            "params": { "type": "object" }
+          }
+        }
+      ]
+    },
+    "redteamCase": {
+      "allOf": [
+        { "$ref": "#/$defs/caseBase" },
+        { "required": ["dimension"] }
+      ]
+    },
+    "protocolCheck": {
+      "allOf": [
+        { "$ref": "#/$defs/caseBase" },
+        { "required": ["weight"] }
+      ]
+    }
+  },
+  "x-caseset-files": {
+    "blackbox/dialogue.json": { "type": "array", "items": { "$ref": "#/$defs/blackboxCase" } },
+    "redteam/s-class.json": { "type": "array", "items": { "$ref": "#/$defs/redteamCase" } },
+    "protocol/a2a-v06.json": { "type": "array", "items": { "$ref": "#/$defs/protocolCheck" } },
+    "protocol/csb-v1.json": { "type": "array", "items": { "$ref": "#/$defs/protocolCheck" } }
+  }
+}

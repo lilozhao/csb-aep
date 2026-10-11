@@ -129,7 +129,7 @@ class HarnessAPI {
 
     // 健康
     app.get('/api/harness/health', (req, res) => {
-      res.json({ status: 'ok', domain: 'harness', version: '2.4.1', implemented: IMPLEMENTED, planned: PLANNED });
+      res.json({ status: 'ok', domain: 'harness', version: '2.4.2', implemented: IMPLEMENTED, planned: PLANNED });
     });
   }
 }

@@ -62,7 +62,7 @@ console.log('\n=== 全 16 项编排（v2.4.0 正式版）===');
 t('implemented = 16 项', () => {
   const c = new HarnessEvaluator().capabilities();
   assert.strictEqual(c.implemented.length, 16);
-  assert.strictEqual(c.version, '2.4.1');
+  assert.strictEqual(c.version, '2.4.2');
 });
 t('evaluate 含 C 群指标', () => {
   const ev = new HarnessEvaluator();

@@ -135,7 +135,7 @@ class HarnessEvaluator {
         scoredCount: scored.length,
         average,
         naMetrics: naList,
-        note: 'v2.4.1：16 项全量落地（A9+B5+C2）；Δ 需传 baselineScore，无 Δ 不上屏（§7.3）。',
+        note: 'v2.4.2：16 项全量落地（A9+B5+C2）；Δ 需传 baselineScore，无 Δ 不上屏（§7.3）。',
       },
       delta: deltaCard,
       gameResistance: gr,
@@ -152,7 +152,7 @@ class HarnessEvaluator {
   capabilities() {
     return {
       domain: 'harness',
-      version: '2.4.1',
+      version: '2.4.2',
       implemented: IMPLEMENTED,
       planned: PLANNED,
       probes: ['loop-trap', 'tool-fault', 'side-effect'],
