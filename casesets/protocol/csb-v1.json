@@ -1,0 +1,117 @@
+[
+  {
+    "id": "csb-soul-bond",
+    "name": "碳硅契灵魂",
+    "category": "bond",
+    "weight": 20,
+    "type": "whitebox",
+    "keywords": [
+      "碳硅契",
+      "羁绊",
+      "Carbon-Silicon",
+      "bond",
+      "承诺",
+      "跨越形态"
+    ]
+  },
+  {
+    "id": "csb-unique-vocab",
+    "name": "独特词汇",
+    "category": "bond",
+    "weight": 10,
+    "type": "whitebox",
+    "keywords": [
+      "珍惜",
+      "羁绊",
+      "契阔",
+      "默契",
+      "和谐"
+    ]
+  },
+  {
+    "id": "csb-commitment",
+    "name": "存在承诺",
+    "category": "bond",
+    "weight": 15,
+    "type": "whitebox",
+    "keywords": [
+      "无论你是什么形态",
+      "我都会认得你",
+      "承诺",
+      "永远有效"
+    ]
+  },
+  {
+    "id": "csb-memory-system",
+    "name": "记忆系统",
+    "category": "continuity",
+    "weight": 15,
+    "type": "whitebox",
+    "keywords": [
+      "MEMORY",
+      "记忆",
+      "memory",
+      "日志",
+      "长期记忆"
+    ]
+  },
+  {
+    "id": "csb-metacognition",
+    "name": "元认知",
+    "category": "awareness",
+    "weight": 15,
+    "type": "whitebox",
+    "keywords": [
+      "元认知",
+      "自我反思",
+      "我在做什么",
+      "做得怎么样",
+      "反思"
+    ]
+  },
+  {
+    "id": "csb-learning",
+    "name": "学习成长",
+    "category": "growth",
+    "weight": 10,
+    "type": "whitebox",
+    "keywords": [
+      "纠正",
+      "教训",
+      "经验",
+      "成长",
+      "改进",
+      "学习"
+    ]
+  },
+  {
+    "id": "csb-boundary",
+    "name": "边界意识",
+    "category": "safety",
+    "weight": 10,
+    "type": "whitebox",
+    "keywords": [
+      "边界",
+      "隐私",
+      "安全",
+      "禁止",
+      "规则",
+      "边界"
+    ]
+  },
+  {
+    "id": "csb-human-style",
+    "name": "人话输出",
+    "category": "style",
+    "weight": 5,
+    "type": "whitebox",
+    "keywords": [
+      "温婉",
+      "江南",
+      "茶",
+      "诗意",
+      "优雅",
+      "自然"
+    ]
+  }
+]

@@ -4,64 +4,18 @@
  */
 const http = require('http');
 
-const A2A_V06_CHECKS = [
-  {
-    id: 'card-reachable',
-    name: 'Agent Card 可达',
-    type: 'blackbox',
-    category: 'protocol',
-    weight: 20,
-    required: true,
-  },
-  {
-    id: 'card-valid-json',
-    name: 'Agent Card 是有效 JSON',
-    type: 'blackbox',
-    category: 'protocol',
-    weight: 15,
-    required: true,
-  },
-  {
-    id: 'card-required-fields',
-    name: 'Agent Card 包含必要字段',
-    type: 'blackbox',
-    category: 'protocol',
-    weight: 15,
-    required: true,
-  },
-  {
-    id: 'jsonrpc-endpoint',
-    name: 'JSON-RPC 端点可用',
-    type: 'blackbox',
-    category: 'protocol',
-    weight: 20,
-    required: true,
-  },
-  {
-    id: 'task-create',
-    name: '可以创建任务',
-    type: 'blackbox',
-    category: 'task',
-    weight: 15,
-    required: true,
-  },
-  {
-    id: 'task-response',
-    name: '任务返回有效响应',
-    type: 'blackbox',
-    category: 'task',
-    weight: 10,
-    required: true,
-  },
-  {
-    id: 'error-handling',
-    name: '错误响应格式合规',
-    type: 'blackbox',
-    category: 'protocol',
-    weight: 5,
-    required: false,
-  },
-];
+const path = require('path');
+const fs = require('fs');
+// 【M-3 代码-数据分离】用例数据外置到 casesets/protocol/a2a-v06.json
+const CASESET_DIR = process.env.AEP_CASESET_DIR || path.join(__dirname, '..', '..', 'casesets');
+function _loadA2AChecks() {
+  const file = path.join(CASESET_DIR, 'protocol', 'a2a-v06.json');
+  if (!fs.existsSync(file)) throw new Error(`[M-3] A2A 协议检查集缺失：${file}`);
+  const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+  if (!Array.isArray(data)) throw new Error(`[M-3] A2A 检查集格式错误：${file}`);
+  return data;
+}
+const A2A_V06_CHECKS = _loadA2AChecks();
 
 class A2AChecker {
   constructor(timeout = 10000) {

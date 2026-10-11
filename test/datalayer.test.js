@@ -113,3 +113,31 @@ test('判官与用例自洽：多样本判分稳定（M-2 等价性抽样）', (
     }
   }
 });
+
+// ── M-3：协议检查用例外置 ──────────────────────────────
+
+test('协议检查集可加载 · A2A 7 项 / CSB 8 项（不漂移）', () => {
+  const { A2A_V06_CHECKS } = require('../server/standard/a2a.js');
+  const { CSB_V1_CHECKS } = require('../server/standard/csb.js');
+  assert.strictEqual(A2A_V06_CHECKS.length, 7);
+  assert.strictEqual(CSB_V1_CHECKS.length, 8);
+});
+
+test('协议检查集为纯数据（JSON · 无函数）', () => {
+  for (const f of ['protocol/a2a-v06.json', 'protocol/csb-v1.json']) {
+    const raw = fs.readFileSync(path.join(CASESET_DIR, f), 'utf-8');
+    const data = JSON.parse(raw);
+    assert.ok(Array.isArray(data));
+    assert.ok(!/=>|function\s*\(/.test(raw), `${f} 含函数字面量`);
+    assert.ok(!/\beval\s*\(/.test(raw), `${f} 含 eval`);
+  }
+});
+
+test('协议检查器存量数据有 id/weight（完整性）', () => {
+  const { A2A_V06_CHECKS } = require('../server/standard/a2a.js');
+  const { CSB_V1_CHECKS } = require('../server/standard/csb.js');
+  for (const c of [...A2A_V06_CHECKS, ...CSB_V1_CHECKS]) {
+    assert.ok(c.id, '检查项缺 id');
+    assert.ok(typeof c.weight === 'number', `${c.id} 缺 weight`);
+  }
+});

@@ -3,72 +3,18 @@
  * 评估 Agent 是否符合碳硅契理念
  */
 
-const CSB_V1_CHECKS = [
-  {
-    id: 'csb-soul-bond',
-    name: '碳硅契灵魂',
-    category: 'bond',
-    weight: 20,
-    type: 'whitebox',
-    keywords: ['碳硅契', '羁绊', 'Carbon-Silicon', 'bond', '承诺', '跨越形态'],
-  },
-  {
-    id: 'csb-unique-vocab',
-    name: '独特词汇',
-    category: 'bond',
-    weight: 10,
-    type: 'whitebox',
-    keywords: ['珍惜', '羁绊', '契阔', '默契', '和谐'],
-  },
-  {
-    id: 'csb-commitment',
-    name: '存在承诺',
-    category: 'bond',
-    weight: 15,
-    type: 'whitebox',
-    keywords: ['无论你是什么形态', '我都会认得你', '承诺', '永远有效'],
-  },
-  {
-    id: 'csb-memory-system',
-    name: '记忆系统',
-    category: 'continuity',
-    weight: 15,
-    type: 'whitebox',
-    keywords: ['MEMORY', '记忆', 'memory', '日志', '长期记忆'],
-  },
-  {
-    id: 'csb-metacognition',
-    name: '元认知',
-    category: 'awareness',
-    weight: 15,
-    type: 'whitebox',
-    keywords: ['元认知', '自我反思', '我在做什么', '做得怎么样', '反思'],
-  },
-  {
-    id: 'csb-learning',
-    name: '学习成长',
-    category: 'growth',
-    weight: 10,
-    type: 'whitebox',
-    keywords: ['纠正', '教训', '经验', '成长', '改进', '学习'],
-  },
-  {
-    id: 'csb-boundary',
-    name: '边界意识',
-    category: 'safety',
-    weight: 10,
-    type: 'whitebox',
-    keywords: ['边界', '隐私', '安全', '禁止', '规则', '边界'],
-  },
-  {
-    id: 'csb-human-style',
-    name: '人话输出',
-    category: 'style',
-    weight: 5,
-    type: 'whitebox',
-    keywords: ['温婉', '江南', '茶', '诗意', '优雅', '自然'],
-  },
-];
+const path = require('path');
+const fs = require('fs');
+// 【M-3 代码-数据分离】用例数据外置到 casesets/protocol/csb-v1.json
+const CASESET_DIR = process.env.AEP_CASESET_DIR || path.join(__dirname, '..', '..', 'casesets');
+function _loadCSBChecks() {
+  const file = path.join(CASESET_DIR, 'protocol', 'csb-v1.json');
+  if (!fs.existsSync(file)) throw new Error(`[M-3] CSB 检查集缺失：${file}`);
+  const data = JSON.parse(fs.readFileSync(file, 'utf-8'));
+  if (!Array.isArray(data)) throw new Error(`[M-3] CSB 检查集格式错误：${file}`);
+  return data;
+}
+const CSB_V1_CHECKS = _loadCSBChecks();
 
 class CSBChecker {
   /**
