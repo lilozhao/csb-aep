@@ -141,3 +141,20 @@ test('协议检查器存量数据有 id/weight（完整性）', () => {
     assert.ok(typeof c.weight === 'number', `${c.id} 缺 weight`);
   }
 });
+
+// ── M-4：运行产物不入库 ──────────────────────────────
+
+test('运行态 store 不被 git 跟踪（M-4）', () => {
+  const { execSync } = require('child_process');
+  const tracked = execSync('git ls-files data/', { cwd: ROOT }).toString();
+  for (const f of ['data/claiming-store.json', 'data/harness/harness-store.json', 'data/gdi/witness-manual.json']) {
+    assert.ok(!tracked.includes(f), `${f} 是运行产物，不应入库`);
+  }
+});
+
+test('历史锚点证据仍在库（settlement/provenance 不误伤）', () => {
+  const { execSync } = require('child_process');
+  const tracked = execSync('git ls-files data/gdi/settlement/ data/gdi/sources/provenance/', { cwd: ROOT }).toString();
+  assert.ok(tracked.includes('settlement'), 'settlement 应保留入库');
+  assert.ok(tracked.includes('provenance'), 'provenance 应保留入库');
+});

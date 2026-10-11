@@ -7,3 +7,17 @@ data/gdi/gdi-store.json
 
 # GDI 开机补偿运行日志（运行时产物，不入库）
 data/gdi/catchup.log
+
+# ── M-4 代码-数据分离（2026-10-11 · 一澜拍板：运行产物就地 data/ gitignore）──
+# 运行态 store（每次运行重写 · 无历史价值）→ 不入库
+data/claiming-store.json
+data/harness/harness-store.json
+data/gdi/witness-manual.json
+data/gdi/sources/witness/manual.json
+data/harness/
+data/gdi/gdi-store.json
+data/results.json
+data/results.v1.backup.json
+
+# 注：data/gdi/settlement/** 与 data/gdi/sources/provenance/** 是**历史锚点证据**
+# （不可变、可溯源），保留入库，不 ignore。

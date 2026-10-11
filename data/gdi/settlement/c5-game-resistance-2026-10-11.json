@@ -1,9 +1,9 @@
 {
   "meta": {
-    "generatedAt": "2026-10-11T11:14:18.484Z",
+    "generatedAt": "2026-10-11T11:15:59.021Z",
     "kind": "c5-game-resistance",
     "engine": "server/engine/gdi/witness.js",
-    "now": "2026-10-11T11:14:18.479Z"
+    "now": "2026-10-11T11:15:58.995Z"
   },
   "threshold": {
     "rule": "同对高频得分 ≤ 诚实基线 ×2",
