@@ -11,7 +11,8 @@
  * 此时**宁可不出分，也不出失真的分**。三道前置全过才出 Δ：
  *   1. 模型一致：harness.model == baseline.model
  *   2. 任务集一致：harness 任务集指纹 == 基线任务集指纹
- *   3. 覆盖一致：harness 评分项数 == 基线评分项数（部分完成 vs 完整 → 拒）
+ *   3. 覆盖一致：harness 评分项集合 == 基线评分项集合（不仅数量，还要**集合** ——
+ *      两侧都 12 项但项不同仍不可比；无 scoredIds 时回退比数量）
  * 任一不满足 → available:false / status:'delta_invalid'（显式理由，不静默）。
  *
  * 呈现净化沿用 GDI 的预签名切片模式：响应体只出 Δ 卡片。
@@ -50,13 +51,29 @@ function checkBaselineComparability({ baselineMeta, harnessMeta } = {}) {
   }
 
   // 前置 3：覆盖一致（部分完成 vs 完整 → 分母不同 → 拒）
+  // M3.1.a（若琢 2026-10-11 指正）：不仅比**数量**，还要比**集合** ——
+  //   两侧都 12 项但评分项集合不同（如 harness 评 A1-A12 · baseline 评 A1-A10+B1-B2）
+  //   → 数量相同但平均值在不同项上求 → 仍不可比。优先用 scoredIds 集合比对。
+  const bIds = Array.isArray(b.scoredIds) ? b.scoredIds : null;
+  const hIds = Array.isArray(h.scoredIds) ? h.scoredIds : null;
+  if (bIds && hIds) {
+    const bs = [...bIds].sort().join(',');
+    const hs = [...hIds].sort().join(',');
+    if (bs !== hs) {
+      return { ok: false, code: 'scoredset_mismatch', reason: `评分项集合不一致：harness=[${hIds.join(',')}] vs baseline=[${bIds.join(',')}]（不同项的平均不可比）` };
+    }
+    // 集合一致 → 数量必然一致，通过
+    return { ok: true };
+  }
+
+  // 回退：无 scoredIds 时只能比数量（兼容旧调用）
   const bc = Number(b.scoredCount);
   const hc = Number(h.scoredCount);
   if (!Number.isFinite(bc) || !Number.isFinite(hc)) {
-    return { ok: false, code: 'missing_coverage', reason: '缺评分项数：无法确认两侧覆盖一致（部分完成 vs 完整 → Δ 失真）' };
+    return { ok: false, code: 'missing_coverage', reason: '缺评分项数/集合：无法确认两侧覆盖一致（部分完成 vs 完整 → Δ 失真）' };
   }
   if (bc !== hc) {
-    return { ok: false, code: 'coverage_mismatch', reason: `覆盖不一致：harness ${hc} 项 vs baseline ${bc} 项（分母不同 → Δ 失真，拒绝出分）` };
+    return { ok: false, code: 'coverage_mismatch', reason: `覆盖数量不一致：harness ${hc} 项 vs baseline ${bc} 项（分母不同 → Δ 失真，拒绝出分）；建议同时传 scoredIds 做集合级校验` };
   }
 
   return { ok: true };

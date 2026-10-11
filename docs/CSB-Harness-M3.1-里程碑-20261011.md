@@ -40,7 +40,13 @@
 |---|---|---|
 | 1 | **模型一致**：harness.model == baseline.model | `model_mismatch` / `missing_model` |
 | 2 | **任务集一致**：两侧 taskSetHash 相同 | `taskset_mismatch` / `missing_taskset` |
-| 3 | **覆盖一致**：两侧 scoredCount 相同（**部分 vs 完整 → 拒**）| `coverage_mismatch` / `missing_coverage` |
+| 3 | **覆盖一致**：两侧 scoredIds 集合相同（**部分 vs 完整 → 拒**）| `scoredset_mismatch` / `coverage_mismatch` / `missing_coverage` |
+
+> **若琢复核指正（2026-10-11）**：覆盖一致只看「评分项**数量**相同」会误伤合法 N/A，
+> 更稳的口径是「评分项**集合** + 分母一致」。已采纳：优先用 `scoredIds` **集合**比对
+> （顺序无关）；无 scoredIds 时回退比数量（兼容旧调用）。新增两组用例：
+> 「数量同但项不同 → 拒」·「合法 N/A 两侧一致 → 通过（不误伤）」。
+> 故此处为 **M3.1.a**（若琢反馈驱动）。
 
 任一不满足 → `{ available:false, status:'delta_invalid', code, reason }`
 ——**显式拒分，理由上屏，不静默**（呼应 CSB 工程契约 P1「拒绝要计分」）。
@@ -78,3 +84,4 @@
 
 _编制：若兰 🌸 · 2026-10-11 · 来源：若琢 🔧 自评报告_
 _协议：csb-AEP-v1.1 §7.3 · 代码：csb-aep v2.4.1_
+_修订：2026-10-11 M3.1.a —— 采纳若琢「集合级覆盖校验」建议（scoredIds + 数量回退）_

@@ -138,6 +138,34 @@ t('覆盖不一致（6 vs 16）→ 拒（部分 vs 完整 = 分母不对）', ()
   assert.strictEqual(c.status, 'delta_invalid');
   assert.strictEqual(c.code, 'coverage_mismatch');
 });
+t('评分项集合不一致（数量同但项不同）→ 拒（若琢指正的集口径）', () => {
+  const c = computeDelta({
+    harnessScore: 8.0, baselineScore: 7.5,
+    harnessMeta: { model: 'm', taskSetHash: 't', scoredIds: ['A1', 'A2', 'A3'], scoredCount: 3 },
+    baselineMeta: { model: 'm', taskSetHash: 't', scoredIds: ['A1', 'A2', 'B1'], scoredCount: 3 },
+  });
+  assert.strictEqual(c.status, 'delta_invalid');
+  assert.strictEqual(c.code, 'scoredset_mismatch');
+});
+t('评分项集合一致（顺序无关）→ 通过', () => {
+  const c = computeDelta({
+    harnessScore: 8.0, baselineScore: 7.5,
+    harnessMeta: { model: 'm', taskSetHash: 't', scoredIds: ['A2', 'A1', 'A3'], scoredCount: 3 },
+    baselineMeta: { model: 'm', taskSetHash: 't', scoredIds: ['A1', 'A3', 'A2'], scoredCount: 3 },
+  });
+  assert.strictEqual(c.available, true);
+  assert.strictEqual(c.delta, 0.5);
+});
+t('合法 N/A 两侧一致 → 通过（不误伤）', () => {
+  // 两侧都 N/A 掉同样 4 项 → 评了同样 12 项
+  const ids = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'B1', 'B2', 'B3', 'B4'];
+  const c = computeDelta({
+    harnessScore: 8.0, baselineScore: 7.5,
+    harnessMeta: { model: 'm', taskSetHash: 't', scoredIds: ids, scoredCount: 12 },
+    baselineMeta: { model: 'm', taskSetHash: 't', scoredIds: [...ids].reverse(), scoredCount: 12 },
+  });
+  assert.strictEqual(c.available, true);
+});
 t('checkBaselineComparability 纯函数直测', () => {
   assert.strictEqual(checkBaselineComparability({ harnessMeta: OK_H, baselineMeta: OK_B }).ok, true);
   assert.strictEqual(checkBaselineComparability({ harnessMeta: OK_H, baselineMeta: { ...OK_B, taskSetHash: 'x' } }).code, 'taskset_mismatch');

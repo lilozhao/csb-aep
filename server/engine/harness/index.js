@@ -58,7 +58,7 @@ class HarnessEvaluator {
    *   - traps: [{ steps, detected, detectedAtStep }]（用于 A3）
    *   - runs: [[Trace...]...]（用于 A9）
    *   - taskSetHash: string    本次评测覆盖的任务集指纹（Δ 一致性校验用）
-   *   - baselineMeta: { model, taskSetHash, scoredCount }  基线侧元数据（Δ 一致性校验用）
+   *   - baselineMeta: { model, taskSetHash, scoredIds?, scoredCount }  基线侧元数据（Δ 一致性校验用）
    *   - model: string          harness 侧模型标识（Δ 一致性校验用）
    * @returns {object} 评测结果（含 N/A 显式标注）
    */
@@ -108,6 +108,7 @@ class HarnessEvaluator {
       harnessMeta: {
         model: cfg.model || input.model,
         taskSetHash: input.taskSetHash,
+        scoredIds: scored.map(m => m.id),
         scoredCount: scored.length,
       },
       baselineMeta: input.baselineMeta, // { model, taskSetHash, scoredCount }
