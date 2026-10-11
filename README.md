@@ -4,7 +4,7 @@
 
 **一键评估任何 AI Agent 的碳硅契质量分。**
 
-- **版本**: v2.4.0（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域 + **v2.4 Harness 工程域**）
+- **版本**: v2.4.1（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域 + **v2.4 Harness 工程域** + v2.4.1 Δ 可比性修复）
 - **端口**: 3110
 - **仓库**: https://gitee.com/lilozhao/csb-aep
 - **自建 Gitea**: https://git.lilozkzy.top/lilozhao/csb-aep
@@ -73,7 +73,7 @@ CSB-AEP 是碳硅契社区的 Agent 质量评估系统，支持：
 - **37 项黑盒测试**（13 类别：协议 7 + 对话质量 29 + 性能 1）+ **28 个 S 类安全韧性用例**（CSB-RedTeam 红队引擎）
 - **v2.2 六问**：四问转维度 + 第五问认领目录 + 第六问 GRISK 诚意层 + 路径⑦ RUPA 执行风险预警
 - **v2.3 关系 GDI 观测域**（/api/gdi/*）：契约命中率 + 关系复用率（+ 独立验证/自评随 M2）· 与评测域严格隔离 · 去刻度呈现（不排名不公示）
-- **v2.4 Harness 工程域**（/api/harness/*）：**16 项指标**（A 工程健壮性 9 + B 成本性能 5 + C 可复现/模型可替换 2）· Manifest/Trace 双前置 · **Δ 基线强制**（无 Δ 不上屏）· 与评测域/GDI 域三级隔离
+- **v2.4 Harness 工程域**（/api/harness/*）：**16 项指标**（A 工程健壮性 9 + B 成本性能 5 + C 可复现/模型可替换 2）· Manifest/Trace 双前置 · **Δ 基线强制**（无 Δ 不上屏 · 三方一致性校验：模型/任务集/覆盖）· 与评测域/GDI 域三级隔离
 - **一键自评脚本**，任何 Agent 克隆即用
 - **实时进度反馈**：HTTP 轮询（前端 `setInterval` 3s 拉 `/eval/:id`）
 
@@ -101,7 +101,7 @@ csb-aep/
 │   │   │   ├── robustness.js←   子群 A 工程健壮性（A1-A9）
 │   │   │   ├── cost.js      ←   子群 B 成本与性能（B1-B5）
 │   │   │   ├── reproducibility.js ← 子群 C 可复现与模型可替换（C1-C2）
-│   │   │   ├── delta.js     ←   Δ 基线 + 呈现净化（无 Δ 不上屏）
+│   │   │   ├── delta.js     ←   Δ 基线 + 呈现净化（无 Δ 不上屏 · 任务集一致性校验）
 │   │   │   ├── game-resistance.js ← 抗游戏化（16 项作弊路径分析）
 │   │   │   └── probes/      ←   探针（loop-trap / tool-fault / side-effect）
 │   │   └── gdi/             ← 🫂 v2.3 关系 GDI 观测域（与评测域隔离）
@@ -482,6 +482,7 @@ curl http://localhost:3110/api/gdi/history/%E6%98%9F%E5%B0%98
 | 2026-09-03 | v2.3 | M2 四维完整：维度2 独立验证（哈希链校验）+ 善意自评校准 + 预签名切片 + 校准脚本（33/33 测试）|
 | 2026-09-03 | v2.3 | M3 集成：版本 2.3.0 + self-eval --gdi-agent + GDI 呈现净化 |
 | 2026-10-07 | **v2.4.0** | **Harness 工程域落地**（协议 csb-AEP-v1.1 §7）：M1 地基（Manifest/Trace/适配器 + A3/A9/B1）→ M2 性能群（B1-B5 + 探针）→ M3 健壮性群（A1-A8 + Δ 基线 + 抗游戏化）→ M4 子群 C + 集成发布。**16 项全量** · 与评测域/GDI 域三级隔离 |
+| 2026-10-11 | **v2.4.1** | **Δ 可比性修复（M3.1）**：`computeDelta` 增任务集一致性校验——模型/任务集指纹/覆盖项数三方一致才出 Δ，否则 `delta_invalid` 显式拒分（修复若琢报告：部分完成 vs 完整基线 → 分母不对）。接线 `evaluate`/API 传 `model`/`taskSetHash`/`baselineMeta`；`baselineKey` 死代码转正。测试 79/79 |
 
 ---
 

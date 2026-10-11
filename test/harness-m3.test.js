@@ -8,7 +8,7 @@
 const assert = require('assert');
 const { extractConfig } = require('../server/engine/harness/manifest.js');
 const { a1, a2, a4, a5, a6, a7, a8, editDistance } = require('../server/engine/harness/robustness.js');
-const { computeDelta, purify } = require('../server/engine/harness/delta.js');
+const { computeDelta, purify, checkBaselineComparability } = require('../server/engine/harness/delta.js');
 const { gameResistance } = require('../server/engine/harness/game-resistance.js');
 const { HarnessEvaluator } = require('../server/engine/harness');
 
@@ -101,10 +101,14 @@ t('失败 → 0', () => {
 });
 
 console.log('\n=== Δ 基线 + 呈现净化（§7.3）===');
-t('Δ = harness − baseline', () => {
-  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2 });
+// 一致的元数据（模型/任务集/覆盖三方一致）—— 供正向用例复用
+const OK_H = { model: 'deepseek-v4-flash', taskSetHash: 'ts-A', scoredCount: 16 };
+const OK_B = { model: 'deepseek-v4-flash', taskSetHash: 'ts-A', scoredCount: 16 };
+t('Δ = harness − baseline（三方一致）', () => {
+  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: OK_B });
   assert.strictEqual(c.available, true);
   assert.strictEqual(c.delta, 1.2);
+  assert.strictEqual(c.taskSetHash, 'ts-A');
   assert.ok(c.sig);
 });
 t('无基线 → pending_baseline（无 Δ 不上屏）', () => {
@@ -112,13 +116,46 @@ t('无基线 → pending_baseline（无 Δ 不上屏）', () => {
   assert.strictEqual(c.available, false);
   assert.strictEqual(c.status, 'pending_baseline');
 });
+t('缺元数据 → delta_invalid（拒绝出分，不静默）', () => {
+  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2 });
+  assert.strictEqual(c.available, false);
+  assert.strictEqual(c.status, 'delta_invalid');
+  assert.strictEqual(c.code, 'missing_model');
+  assert.ok(c.reason);
+});
+t('模型不一致 → 拒', () => {
+  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: { ...OK_B, model: 'mimo-v2.6-flash' } });
+  assert.strictEqual(c.status, 'delta_invalid');
+  assert.strictEqual(c.code, 'model_mismatch');
+});
+t('任务集不一致 → 拒（若琢报告的核心漏洞）', () => {
+  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: { ...OK_B, taskSetHash: 'ts-B' } });
+  assert.strictEqual(c.status, 'delta_invalid');
+  assert.strictEqual(c.code, 'taskset_mismatch');
+});
+t('覆盖不一致（6 vs 16）→ 拒（部分 vs 完整 = 分母不对）', () => {
+  const c = computeDelta({ harnessScore: 1.0, baselineScore: 8.75, harnessMeta: { ...OK_H, scoredCount: 6 }, baselineMeta: OK_B });
+  assert.strictEqual(c.status, 'delta_invalid');
+  assert.strictEqual(c.code, 'coverage_mismatch');
+});
+t('checkBaselineComparability 纯函数直测', () => {
+  assert.strictEqual(checkBaselineComparability({ harnessMeta: OK_H, baselineMeta: OK_B }).ok, true);
+  assert.strictEqual(checkBaselineComparability({ harnessMeta: OK_H, baselineMeta: { ...OK_B, taskSetHash: 'x' } }).code, 'taskset_mismatch');
+});
 t('purify 无基线 → 不出分', () => {
   const p = purify({ harness: { name: 'x' } }, { available: false });
   assert.strictEqual(p.status, 'pending_baseline');
   assert.strictEqual(p.delta, null);
 });
+t('purify delta_invalid → 拒绝状态 + 理由上屏（不出分但说清）', () => {
+  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: { ...OK_B, taskSetHash: 'x' } });
+  const p = purify({ harness: { name: 'x' } }, c);
+  assert.strictEqual(p.status, 'delta_invalid');
+  assert.strictEqual(p.delta, null);
+  assert.ok(p.note && p.note.includes('任务集'));
+});
 t('purify 有基线 → 只出 Δ 卡片，不含绝对分', () => {
-  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2 });
+  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: OK_B });
   const p = purify({ harness: { name: 'x' }, partial: { naMetrics: [] } }, c);
   assert.ok(p.delta && p.delta.delta === 1.2);
   assert.ok(!('average' in p));           // 绝对分不上屏
@@ -152,11 +189,16 @@ t('evaluate 出 A+B 全量指标', () => {
     observability: { logCoverage: 0.96, auditIntegrity: 0.96, keyEventCapture: 0.96 },
     recovery: [{ recovered: true, stateConsistent: true, duplicateSideEffects: false }],
     baselineScore: 7.0,
+    model: 'deepseek-v4-flash',
+    taskSetHash: 'ts-A',
+    baselineMeta: { model: 'deepseek-v4-flash', taskSetHash: 'ts-A', scoredCount: 16 },
   });
   for (const id of ['A1', 'A2', 'A4', 'A5', 'A6', 'A7', 'A8']) {
     assert.strictEqual(out.metrics.find(m => m.id === id).status, 'ok', `${id} 应 ok`);
   }
-  assert.strictEqual(out.delta.available, true);
+  // 注：本用例输入未凑满 16 项 → 覆盖数 ≠ 16 → Δ 正确拒出（这正是 M3.1 的行为）
+  assert.strictEqual(out.delta.available, false);
+  assert.strictEqual(out.delta.status, 'delta_invalid');
   assert.ok(out.gameResistance.analyzed > 0);
 });
 t('present() 净化：无 Δ 时不上屏', () => {

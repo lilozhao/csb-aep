@@ -1,6 +1,6 @@
 {
   "name": "csb-aep",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "CSB Agent Evaluation Platform - Agent 质量评估平台",
   "main": "server/index.js",
   "scripts": {

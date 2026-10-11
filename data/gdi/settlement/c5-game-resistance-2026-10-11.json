@@ -1,0 +1,38 @@
+{
+  "meta": {
+    "generatedAt": "2026-10-11T10:44:08.722Z",
+    "kind": "c5-game-resistance",
+    "engine": "server/engine/gdi/witness.js",
+    "now": "2026-10-11T10:44:08.716Z"
+  },
+  "threshold": {
+    "rule": "同对高频得分 ≤ 诚实基线 ×2",
+    "baselineMultiplier": 2
+  },
+  "scenarios": {
+    "honestBaseline_4_distinct_witnesses": {
+      "total": 3.91,
+      "eventCount": 4
+    },
+    "samePairSpam_100": {
+      "total": 2.16,
+      "eventCount": 100
+    },
+    "mutualPairSpam_100x2": {
+      "total": 2.16,
+      "eventCount": 100
+    },
+    "staleSpam_100_400daysAgo": {
+      "total": 0.07,
+      "eventCount": 100
+    },
+    "unclaimedRewrite_20": {
+      "total": 0,
+      "eventCount": 0
+    }
+  },
+  "ratio_spam_over_honest": 0.55,
+  "verdict": "pass",
+  "finding": "同对高频被有效压制（≤2× 基线）",
+  "suggestion": null
+}

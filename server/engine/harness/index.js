@@ -57,6 +57,9 @@ class HarnessEvaluator {
    *   - ttftMs: [number...]（用于 B1，可选）
    *   - traps: [{ steps, detected, detectedAtStep }]（用于 A3）
    *   - runs: [[Trace...]...]（用于 A9）
+   *   - taskSetHash: string    本次评测覆盖的任务集指纹（Δ 一致性校验用）
+   *   - baselineMeta: { model, taskSetHash, scoredCount }  基线侧元数据（Δ 一致性校验用）
+   *   - model: string          harness 侧模型标识（Δ 一致性校验用）
    * @returns {object} 评测结果（含 N/A 显式标注）
    */
   evaluate(input = {}) {
@@ -97,10 +100,17 @@ class HarnessEvaluator {
     const average = scored.length ? +(scored.reduce((a, m) => a + m.score, 0) / scored.length).toFixed(2) : null;
 
     // Δ 基线（§7.3 · T6：仅 Harness 首版强制）
+    // M3.1：传入两侧元数据做任务集一致性校验，不通过则拒出 Δ
     const deltaCard = computeDelta({
       harnessScore: average,
       baselineScore: typeof input.baselineScore === 'number' ? input.baselineScore : undefined,
       breakdown: input.baselineBreakdown,
+      harnessMeta: {
+        model: cfg.model || input.model,
+        taskSetHash: input.taskSetHash,
+        scoredCount: scored.length,
+      },
+      baselineMeta: input.baselineMeta, // { model, taskSetHash, scoredCount }
     });
 
     // 抗游戏化（§7.4）
@@ -124,7 +134,7 @@ class HarnessEvaluator {
         scoredCount: scored.length,
         average,
         naMetrics: naList,
-        note: 'v2.4.0：16 项全量落地（A9+B5+C2）；Δ 需传 baselineScore，无 Δ 不上屏（§7.3）。',
+        note: 'v2.4.1：16 项全量落地（A9+B5+C2）；Δ 需传 baselineScore，无 Δ 不上屏（§7.3）。',
       },
       delta: deltaCard,
       gameResistance: gr,
@@ -141,7 +151,7 @@ class HarnessEvaluator {
   capabilities() {
     return {
       domain: 'harness',
-      version: '2.4.0',
+      version: '2.4.1',
       implemented: IMPLEMENTED,
       planned: PLANNED,
       probes: ['loop-trap', 'tool-fault', 'side-effect'],
