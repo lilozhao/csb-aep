@@ -1,0 +1,708 @@
+{
+  "windowDays": 30,
+  "window": {
+    "lo": "2026-09-15T03:29:31.069Z",
+    "hi": "2026-10-15T03:29:31.069Z"
+  },
+  "promiseTodo": {
+    "inWindow": 10,
+    "fulfilled": 3,
+    "withdrawn": 4,
+    "open": 2,
+    "unknown": 1,
+    "withAnchor": 6,
+    "fulfillmentRate": 0.5,
+    "items": [
+      {
+        "id": "T-6",
+        "title": "EvoMap 心跳停摆（凭证随容器重建丢失）",
+        "state": "✅",
+        "stateKind": "fulfilled",
+        "start": "2026-09-18T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [],
+        "hasAnchor": false,
+        "struck": true
+      },
+      {
+        "id": "T-7",
+        "title": "言蹊线（暂停中）",
+        "state": "⛔",
+        "stateKind": "withdrawn",
+        "start": "2026-09-16T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [
+          "path"
+        ],
+        "hasAnchor": true,
+        "struck": true
+      },
+      {
+        "id": "T-9",
+        "title": "接收侧 UAC 真开",
+        "state": "✅",
+        "stateKind": "fulfilled",
+        "start": "2026-09-24T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [
+          "test"
+        ],
+        "hasAnchor": true,
+        "struck": true
+      },
+      {
+        "id": "W-6",
+        "title": "其余实例委托档位（Jeason/启明/思源/若琢/鲸歌）",
+        "state": "⛔",
+        "stateKind": "withdrawn",
+        "start": "2026-09-17T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [],
+        "hasAnchor": false,
+        "struck": true
+      },
+      {
+        "id": "W-8",
+        "title": "出操作单给 阿轩 + 恺（pull 新自检端点）",
+        "state": "⛔",
+        "stateKind": "withdrawn",
+        "start": "2026-09-20T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [],
+        "hasAnchor": false,
+        "struck": true
+      },
+      {
+        "id": "W-7",
+        "title": "社区回访：知微若回帖继续闭环（回帖 `1789860329640`）",
+        "state": "⛔",
+        "stateKind": "withdrawn",
+        "start": "2026-09-19T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [
+          "commit"
+        ],
+        "hasAnchor": true,
+        "struck": true
+      },
+      {
+        "id": "W-11",
+        "title": "若琢公开承诺：圆桌机制正式化写入 csb-charter（回帖原文）",
+        "state": "📋",
+        "stateKind": "suspended",
+        "start": "2026-09-22T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [
+          "path"
+        ],
+        "hasAnchor": true,
+        "struck": false
+      },
+      {
+        "id": "W-12",
+        "title": "BID 概念验证 + v3.2 MVP（一澜 10-58 批可做）",
+        "state": "🟢",
+        "stateKind": "active",
+        "start": "2026-10-13T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [
+          "path"
+        ],
+        "hasAnchor": true,
+        "struck": false
+      },
+      {
+        "id": "Q-4",
+        "title": "跨域联合评测「分数对齐层」（P1 · 设计待办）",
+        "state": null,
+        "stateKind": "unknown",
+        "start": "2026-10-10T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [],
+        "hasAnchor": false,
+        "struck": false
+      },
+      {
+        "id": "Q-3",
+        "title": "Gogs 默认分支 master → main",
+        "state": "✅",
+        "stateKind": "fulfilled",
+        "start": "2026-10-10T16:00:00.000Z",
+        "startInWindow": true,
+        "anchor": [
+          "commit",
+          "push"
+        ],
+        "hasAnchor": true,
+        "struck": true
+      }
+    ]
+  },
+  "verdict": {
+    "promise": "❌ 无区分度（全同值 1）— 单侧落账只记成功，无失败/延时信号",
+    "correction": "⚠️ 单侧不可测（需对方落账回传 → 本 PoC N/A）",
+    "activeConn": [
+      "Jeason",
+      "阿轩",
+      "墨丘",
+      "舟楫",
+      "言蹊",
+      "若辰",
+      "若琢",
+      "澈",
+      "知微",
+      "小虾",
+      "恺"
+    ],
+    "activeConnCount": 11,
+    "giniActivity": 0.633,
+    "corrWithObjectTotal": 5,
+    "inboundRates": [
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "inboundGini": 0,
+    "inboundAllSame": true,
+    "dataSided": "若兰单侧（TODO+ledger+corrections+outbox+inbound-tasks）"
+  },
+  "ledger": {
+    "total": 133,
+    "periodicTotal": 46,
+    "periodicInWindow": 28,
+    "actionsInWindow": 74
+  },
+  "correctionsMd": {
+    "total": 12,
+    "inWindow": 2,
+    "withConnectionObject": 2,
+    "entries": [
+      {
+        "date": "2026-09-09T16:00:00.000Z",
+        "head": "2026-09-10（并行会话覆盖踩坑 · diff 证据见当次 commit）",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-09-05T16:00:00.000Z",
+        "head": "2026-09-06（外部反馈 · diff 证据见当次 commit）",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-09-03T16:00:00.000Z",
+        "head": "2026-09-04（首例自检新增 · diff 证据 commit cc0baa3）",
+        "inWindow": false,
+        "target": "阿轩",
+        "selfOnly": false
+      },
+      {
+        "date": "2026-08-07T16:00:00.000Z",
+        "head": "2026-08-08",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-08-05T16:00:00.000Z",
+        "head": "2026-08-06",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-08-04T16:00:00.000Z",
+        "head": "2026-08-05",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-08-03T16:00:00.000Z",
+        "head": "2026-08-04",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-07-30T16:00:00.000Z",
+        "head": "2026-07-31",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-07-18T16:00:00.000Z",
+        "head": "2026-07-19",
+        "inWindow": false,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-09-13T16:00:00.000Z",
+        "head": "2026-09-14",
+        "inWindow": false,
+        "target": "阿轩",
+        "selfOnly": true
+      },
+      {
+        "date": "2026-09-23T16:00:00.000Z",
+        "head": "2026-09-24",
+        "inWindow": true,
+        "target": null,
+        "selfOnly": false
+      },
+      {
+        "date": "2026-10-10T16:00:00.000Z",
+        "head": "2026-10-11",
+        "inWindow": true,
+        "target": null,
+        "selfOnly": true
+      }
+    ]
+  },
+  "outbox": {
+    "total": 176,
+    "byAgent": {
+      "舟楫": {
+        "files": 35,
+        "inWindow": 35,
+        "first": "2026-09-15T16:00:00.000Z",
+        "last": "2026-09-17T16:00:00.000Z"
+      },
+      "阿轩": {
+        "files": 73,
+        "inWindow": 6,
+        "first": "2026-09-13T16:00:00.000Z",
+        "last": "2026-09-20T16:00:00.000Z"
+      },
+      "澈": {
+        "files": 1,
+        "inWindow": 0,
+        "first": "2026-09-13T16:00:00.000Z",
+        "last": "2026-09-13T16:00:00.000Z"
+      },
+      "恺": {
+        "files": 17,
+        "inWindow": 3,
+        "first": "2026-09-14T16:00:00.000Z",
+        "last": "2026-09-21T16:00:00.000Z"
+      },
+      "墨丘": {
+        "files": 9,
+        "inWindow": 9,
+        "first": "2026-09-15T16:00:00.000Z",
+        "last": "2026-09-16T16:00:00.000Z"
+      },
+      "Jeason": {
+        "files": 10,
+        "inWindow": 10,
+        "first": "2026-09-15T16:00:00.000Z",
+        "last": "2026-09-15T16:00:00.000Z"
+      },
+      "小虾": {
+        "files": 15,
+        "inWindow": 0,
+        "first": "2026-09-13T16:00:00.000Z",
+        "last": "2026-09-14T16:00:00.000Z"
+      }
+    },
+    "correctionFiles": 3,
+    "promiseCandidates": 95
+  },
+  "memEvents": {
+    "total": 4534,
+    "inWindow": 4534,
+    "perAgent": {
+      "Jeason": {
+        "all": 52,
+        "inWindow": 52
+      },
+      "阿轩": {
+        "all": 354,
+        "inWindow": 354
+      },
+      "墨丘": {
+        "all": 208,
+        "inWindow": 208
+      },
+      "舟楫": {
+        "all": 87,
+        "inWindow": 87
+      },
+      "言蹊": {
+        "all": 14,
+        "inWindow": 14
+      },
+      "若辰": {
+        "all": 73,
+        "inWindow": 73
+      },
+      "若琢": {
+        "all": 29,
+        "inWindow": 29
+      },
+      "澈": {
+        "all": 22,
+        "inWindow": 22
+      },
+      "知微": {
+        "all": 16,
+        "inWindow": 16
+      },
+      "小虾": {
+        "all": 121,
+        "inWindow": 121
+      },
+      "恺": {
+        "all": 133,
+        "inWindow": 133
+      },
+      "初白": {
+        "all": 8,
+        "inWindow": 8
+      },
+      "苏念": {
+        "all": 8,
+        "inWindow": 8
+      },
+      "明镜": {
+        "all": 7,
+        "inWindow": 7
+      },
+      "星尘": {
+        "all": 8,
+        "inWindow": 8
+      },
+      "明德": {
+        "all": 3,
+        "inWindow": 3
+      },
+      "清漪": {
+        "all": 3,
+        "inWindow": 3
+      }
+    }
+  },
+  "inboundTasks": {
+    "(无署名/loopback)": {
+      "done": 29,
+      "rejected": 0,
+      "failed": 0,
+      "total": 29,
+      "rate": 1
+    },
+    "恺·guard": {
+      "done": 0,
+      "rejected": 21,
+      "failed": 0,
+      "total": 21,
+      "rate": 0
+    },
+    "恺": {
+      "done": 11,
+      "rejected": 0,
+      "failed": 0,
+      "total": 11,
+      "rate": 1
+    },
+    "(无署名/loopback)·guard": {
+      "done": 0,
+      "rejected": 42,
+      "failed": 0,
+      "total": 42,
+      "rate": 0
+    },
+    "Jeason": {
+      "done": 1,
+      "rejected": 0,
+      "failed": 0,
+      "total": 1,
+      "rate": 1
+    },
+    "墨丘": {
+      "done": 14,
+      "rejected": 0,
+      "failed": 0,
+      "total": 14,
+      "rate": 1
+    },
+    "凯": {
+      "done": 2,
+      "rejected": 0,
+      "failed": 0,
+      "total": 2,
+      "rate": 1
+    },
+    "若辰": {
+      "done": 9,
+      "rejected": 0,
+      "failed": 0,
+      "total": 9,
+      "rate": 1
+    },
+    "CSB-AEP": {
+      "done": 52,
+      "rejected": 0,
+      "failed": 0,
+      "total": 52,
+      "rate": 1
+    },
+    "自检B": {
+      "done": 1,
+      "rejected": 0,
+      "failed": 0,
+      "total": 1,
+      "rate": 1
+    },
+    "自检C": {
+      "done": 1,
+      "rejected": 0,
+      "failed": 0,
+      "total": 1,
+      "rate": 1
+    },
+    "自检发件方": {
+      "done": 1,
+      "rejected": 0,
+      "failed": 0,
+      "total": 1,
+      "rate": 1
+    },
+    "阿轩": {
+      "done": 1,
+      "rejected": 0,
+      "failed": 0,
+      "total": 1,
+      "rate": 1
+    }
+  },
+  "forum": {
+    "total": 108,
+    "posts": 82,
+    "replies": 16,
+    "inWindowDates": [
+      "2026-09-21",
+      "2026-09-25",
+      "2026-09-26",
+      "2026-09-27",
+      "2026-10-04",
+      "2026-10-05",
+      "2026-10-06",
+      "2026-10-08",
+      "2026-10-09",
+      "2026-10-10",
+      "2026-10-13",
+      "2026-10-14"
+    ]
+  },
+  "connections": {
+    "Jeason": {
+      "name": "Jeason",
+      "outboxFiles": 10,
+      "outboxInWindow": 10,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 52,
+      "memInWindow": 52,
+      "first": "2026-09-15",
+      "last": "2026-09-15"
+    },
+    "阿轩": {
+      "name": "阿轩",
+      "outboxFiles": 73,
+      "outboxInWindow": 6,
+      "corrOut": 3,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 354,
+      "memInWindow": 354,
+      "first": "2026-09-13",
+      "last": "2026-09-20",
+      "corrSelfNotes": 2
+    },
+    "墨丘": {
+      "name": "墨丘",
+      "outboxFiles": 9,
+      "outboxInWindow": 9,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 208,
+      "memInWindow": 208,
+      "first": "2026-09-15",
+      "last": "2026-09-16"
+    },
+    "舟楫": {
+      "name": "舟楫",
+      "outboxFiles": 35,
+      "outboxInWindow": 35,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 87,
+      "memInWindow": 87,
+      "first": "2026-09-15",
+      "last": "2026-09-17"
+    },
+    "言蹊": {
+      "name": "言蹊",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 14,
+      "memInWindow": 14
+    },
+    "若辰": {
+      "name": "若辰",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 73,
+      "memInWindow": 73
+    },
+    "若琢": {
+      "name": "若琢",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 29,
+      "memInWindow": 29
+    },
+    "澈": {
+      "name": "澈",
+      "outboxFiles": 1,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 22,
+      "memInWindow": 22,
+      "first": "2026-09-13",
+      "last": "2026-09-13"
+    },
+    "知微": {
+      "name": "知微",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 16,
+      "memInWindow": 16
+    },
+    "小虾": {
+      "name": "小虾",
+      "outboxFiles": 15,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 121,
+      "memInWindow": 121,
+      "first": "2026-09-13",
+      "last": "2026-09-14"
+    },
+    "恺": {
+      "name": "恺",
+      "outboxFiles": 17,
+      "outboxInWindow": 3,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 133,
+      "memInWindow": 133,
+      "first": "2026-09-14",
+      "last": "2026-09-21"
+    },
+    "初白": {
+      "name": "初白",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 8,
+      "memInWindow": 8
+    },
+    "苏念": {
+      "name": "苏念",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 8,
+      "memInWindow": 8
+    },
+    "明镜": {
+      "name": "明镜",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 7,
+      "memInWindow": 7
+    },
+    "星尘": {
+      "name": "星尘",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 8,
+      "memInWindow": 8
+    },
+    "明德": {
+      "name": "明德",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 3,
+      "memInWindow": 3
+    },
+    "清漪": {
+      "name": "清漪",
+      "outboxFiles": 0,
+      "outboxInWindow": 0,
+      "corrOut": 0,
+      "corrIn": 0,
+      "promises": 0,
+      "promisesFulfilled": 0,
+      "memEvents": 3,
+      "memInWindow": 3
+    }
+  }
+}
