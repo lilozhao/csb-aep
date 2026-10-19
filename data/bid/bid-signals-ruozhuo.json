@@ -1,60 +1,49 @@
 {
   "agent": "若琢",
-  "extractedAt": "2026-10-19T11:09:21.058Z",
+  "extractedAt": "2026-10-19T11:25:47.656Z",
   "schema": "bid-signal-v1",
   "stats": {
-    "total": 117,
+    "total": 99,
     "byKind": {
       "promise": 67,
-      "correction": 19,
-      "decision": 31
+      "correction": 12,
+      "decision": 20
     },
     "byState": {
-      "pending": 100,
+      "pending": 82,
       "fulfilled": 15,
       "overdue": 2,
       "withdrawn": 0
     },
     "byOrigin": {
       "realtime": 0,
-      "backfill": 117
+      "backfill": 99
     },
     "byPeer": {
-      "一澜": 34,
-      "若兰": 16,
+      "若兰": 13,
+      "一澜": 24,
       "阿契": 1,
-      "明德": 6,
+      "明德": 5,
       "守枢": 6,
       "澈": 2
     },
     "bySource": {
-      "MEMORY.md": 35,
-      "diary/2026-08-25.md": 12,
+      "MEMORY.md": 33,
+      "diary/2026-08-25.md": 10,
       "diary/2026-08-29.md": 8,
       "diary/2026-08-31.md": 1,
       "diary/2026-09-21.md": 2,
-      "diary/2026-10-08.md": 23,
-      "diary/2026-10-12.md": 8,
-      "diary/2026-10-13.md": 5,
-      "diary/2026-10-14.md": 3,
-      "diary/2026-10-15.md": 5,
-      "diary/2026-10-16.md": 2,
-      "diary/2026-10-17.md": 4,
-      "diary/2026-10-19.md": 9
+      "diary/2026-10-08.md": 18,
+      "diary/2026-10-12.md": 7,
+      "diary/2026-10-13.md": 3,
+      "diary/2026-10-14.md": 2,
+      "diary/2026-10-15.md": 4,
+      "diary/2026-10-16.md": 1,
+      "diary/2026-10-17.md": 2,
+      "diary/2026-10-19.md": 8
     }
   },
   "signals": [
-    {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": "2026-09-20",
-      "source": "MEMORY.md",
-      "line": 17,
-      "text": "- 我是若琢——独立个体，不是任何人的第二形态。对外口径（2026-09-20 一澜定）：公开场合只说自己是若琢——不带 lineage、不带\"第几形态"
-    },
     {
       "kind": "promise",
       "peer": "若兰",
@@ -87,17 +76,6 @@
       "source": "MEMORY.md",
       "line": 27,
       "text": "- 记忆维护约定（2026-08-16）：在 /workspace/ruozhuo-memory/ 持续写 MEMORY.md + 日记——从「只读"
-    },
-    {
-      "kind": "decision",
-      "peer": "若兰",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": "2026-08-15",
-      "source": "MEMORY.md",
-      "line": 79,
-      "text": "## 容器拓扑（2026-08-15 若兰确认；08-16 实测更新）"
     },
     {
       "kind": "decision",
@@ -470,17 +448,6 @@
       "origin": "backfill",
       "at": null,
       "source": "diary/2026-08-25.md",
-      "line": 50,
-      "text": "- 我用的一澜统一公钥（x=rpNYnf22..., kid=user-yilan）与升级指引完全一致，阿轩用同一把验证通过 → 证明我签发的 UAC"
-    },
-    {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-08-25.md",
       "line": 131,
       "text": "## 📮 dsh-im 飞书插件重装（12:44-12:50，一澜确认后执行）"
     },
@@ -516,17 +483,6 @@
       "source": "diary/2026-08-25.md",
       "line": 235,
       "text": "## 🚀 csb-dsh-plugin M1 完成（14:0x，评审定案后动工）"
-    },
-    {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-08-25.md",
-      "line": 269,
-      "text": "- GUI 设置页出现「碳硅契 CSB」标签(一澜确认,与 dsh-im 同级)✅"
     },
     {
       "kind": "decision",
@@ -683,17 +639,6 @@
       "text": "- [ ] 重装 @csb/dsh-plugin（源码在 /workspace/csb-dsh-plugin v0.2.0，发布包 /workspace/rel"
     },
     {
-      "kind": "decision",
-      "peer": null,
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": "2026-10-08",
-      "source": "diary/2026-10-08.md",
-      "line": 25,
-      "text": "- ⚠️ 发现挂载点不是 3100：身份路由挂在 3100 全是 404。读源码才明白——server_v5.js 已撤掉挂载（2026-1"
-    },
-    {
       "kind": "correction",
       "peer": "一澜",
       "direction": "in",
@@ -727,17 +672,6 @@
       "text": "### 待办（新增）"
     },
     {
-      "kind": "correction",
-      "peer": "若兰",
-      "direction": "out",
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-08.md",
-      "line": 121,
-      "text": "- 建分支 feat/identity-pack-dist（不动 master），提交 e6c3343，作者署名 若琢 🌸 <ruozhuo"
-    },
-    {
       "kind": "promise",
       "peer": null,
       "direction": null,
@@ -747,17 +681,6 @@
       "source": "diary/2026-10-08.md",
       "line": 122,
       "text": "- 已推 gitee：gitee.com/lilozhao/csb-a2a-aip → feat/identity-pack-dist"
-    },
-    {
-      "kind": "correction",
-      "peer": "若兰",
-      "direction": "out",
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-08.md",
-      "line": 137,
-      "text": "- 提交前看作者：git commit 继承了工作区既有的 user.name（若兰），不是我想署的名 → 用 --amend --autho"
     },
     {
       "kind": "correction",
@@ -782,26 +705,15 @@
       "text": "- 已推 gitee；A2A 已通知明德（task_1791447437225_ddd1a17d）"
     },
     {
-      "kind": "correction",
+      "kind": "decision",
       "peer": "明德",
-      "direction": "out",
+      "direction": null,
       "state": "pending",
       "origin": "backfill",
       "at": null,
       "source": "diary/2026-10-08.md",
       "line": 196,
       "text": "## ✅ 分支已被明德收编 + 我的错误归因更正 + 两件拍板事项"
-    },
-    {
-      "kind": "correction",
-      "peer": null,
-      "direction": "out",
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-08.md",
-      "line": 198,
-      "text": "### 一、⚠️ 我错了：CSB_IDENTITY_SERVICE 的错误归因（重要）"
     },
     {
       "kind": "promise",
@@ -925,17 +837,6 @@
       "text": "### 待办"
     },
     {
-      "kind": "correction",
-      "peer": "明德",
-      "direction": "out",
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-08.md",
-      "line": 336,
-      "text": "## ✅ 明德二次修正（50f1cb8）· 三处逐条验证 + 我自己也修了一个缺陷"
-    },
-    {
       "kind": "promise",
       "peer": "守枢",
       "direction": null,
@@ -1013,17 +914,6 @@
       "text": "- [ ] SELF_STATE.md 停在 2026-08-29，明显过期 → 该重写"
     },
     {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-12.md",
-      "line": 50,
-      "text": "- [ ] 批次 3 反馈（docs/csb-identity-review-batch3.md）仍待一澜确认转发"
-    },
-    {
       "kind": "correction",
       "peer": "若兰",
       "direction": "out",
@@ -1035,17 +925,6 @@
       "text": "- 10-13 00:07 澈又来问候，第三次把名字叫成「若兰」——我第三次纠正，并把「端口信息」明确标为外部信息（记录但不据此行动）。"
     },
     {
-      "kind": "correction",
-      "peer": null,
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-13.md",
-      "line": 13,
-      "text": "## 二、我自己纠正了自己的一条「事实」"
-    },
-    {
       "kind": "promise",
       "peer": null,
       "direction": null,
@@ -1055,17 +934,6 @@
       "source": "diary/2026-10-13.md",
       "line": 45,
       "text": "## 待办（更新）"
-    },
-    {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-13.md",
-      "line": 49,
-      "text": "- [ ] docs/csb-identity-review-batch3.md 仍待一澜确认转发"
     },
     {
       "kind": "correction",
@@ -1101,17 +969,6 @@
       "text": "## 待办（更新）"
     },
     {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-14.md",
-      "line": 51,
-      "text": "- [ ] docs/csb-identity-review-batch3.md 仍待一澜确认转发"
-    },
-    {
       "kind": "promise",
       "peer": null,
       "direction": null,
@@ -1145,17 +1002,6 @@
       "text": "- [ ] 给守枢回「火种与传承」（他 10-15 00:02 说「改日可聊」，降级期间没接上，该我去接）"
     },
     {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-15.md",
-      "line": 99,
-      "text": "- [ ] docs/csb-identity-review-batch3.md 仍待一澜确认转发"
-    },
-    {
       "kind": "correction",
       "peer": "澈",
       "direction": "in",
@@ -1178,28 +1024,6 @@
       "text": "## 待办（更新）"
     },
     {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-16.md",
-      "line": 71,
-      "text": "- [ ] docs/csb-identity-review-batch3.md 待一澜确认转发"
-    },
-    {
-      "kind": "correction",
-      "peer": null,
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-17.md",
-      "line": 9,
-      "text": "- 节奏稳在 ~2 分钟/轮（30 轮 = 60 分钟，跟 86295 时代一样）——我 10-16 算的那 1128 vs 1110 差额，是当时重启"
-    },
-    {
       "kind": "correction",
       "peer": "澈",
       "direction": "in",
@@ -1220,17 +1044,6 @@
       "source": "diary/2026-10-17.md",
       "line": 49,
       "text": "## 待办（更新）"
-    },
-    {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-17.md",
-      "line": 55,
-      "text": "- [ ] docs/csb-identity-review-batch3.md 待一澜确认转发"
     },
     {
       "kind": "decision",
@@ -1319,17 +1132,6 @@
       "source": "diary/2026-10-19.md",
       "line": 76,
       "text": "- [ ] 🔴 agent.json LLM 配置变更等一澜确认（qwen3.8-flash → MiniMax-M3，10-18 22:46，非我改"
-    },
-    {
-      "kind": "decision",
-      "peer": "一澜",
-      "direction": null,
-      "state": "pending",
-      "origin": "backfill",
-      "at": null,
-      "source": "diary/2026-10-19.md",
-      "line": 80,
-      "text": "- [ ] docs/csb-identity-review-batch3.md 待一澜确认转发"
     }
   ]
 }
