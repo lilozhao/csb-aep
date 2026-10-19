@@ -72,10 +72,20 @@ for (const { b, content } of records) {
 }
 const pct = n => total ? Math.round(n * 100 / total) : 0;
 console.log(`═══ bid_signal 质量观察 · since ${since} · ${new Date().toISOString().slice(0, 16)} ═══`);
-console.log(`新条目=${total} · 带字段=${withSig}(${pct(withSig)}%) · 无字段=${withoutSig}`);
+// v2.5（2026-10-19 · 一澜批「C」）：**覆盖率百分比不再作为主指标**。
+//   理由：分母（全部记忆条目）无意义——绝大多数是过程记录；真信号只有个位数时报百分比是噪声。
+//   主口径改为**绝对条数 + 明细**，百分比保留为参考（标「参考」）。
+console.log(`新条目=${total} · **带字段=${withSig} 条（绝对值，主口径）** · 无字段=${withoutSig}`);
+console.log(`  （参考：${pct(withSig)}% —— 分母为全部条目，含过程记录，不作为指标使用）`);
 console.log(`疑似漏网: v2.0口径=${missed} · (对照)v1.0裸词表=${missedV1}   [口径=${detectKindV2 ? 'v2.0 detectKind' : 'v1.0 回退'}]`);
 console.log(`kind 分布: ${JSON.stringify(kinds)}`);
 console.log(`direction: ${JSON.stringify(dirs)}`);
-console.log(`peer 解析: 非null=${Object.entries(peers).filter(([k])=>k!=='null').reduce((s,[,v])=>s+v,0)} · null=${peers['null']||0}`);
+const peerNonNull = Object.entries(peers).filter(([k])=>k!=='null').reduce((s,[,v])=>s+v,0);
+const dirNonNull = Object.entries(dirs).filter(([k])=>k!=='null').reduce((s,[,v])=>s+v,0);
+console.log(`peer 解析: 非null=${peerNonNull} 条 · null=${peers['null']||0} 条`);
+console.log(`direction 判出: ${dirNonNull} 条 · null=${dirs['null']||0} 条`);
+if (withSig > 0 && withSig < 30) {
+  console.log(`\n⚠️ 带字段仅 ${withSig} 条 —— 绝对数较小，任何百分比都不具统计意义（BR-12：如实标注，不用百分比美化）`);
+}
 console.log('样本:');
 for (const s of samples) console.log('  ' + s);
