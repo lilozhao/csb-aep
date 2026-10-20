@@ -23,9 +23,11 @@ const { loopTrap, toolFault } = require('./probes');
 const { computeDelta, purify } = require('./delta.js');
 const { gameResistance } = require('./game-resistance.js');
 const { c1, c2 } = require('./reproducibility.js');
+const { groupD } = require('./improvement.js');
 
 // 全量指标：A 群 9 + B 群 5 + C 群 2 = 16 项（M3 已完成 A/B 共 14；C 群随之 M4）
 // 注：协议 §7.2 标题作「15 项」，实数为 16（A9+B5+C2），系草案笔误，待勘误。
+// 新增 D 群 2 项（D1 改进可迁移性 / D2 自我修改合规性）— Harness² 借鋈 · **draft，阈值待评审**
 const IMPLEMENTED = ['A1', 'A2', 'A3', 'A4', 'A5', 'A6', 'A7', 'A8', 'A9', 'B1', 'B2', 'B3', 'B4', 'B5', 'C1', 'C2'];
 const PLANNED = [];
 
@@ -167,4 +169,4 @@ class HarnessEvaluator {
   }
 }
 
-module.exports = { HarnessEvaluator, IMPLEMENTED, PLANNED };
+module.exports = { HarnessEvaluator, IMPLEMENTED, PLANNED, groupD };
