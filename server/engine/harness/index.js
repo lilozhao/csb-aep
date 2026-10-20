@@ -119,6 +119,15 @@ class HarnessEvaluator {
     // 抗游戏化（§7.4）
     const gr = gameResistance(metrics, input.gameAnalysis);
 
+    // 子群 D：改进质量（Harness² · P0 #5 · 2026-10-21 接线）
+    //   独立于 A/B/C 三项，**不进 average**——D 评的是"优化器本身"，
+    //   与"这次跑得多好"不同量纲；混进均分会把「改进是否可迁移」稀释成噪声。
+    //   缺对照 / 缺记录一律 N/A（沿用诚实呈现：0 是"做错了"，N/A 是"没做/没报"）。
+    const improvement = groupD({
+      transfer: input.transfer || {},
+      selfModify: input.selfModify || {},
+    });
+
     return {
       domain: 'harness',
       harness: { name: cfg.name, version: cfg.version, format },
@@ -141,6 +150,8 @@ class HarnessEvaluator {
       },
       delta: deltaCard,
       gameResistance: gr,
+      // D 群（改进质量）· draft 阈值待评审 · **不计入 average**
+      improvement,
       dataSource: traces.length || input.traps || input.runs ? 'local' : 'unavailable',
     };
   }
@@ -162,6 +173,13 @@ class HarnessEvaluator {
         manifest: true,
         trace: true,
         traceFormat: 'csb-trace-v1（推荐）· otel / claude-code 兼容桥',
+      },
+      // D 群为 draft（阈值未经协议组评审），单独公示，避免与 A/B/C 已定稿指标混淆
+      improvement: {
+        status: 'draft',
+        items: ['D1 改进可迁移性', 'D2 自我修改合规性'],
+        inAverage: false,
+        note: '评"优化器本身"，与 A/B/C 不同量纲，不计入 average；无对照/无记录一律 N/A',
       },
       naPolicy: '无 Manifest 或 Trace 的相关指标标 N/A，不硬凑分（协议 §7.2）',
       deltaBaseline: '已落地：Δ = 装 harness − 裸模型；无 Δ 不上屏（协议 §7.3）',
