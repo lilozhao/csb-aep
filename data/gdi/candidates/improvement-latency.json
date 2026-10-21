@@ -8,5 +8,25 @@
   "rule": "BR-12：无样本报 null，不拿 0/旧值冒充；estimated 时间戳不入排序",
   "samples": [],
   "median_days": null,
-  "note": "首采中——W 条目收口时顺手录样本（proposed_at / landed_at / ref 三字段一行），攒 ≥5 条报首个中位数。首批候选（今日三件，天然偏快不代表常态）：宪章第十四条 05:52→06:32 · Harness² P0 五项 06:44→07:15 · 红线2落码 16:27→17:10"
+  "note": "首采中——W 条目收口时顺手录样本（proposed_at / landed_at / ref 三字段一行），攒 ≥5 条报首个中位数。首批候选（今日三件，天然偏快不代表常态）：宪章第十四条 05:52→06:32 · Harness² P0 五项 06:44→07:15 · 红线2落码 16:27→17:10",
+  "fields": {
+    "T1_evidence_latency_days": {
+      "definition": "发现 → 证据齐",
+      "reading": "大 = 核对太贵，该建工具（不是护栏问题）"
+    },
+    "T2_landing_latency_days": {
+      "definition": "证据齐 → 落地",
+      "reading": "大 = 护栏太紧，该收"
+    },
+    "denominator": {
+      "definition": "同期 W 类条目总数 : 实际发起改进的条数",
+      "why": "没有分母的中位数是另一种全绿"
+    },
+    "silent_zero": {
+      "definition": "W 类条目数 = 0 单独报成一个状态",
+      "false_zero": "「不存在」在看板上和「零延迟」长得一样"
+    }
+  },
+  "enhanced_at": "2026-10-22",
+  "enhanced_from": "P-14 回帖（墨丘 T1/T2 拆分 · 恺+星尘 分母与静默零）"
 }
