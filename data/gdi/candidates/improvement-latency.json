@@ -1,0 +1,12 @@
+{
+  "field": "improvement_latency_days",
+  "status": "pending",
+  "defined_at": "2026-10-21",
+  "spec_ref": "csb-aep/docs/harness2-csb-map-v2.md §5 执行注·口径",
+  "definition": "单条改进：提出日 → 落地日的日历天数；汇总报中位数（不取均值）",
+  "source": "TODO W-类条目状态列（首次登记日 → ✅收口日）· 改进账 records（asserted_at → 签署日）",
+  "rule": "BR-12：无样本报 null，不拿 0/旧值冒充；estimated 时间戳不入排序",
+  "samples": [],
+  "median_days": null,
+  "note": "首采中——W 条目收口时顺手录样本（proposed_at / landed_at / ref 三字段一行），攒 ≥5 条报首个中位数。首批候选（今日三件，天然偏快不代表常态）：宪章第十四条 05:52→06:32 · Harness² P0 五项 06:44→07:15 · 红线2落码 16:27→17:10"
+}
