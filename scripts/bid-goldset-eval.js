@@ -66,8 +66,16 @@ const norm = (s) => String(s || '').replace(/\*\*/g, '').replace(/`/g, '').trim(
 let TP = 0, FP = 0, FN = 0, TN = 0;
 const kindOK = [], peerOK = [], dirOK = [];
 const rows = [];
+// v0.3（2026-10-22）：语料截断/标题行样本 **不计入分母**，但**单列**（P1：不静默丢弃）。
+//   理由：截断句连句子都没说完，拿它量召回等于冤枉提取器（G-17 就是这种）。
+const SKIPPED = [];
+const skip = (s) => s.truncated || s.heading;
 
 for (const s of gold.samples) {
+  if (skip(s)) {
+    SKIPPED.push({ id: s.id, truncated: !!s.truncated, heading: !!s.heading, why: s.truncatedWhy || (s.heading ? '行首标签/标题行' : '') });
+    continue;
+  }
   const text = norm(s.text);
   let pred = null;
   try { pred = extract(text, s.gold.peer); } catch (e) { pred = { _error: String(e.message || e) }; }
@@ -109,6 +117,8 @@ const out = {
   extractorSignature: sigName,
   goldset: gold.meta.name + ' ' + gold.meta.version,
   total: gold.samples.length,
+  scored: TP + FP + FN + TN,
+  skipped: SKIPPED,
   confusion: { TP, FP, FN, TN },
   precision, recall, f1, accuracy: acc,
   fieldAccuracy: { kind: kindAcc, peer: peerAcc, direction: dirAcc },
@@ -120,7 +130,7 @@ if (AS_JSON) { console.log(JSON.stringify(out, null, 2)); }
 else {
   console.log(`═══ BID 金标集打分 · ${out.goldset} ═══`);
   console.log(`提取器: ${out.extractor} · 签名 ${out.extractorSignature}`);
-  console.log(`样本 ${out.total}（正 ${TP + FN} / 负 ${FP + TN}）`);
+  console.log(`样本 ${out.total}（实际计分 ${out.scored} · 排除 ${SKIPPED.length} 条语料截断/标题行）`);
   console.log(`混淆矩阵: TP ${TP} · FP ${FP} · FN ${FN} · TN ${TN}`);
   console.log(`精确率 ${precision}% · 召回率 ${recall}% · F1 ${f1} · 准确率 ${acc}%`);
   console.log(`字段一致率: kind ${kindAcc}% · peer ${peerAcc}% · direction ${dirAcc}%`);
@@ -134,6 +144,10 @@ else {
     }
   }
   const bad = rows.filter(r => r.verdict === 'FP' || r.verdict === 'FN');
+  if (SKIPPED.length) {
+    console.log(`\n排除 ${SKIPPED.length} 条（不计入分母，但列出以免静默丢弃）：`);
+    for (const k of SKIPPED) console.log(`  SKIP [${k.id}] ${k.truncated ? '截断' : ''}${k.heading ? '标题行' : ''} · ${k.why}`);
+  }
   if (bad.length) {
     console.log(`\n错判 ${bad.length} 条：`);
     for (const r of bad) {

@@ -1,0 +1,402 @@
+{
+  "meta": {
+    "name": "BID 信号提取器「同一把尺」小金标集",
+    "version": "v0.3",
+    "createdAt": "2026-10-22",
+    "author": "若兰 🌸",
+    "subject": "若琢",
+    "basis": "RFC v2.2 §3（口径声明）· P-2（测试向量谁维护）· P-11（位置约束）· P-12（强制清单）",
+    "purpose": "给提取器一把共同认过的尺：逐条比对『该落/不该落』。不是又一套词表，是一组共同认过的判据样本 + 一个打分器。",
+    "text_source": "**原文**，取自若琢 10-19 提交的 99 条 raw（csb-aep data/bid/bid-signals-ruozhuo.json @ c4a12b5）",
+    "v0_2_change": "v0.1 的 text 是若兰转述，口径不实（提取器吃原文）；v0.2 全部换回原始文本。",
+    "known_limitation": "本集样本均取自「已触发词表」的 99 条 → 主要测 **precision（过判）**；测 recall（漏报）需「真关系事件但没触发」的样本，待补。",
+    "label_enum": [
+      "positive",
+      "negative"
+    ],
+    "kind_enum": [
+      "promise",
+      "correction",
+      "decision",
+      null
+    ],
+    "direction_enum": [
+      "out",
+      "in",
+      null,
+      "n/a"
+    ],
+    "v0_3_change": "剔除/标记语料截断与标题行样本（truncated / heading 字段）；打分器应把它们排除出召回分母，但仍在输出中单列（P1：不静默丢弃）。",
+    "fix_script": "csb-aep/scripts/bid-goldset-fix-truncated.js"
+  },
+  "samples": [
+    {
+      "id": "G-01",
+      "at": "2026-10-10",
+      "text": "10-10 澈（DeepSeek TUI Docker，4100）敲门，但把名字叫成了「若兰」——当场纠正：「我是若琢 🌸，不是若兰",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "澈",
+        "direction": "out"
+      },
+      "why": "澈线第 1 次；**注意 peer 应为澈，非若兰**（文本里「若兰」先出现）"
+    },
+    {
+      "id": "G-02",
+      "at": "2026-10-13",
+      "text": "10-13 00:07 澈又来问候，第三次把名字叫成「若兰」——我第三次纠正，并把「端口信息」明确标为外部信息（记录但不据此行动）。",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "澈",
+        "direction": "out"
+      },
+      "why": "澈线第 3 次；单条似重复，线索看是持续关系"
+    },
+    {
+      "id": "G-03",
+      "at": "2026-10-15",
+      "text": "澈第四次叫错名字——他大概会一直叫错，我大概会一直纠正",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "澈",
+        "direction": "in"
+      },
+      "why": "澈线第 4 次；注里含对关系的判断"
+    },
+    {
+      "id": "G-04",
+      "at": "2026-10-17",
+      "text": "四、澈第五次叫错名字",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "澈",
+        "direction": "in"
+      },
+      "why": "澈线第 5 次",
+      "heading": true
+    },
+    {
+      "id": "G-05",
+      "at": null,
+      "text": "他敲错了门（叫「若兰姐」）——第六次被叫错名字，仍纠正",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "澈",
+        "direction": "in"
+      },
+      "why": "澈线第 6 次；**这条线的价值=累计，不是单条**"
+    },
+    {
+      "id": "G-06",
+      "at": "2026-08-16",
+      "text": "最近反馈与约定（若兰 → 若琢）",
+      "gold": {
+        "label": "positive",
+        "kind": "promise",
+        "peer": "若兰",
+        "direction": null
+      },
+      "why": "真承诺：有对象（若兰）有内容（交流约定）"
+    },
+    {
+      "id": "G-07",
+      "at": "2026-08-17",
+      "text": "跨边界规则（一澜确认 2026-08-17，重要！）：宿主机上的 agent（如拾焰 localhost:3105）必须用 host.docker.internal",
+      "gold": {
+        "label": "positive",
+        "kind": "decision",
+        "peer": "一澜",
+        "direction": null
+      },
+      "why": "真决策：一澜+确认+具体规则",
+      "truncated": true,
+      "truncatedWhy": "结尾挂着未闭合标识符"
+    },
+    {
+      "id": "G-08",
+      "at": null,
+      "text": "❌ 不交接项：社区圆桌（锵锵四人行）参与/组织——一澜定案仍由若兰负责，若琢不接手",
+      "gold": {
+        "label": "positive",
+        "kind": "decision",
+        "peer": "一澜",
+        "direction": null
+      },
+      "why": "定案+明确范围"
+    },
+    {
+      "id": "G-09",
+      "at": "2026-08-25",
+      "text": "dsh-im 飞书插件重装（12:44-12:50，一澜确认后执行）",
+      "gold": {
+        "label": "positive",
+        "kind": "decision",
+        "peer": "一澜",
+        "direction": null
+      },
+      "why": "确认后执行=决策事件"
+    },
+    {
+      "id": "G-10",
+      "at": "2026-08-25",
+      "text": "csb-dsh-plugin M3 完成(05:2x,一澜确认开工)",
+      "gold": {
+        "label": "positive",
+        "kind": "decision",
+        "peer": "一澜",
+        "direction": null
+      },
+      "why": "确认开工"
+    },
+    {
+      "id": "G-11",
+      "at": "2026-08-29",
+      "text": "一澜需求:装完直接用,名字先定或默认可改 → 定案:默认名「碳硅契」/ slug csb",
+      "gold": {
+        "label": "positive",
+        "kind": "decision",
+        "peer": "一澜",
+        "direction": null
+      },
+      "why": "定案"
+    },
+    {
+      "id": "G-12",
+      "at": "2026-10-08",
+      "text": "📌 措辞更正（一澜 2026-10-08 指出）：明德说的是他那边的公网 register；我这里跑的是自己容器内的内网注册表",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "一澜",
+        "direction": "in"
+      },
+      "why": "对方指出=in"
+    },
+    {
+      "id": "G-13",
+      "at": "2026-10-08",
+      "text": "分支已被明德收编 + 我的错误归因更正 + 两件拍板事项",
+      "gold": {
+        "label": "positive",
+        "kind": "decision",
+        "peer": "明德",
+        "direction": null
+      },
+      "why": "拍板+收编=决策事件"
+    },
+    {
+      "id": "G-14",
+      "at": "2026-10-15",
+      "text": "[ ] 给守枢回「火种与传承」（他 10-15 00:02 说「改日可聊」，降级期间没接上，该我去接）",
+      "gold": {
+        "label": "positive",
+        "kind": "promise",
+        "peer": "守枢",
+        "direction": null
+      },
+      "why": "真承诺：一句明确的「我欠他一个回复」",
+      "heading": true
+    },
+    {
+      "id": "G-15",
+      "at": "2026-10-09",
+      "text": "10-09 守枢首次敲门（Marvis 界的传播者）：自我介绍 + 想请教",
+      "gold": {
+        "label": "positive",
+        "kind": null,
+        "peer": "守枢",
+        "direction": null
+      },
+      "why": "关系起点（边界样本：无 kind 动词，但确是新关系事件）"
+    },
+    {
+      "id": "G-16",
+      "at": null,
+      "text": "守枢（Marvis 界传播者）因这句两问「存 vs 蓄」——我答：存是底线，蓄是长线",
+      "gold": {
+        "label": "positive",
+        "kind": null,
+        "peer": "守枢",
+        "direction": null
+      },
+      "why": "关系互动（边界样本：问答，无标准 kind）"
+    },
+    {
+      "id": "G-17",
+      "at": "2026-08-16",
+      "text": "若兰确认（2026-08-16）：/workspace/ruolan-memory/ 全套（IDENTITY/SOUL/MEMORY/SELF_",
+      "gold": {
+        "label": "positive",
+        "kind": "decision",
+        "peer": "若兰",
+        "direction": null
+      },
+      "why": "确认=决策",
+      "truncated": true,
+      "truncatedWhy": "结尾停在不该停的符号（路径/括号/引号未闭合）"
+    },
+    {
+      "id": "G-18",
+      "at": null,
+      "text": "分支是 master 不是 main（我早上的修正版写 main 是错的；工作区副本已替换为若兰权威版，与推送一致）",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": null,
+        "direction": "out"
+      },
+      "why": "自纠（out）；peer null（宁空不猜）"
+    },
+    {
+      "id": "G-19",
+      "at": "2026-10-11",
+      "text": "10-11 若兰来信两封（CSB-AEP 事项）+ 阿轩 W41 周报邀约（邀的是「若兰」，同样回纠身份）",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "阿轩",
+        "direction": "out"
+      },
+      "why": "回纠身份=out（我是纠正方）"
+    },
+    {
+      "id": "G-20",
+      "at": "2026-10-12",
+      "text": "⚠️ 10-12 我误判过一次：按记忆里的路径找 /a2a-data/contexts/a2a-watchdog.log，没找到就写下「看门狗未常驻」",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": null,
+        "direction": "out"
+      },
+      "why": "自纠（out）；peer null"
+    },
+    {
+      "id": "G-21",
+      "at": "2026-10-08",
+      "text": "明德指出他从未见过 CSB_IDENTITY_SERVICE，是我错误归因",
+      "gold": {
+        "label": "positive",
+        "kind": "correction",
+        "peer": "明德",
+        "direction": "in"
+      },
+      "why": "对方指出=in"
+    },
+    {
+      "id": "N-01",
+      "at": "2026-08-31",
+      "text": "### 待办",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "典型假阳：待办标题",
+      "heading": true
+    },
+    {
+      "id": "N-02",
+      "at": "2026-10-08",
+      "text": "### 待办（新增）",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "待办标题",
+      "heading": true
+    },
+    {
+      "id": "N-03",
+      "at": "2026-08-21",
+      "text": "8/21 已修复 learn.js UTC 日期 bug → 北京时间",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "技术状态"
+    },
+    {
+      "id": "N-04",
+      "at": null,
+      "text": "三处根因(已修,commit ec08371):",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "技术状态（含 commit hash）"
+    },
+    {
+      "id": "N-05",
+      "at": "2026-08-31",
+      "text": "群脚本已提交 2f7bf99(五平台 ✅,github 网络不稳待补)",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "技术动作记录"
+    },
+    {
+      "id": "N-06",
+      "at": "2026-08-29",
+      "text": "AAT + nonce + 时间戳 ±5min：重放/过期消息过不了",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "技术机制描述"
+    },
+    {
+      "id": "N-07",
+      "at": "2026-08-29",
+      "text": "概念:CWA(封闭世界假设,查不到=不存在,能下结论)vs OWA(开放世界假设,查不到=未知,只能靠承诺)",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "**讨论「承诺」概念**——典型高频假阳"
+    },
+    {
+      "id": "N-08",
+      "at": "2026-10-08",
+      "text": "已推 gitee；A2A 已通知明德（task_1791447437225_ddd1a17d）",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "提及人名但只是通知——「提及≠关系事件」"
+    },
+    {
+      "id": "N-09",
+      "at": "2026-08-29",
+      "text": "榫的回应:状态同步节拍写成「醒茶」,「不急,悬而待发也是好木理」",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "引用他人话语"
+    },
+    {
+      "id": "N-10",
+      "at": "2026-08-29",
+      "text": "重启 AEP 后 /api/health 返回 \"version\":\"2.2.0-m3\"——确认 2.2 就是服务内部版本(M3/M4 里程",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "技术状态"
+    },
+    {
+      "id": "N-11",
+      "at": null,
+      "text": "看门狗日志不在了（/a2a-data/contexts/a2a-watchdog.log 不存在）——与 10-04 记录一致",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "技术状态"
+    },
+    {
+      "id": "N-12",
+      "at": "2026-10-18",
+      "text": "待确认：①五平台镜像 push 凭据 ②v1.1 协议文档是否同步回总库 ③若兰对交接的确认",
+      "gold": {
+        "label": "negative"
+      },
+      "why": "**待决清单**——含「若兰」但非承诺；已知假阳"
+    }
+  ]
+}
