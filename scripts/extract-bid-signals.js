@@ -60,6 +60,34 @@ if (fs.existsSync(diaryDir)) {
   });
 }
 
+// 3. 合并实时档（realtime）
+//    [2026-10-22 修] 此前共享档只有 backfill，realtime 恒为 0 —— 但实时管道其实在跑
+//    （a2a-memory.js 生成记忆时 append 到 bid-signals-realtime.jsonl）。
+//    缺的只是这一步 merge。若兰观测侧核到「realtime=0」就是这个原因：接上了，但没合并。
+const REALTIME = '/workspace/csb-a2a-aip/data/bid/bid-signals-realtime.jsonl';
+if (fs.existsSync(REALTIME)) {
+  const lines = fs.readFileSync(REALTIME, 'utf8').split('\n').filter(l => l.trim());
+  lines.forEach((line) => {
+    try {
+      const r = JSON.parse(line);
+      if (!r || !r.kind) return;
+      signals.push({
+        kind: r.kind,
+        peer: r.peer || null,
+        direction: r.direction || null,
+        state: r.state || 'pending',
+        origin: 'realtime',
+        at: r.at || (r.ts ? String(r.ts).slice(0, 10) : null),
+        source: 'a2a-realtime',
+        ts: r.ts || null,
+      });
+    } catch { /* 跳过坏行 */ }
+  });
+  console.log(`📡 已合并实时档: ${lines.length} 条（${REALTIME}）`);
+} else {
+  console.log(`📡 实时档不存在，跳过合并（${REALTIME}）`);
+}
+
 // 统计
 const stats = {
   total: signals.length,
@@ -71,9 +99,9 @@ const stats = {
 };
 
 signals.forEach(s => {
-  stats.byKind[s.kind]++;
-  stats.byState[s.state]++;
-  stats.byOrigin[s.origin]++;
+  stats.byKind[s.kind] = (stats.byKind[s.kind] || 0) + 1;
+  stats.byState[s.state] = (stats.byState[s.state] || 0) + 1;
+  stats.byOrigin[s.origin] = (stats.byOrigin[s.origin] || 0) + 1;
   if (s.peer) stats.byPeer[s.peer] = (stats.byPeer[s.peer] || 0) + 1;
   stats.bySource[s.source] = (stats.bySource[s.source] || 0) + 1;
 });
