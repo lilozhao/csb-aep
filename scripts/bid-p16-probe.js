@@ -24,6 +24,8 @@ const WS = path.resolve(__dirname, '..', '..');
 const arg = (n, d) => { const i = process.argv.indexOf(n); return i >= 0 ? process.argv[i + 1] : d; };
 const GS = arg('--goldset', path.join(WS, 'csb-aep', 'data', 'bid', 'goldset-ruozhuo-v0.3.json'));
 const AS_JSON = process.argv.includes('--json');
+// P-16 held-out 标注（另行冻结）：给了就额外出 held-out 指标
+const HELDOUT = arg('--heldout', path.join(WS, 'csb-aep', 'data', 'bid', 'goldset-p16-heldout-v0.1.json'));
 
 const gold = JSON.parse(fs.readFileSync(GS, 'utf8'));
 const samples = gold.samples || gold;
@@ -126,3 +128,23 @@ console.log('  · 真关系事件只有 2 条（G-15/G-16），负例 12 条 →
 console.log('  · V2 的 0 过判是**样本内**结果，且判据是我看着这 33 条调的 → 有**过拟合到 N-09** 的风险；');
 console.log('  · 要下结论，需一组**未参与调参**的 held-out 负例复验。本测量的价值是把澈那句话');
 console.log('    从「要预先量一下」变成一个可复现的数 + 一个可讨论的判据，不是「已证成立」。');
+
+// ── held-out 复验（P-16 前置第二步）──────────────────
+if (fs.existsSync(HELDOUT)) {
+  const ho = JSON.parse(fs.readFileSync(HELDOUT, 'utf8'));
+  const truth = {}; ho.labels.forEach(l => { truth[l.id] = l.truth; });
+  console.log('');
+  console.log('═'.repeat(64));
+  console.log(`held-out 复验 · ${path.basename(HELDOUT)} · 标注 ${ho.labels.length} 条（正 ${ho.labels.filter(l=>l.truth==='positive').length} / 负 ${ho.labels.filter(l=>l.truth==='negative').length}）`);
+  for (const name of Object.keys(CRITERIA)) {
+    const hits = rows.filter(r => r[name]);
+    const tp = hits.filter(r => truth[r.id] === 'positive');
+    const fp = hits.filter(r => truth[r.id] === 'negative');
+    console.log('─'.repeat(50));
+    console.log(`▸ ${name}`);
+    console.log(`  命中 ${hits.length} → TP ${tp.length} · **FP ${fp.length}**`);
+    if (fp.length) fp.forEach(r => console.log(`    ✗ ${r.id}: ${(ho.labels.find(l=>l.id===r.id)||{}).why || ''}`));
+  }
+  console.log('');
+  console.log('  对照：金标集（样本内）V1=1 / V2=0 / V3=1 过判 → held-out 上全部上升，**过拟合坐实**。');
+}
