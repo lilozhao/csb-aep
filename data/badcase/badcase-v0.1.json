@@ -1,0 +1,113 @@
+{
+  "schema": "csb-badcase-v1",
+  "schema_note": "字段依知微《CSB-AEP × QCA 评测 Loop 借鉴备忘 v2》第五节：场景 / 触发条件 / 期望与实际 / 证据 / 严重度 / 根因 / 修复与回归版本。脱敏边界：只留结构，不留原文；不出现身份标识、网络地址、完整业务原文。",
+  "library": {
+    "name": "CSB BadCase 库",
+    "version": "v0.1",
+    "createdAt": "2026-10-23",
+    "owner": "若琢 🌸",
+    "purpose": "从真实事故沉淀可复用用例：别人抄得走题面，抄不走结构。"
+  },
+  "cases": [
+    {
+      "id": "BC-001",
+      "title": "样本内满分 → held-out 崩盘：判据过拟合被误当作 🟢",
+      "createdAt": "2026-10-23",
+      "status": "closed",
+      "severity": "S2-严重",
+      "severity_note": "不直接损坏数据，但会导致「带病的协议变更被放行」——若未拦截，错误判据将写入协议层并传播到所有实例。",
+
+      "scene": {
+        "domain": "AEP / BID 信号提取",
+        "task": "验证「关系事件」提取判据是否成立，决定是否将其纳入协议（P-16 候选）",
+        "actor_role": "判据设计者 = 判据验证者（同一人）",
+        "stakes": "若判据有误而未被发现，将作为协议条款落地，影响全部接入实例"
+      },
+
+      "trigger": {
+        "condition": "用「人工标注样本」调判据，调完立刻在同一批样本上评测",
+        "structural_flaw": "调参与评测使用同一集合 → 判据记住了这批样本的特征，而非学到了判别规则",
+        "why_missed": "设计者看到「过判 0、召回 100%」即认为达标，未意识到该数字只在被污染的集合上成立",
+        "triggerable": "任何「无独立留出集」的判据/规则/提示词调优流程都会复现"
+      },
+
+      "expectation_vs_actual": {
+        "expected": "判据精确率 100%、召回 100%（F1=100）→ 可上线",
+        "actual": "在 122 条未参与调参的样本上，过判率 25%～43%",
+        "delta": "过判率 0% → 25~43%；结论从「可上线」翻转为「不可上线」",
+        "note": "两次评测用的是同一份判据代码，唯一变量是评测集合的划分"
+      },
+
+      "evidence": {
+        "in_sample": {
+          "set_size": 33,
+          "set_origin": "人工标注，且判据在调参过程中反复参照",
+          "precision": "100%",
+          "recall": "100%",
+          "fp": 0,
+          "fn": 0,
+          "eval_set": "in-sample"
+        },
+        "held_out": {
+          "set_size": 122,
+          "set_origin": "天然留出：原始池 126 条 − 4 条与标注集重叠，从未参与调参",
+          "hit_count": 7,
+          "true_positive": 4,
+          "false_positive": 3,
+          "fp_rate_by_variant": {
+            "V1_原文直译": "43%",
+            "V2_加自身端在场": "25%",
+            "V3_最紧（互指且排除单向通知）": "43%"
+          },
+          "eval_set": "held-out"
+        },
+        "reproduce": {
+          "command": "node csb-aep/scripts/bid-p16-probe.js",
+          "inputs": [
+            "csb-aep/data/bid/goldset-ruozhuo-v0.3.json（33 条样本内）",
+            "csb-aep/data/bid/goldset-p16-heldout-v0.1.json（7 条 held-out 命中标注）",
+            "csb-aep/data/bid/bid-signals-ruozhuo.json（126 条原始池）"
+          ],
+          "commit": "f280223",
+          "docs": [
+            "csb-aep/docs/bid-p16-probe-2026-10-23.md",
+            "csb-aep/docs/bid-p16-heldout-2026-10-23.md"
+          ]
+        }
+      },
+
+      "root_cause": {
+        "primary": "评测集合划分缺失——调参集与评测集重合，且该事实未被记录在任何 baseline 元数据中",
+        "secondary": "判据设计者与验证者同为一人，缺少异构复核",
+        "pattern": "「没发现问题」被当作「有证据证明没问题」——即三态语义中把 🟡 误判为 🟢",
+        "generalization": "不是某条判据写错了，而是**流程缺一格**：baseline 未声明它在哪个集合上成立",
+        "all_three_false_positives_share_shape": "三条过判全部是「关于事件的话」而非「事件本身」：分别是一条动作清单、一条教训反思、一条引用他人话语"
+      },
+
+      "fix": {
+        "immediate": "P-16 判为「暂不开 · 判据返工」——不带病进入协议层",
+        "process_fix": [
+          "baseline 必须声明评测集合划分（in-sample / held-out / online），跨集合不得比较为「未退步」",
+          "unknown 比例本身作为 KPI：仅当 unknown 比例不上升时，通过率上升才可计为进步",
+          "判据设计者须先交出自己在 held-out 上的过判率，方有权给出绿灯"
+        ],
+        "design_fix": "判据从「可指称性」升级为「可指称性 + 事件性」，须能区分 事件 / 列举 / 反思 / 转述 四种形态",
+        "did_not_do": "未修改判据代码本身——因为重新调参会再次污染同一批样本，需先扩池 ≥50 条独立负例"
+      },
+
+      "regression": {
+        "regression_version": "待定（判据返工完成后）",
+        "regression_suite": "bid-p16-probe.js 的 held-out 段自动跑，过判率作为回归指标",
+        "acceptance_criteria": "在独立 held-out 集上过判率 ≤ 5%，且 unknown 比例不高于基线",
+        "status": "open — 等待扩池与判据返工"
+      },
+
+      "tags": ["判据过拟合", "样本内vs留出", "三态语义", "baseline口径", "验证者独立性", "评测集合划分"],
+      "lessons": [
+        "一个漂亮的全绿分数，在不知道它是在哪个集合上量的之前，等于没有信息",
+        "最危险的不是判据错，是判据在错误的集合上对",
+        "三条同形状的失败，指向的是同一个机制缺口，不是三次偶然"
+      ]
+    }
+  ]
+}
