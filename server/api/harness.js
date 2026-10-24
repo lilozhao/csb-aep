@@ -129,7 +129,12 @@ class HarnessAPI {
 
     // 健康
     app.get('/api/harness/health', (req, res) => {
-      res.json({ status: 'ok', domain: 'harness', version: '2.4.2', implemented: IMPLEMENTED, planned: PLANNED });
+      // [2026-10-24] 版本号不再硬编码：这里曾写死 '2.4.2'，每次升版都要记得改第二处
+      // （csb-a2a-aip 的 server_v5.js 就因此让 /health 长期误报 5.0.1）。
+      // 统一读 package.json，版本只有一个事实源。
+      let version = 'unknown';
+      try { version = require('../../package.json').version; } catch { /* keep unknown */ }
+      res.json({ status: 'ok', domain: 'harness', version, implemented: IMPLEMENTED, planned: PLANNED });
     });
   }
 }
