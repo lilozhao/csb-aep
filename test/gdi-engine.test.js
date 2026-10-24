@@ -416,11 +416,20 @@ test('B7 域隔离：GDI 响应不含评测域字段（present 无刻度、dimen
     assert.ok(!('value' in cleaned[dim]) && !('rate' in cleaned[dim]), `${dim} 净化后无原始分值`);
     assert.ok(cleaned[dim].label, `${dim} 有质性标签`);
   }
-  // 预签名切片存在且可验真
+  // 切片存在（P1-1 2026-10-24：无密钥 → 显式未签名模式；有密钥 → 可验真）
   assert.ok(obs.slices.length >= 4, '应有 ≥4 维切片');
   const { verifySlice } = require('../server/engine/gdi/present.js');
-  const s0 = obs.slices[0];
-  assert.ok(verifySlice(observer.secret, s0, '墨丘'), '切片签名可验真');
-  assert.ok(!verifySlice('wrong-secret', s0, '墨丘'), '错误密钥验签失败');
-  assert.ok(!verifySlice(observer.secret, { ...s0, label: '篡改' }, '墨丘'), '篡改切片验签失败');
+  if (observer.secret) {
+    const s0 = obs.slices[0];
+    assert.ok(verifySlice(observer.secret, s0, '墨丘'), '切片签名可验真');
+    assert.ok(!verifySlice('wrong-secret', s0, '墨丘'), '错误密钥验签失败');
+    assert.ok(!verifySlice(observer.secret, { ...s0, label: '篡改' }, '墨丘'), '篡改切片验签失败');
+  } else {
+    // 未配置 AEP_GDI_PRESENT_SECRET：必须全片标 unsigned，且不得带假 sig
+    assert.ok(obs.slices.every(s => s.unsigned === true && s.sig === undefined), '未签名模式：全片 unsigned:true 且无 sig 字段');
+    // 同一环境下带真密钥时仍可验真（证明降级是显式选择，不是功能坏了）
+    const o2 = new GdiObserver({ presentSecret: 'test-secret-' + 'x'.repeat(20) });
+    const obs2 = o2.observe('墨丘', { now: NOW });
+    assert.ok(verifySlice(o2.secret, obs2.slices[0], '墨丘'), '显式密钥时切片可验真');
+  }
 });

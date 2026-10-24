@@ -21,7 +21,9 @@
 
 const crypto = require('crypto');
 
-const DEFAULT_SECRET = 'csb-harness-delta-secret';
+// P1-1 修复（2026-10-24 · 明鉴评审）：去掉 DEFAULT_SECRET 回退。
+// 该密钥用于 Δ 卡片 HMAC 预签名（GDI 信誉数据链的一环），落到公开常量 = 各部署实例
+// 互相同一把公开钥匙 → 伪造凭证可污染信誉数据。无密钥时降级为 unsigned（可机械识别）。
 
 /**
  * 任务集一致性校验（纯函数，可单测）。
@@ -125,7 +127,13 @@ function computeDelta({ harnessScore, baselineScore, breakdown = null, baselineM
       }
     }
   }
-  card.sig = sign(secret || process.env.AEP_HARNESS_DELTA_SECRET || DEFAULT_SECRET, card);
+  const effectiveSecret = secret || process.env.AEP_HARNESS_DELTA_SECRET || null;
+  if (effectiveSecret) {
+    card.sig = sign(effectiveSecret, card);
+  } else {
+    // 无密钥 → 显式未签名（不放公开常量签出来的假 sig）
+    card.unsigned = true;
+  }
   return card;
 }
 
@@ -159,6 +167,7 @@ function purify(evalResult, deltaCard) {
     delta: deltaCard,       // 只出 Δ，不出绝对分
     naMetrics: evalResult.partial ? evalResult.partial.naMetrics : [],
     sig: deltaCard.sig,
+    unsigned: deltaCard.unsigned, // P1-1：无密钥时显式标记，消费方据此判「未验真」
   };
 }
 

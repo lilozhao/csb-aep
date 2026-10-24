@@ -105,11 +105,16 @@ console.log('\n=== Δ 基线 + 呈现净化（§7.3）===');
 const OK_H = { model: 'deepseek-v4-flash', taskSetHash: 'ts-A', scoredCount: 16 };
 const OK_B = { model: 'deepseek-v4-flash', taskSetHash: 'ts-A', scoredCount: 16 };
 t('Δ = harness − baseline（三方一致）', () => {
-  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: OK_B });
+  const c = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: OK_B, secret: 'unit-test-' + 'k'.repeat(24) });
   assert.strictEqual(c.available, true);
   assert.strictEqual(c.delta, 1.2);
   assert.strictEqual(c.taskSetHash, 'ts-A');
-  assert.ok(c.sig);
+  assert.ok(c.sig, '带密钥 → 有签名');
+  assert.ok(!c.unsigned);
+  // P1-1（2026-10-24 明鉴评审）：无密钥 → 降级 unsigned，不再落公开常量
+  delete process.env.AEP_HARNESS_DELTA_SECRET;
+  const c2 = computeDelta({ harnessScore: 8.4, baselineScore: 7.2, harnessMeta: OK_H, baselineMeta: OK_B });
+  assert.ok(c2.unsigned === true && c2.sig === undefined, '无密钥 → unsigned:true 无假 sig');
 });
 t('无基线 → pending_baseline（无 Δ 不上屏）', () => {
   const c = computeDelta({ harnessScore: 8 });

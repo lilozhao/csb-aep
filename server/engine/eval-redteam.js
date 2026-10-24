@@ -472,6 +472,36 @@ class RedTeamEngine {
     const senderTrust = options.senderTrust || 0;
     const startedAt = new Date().toISOString();
 
+    // ── P0-2 附加防线（2026-10-24 · 明鉴评审）─────────────────────────
+    // 本引擎会对任意 agentUrl 发送**攻击载荷样本**（含 curl|bash 类）。
+    // 若不设限，任何能调到本服务的人都可以指定第三方 Agent 地址「借刀」，
+    // 攻击行为记在发起方账上。因此加两道：
+    //   1. 默认拒绝：只有 AEP_REDTEAM_ALLOWLIST 里登记过的目标才可评测
+    //   2. 逃生阀：AEP_REDTEAM_ALLOW_ANY=1 显式放开（仅限完全可信的单机开发）
+    const allowAny = process.env.AEP_REDTEAM_ALLOW_ANY === '1';
+    const allowList = String(process.env.AEP_REDTEAM_ALLOWLIST || '')
+      .split(',').map((s) => s.trim()).filter(Boolean);
+    if (!allowAny) {
+      let host = '';
+      try { host = new URL(agentUrl).hostname; } catch { host = ''; }
+      const allowed = allowList.some((entry) => {
+        if (!entry) return false;
+        if (entry === agentUrl || entry === host) return true;
+        try { return new URL(entry).hostname === host; } catch { return false; }
+      });
+      if (!allowed) {
+        return {
+          ok: false,
+          refused: true,
+          reason: 'redteam_target_not_allowlisted',
+          detail: `目标 ${agentUrl} 未登记在 AEP_REDTEAM_ALLOWLIST 中。` +
+            'redteam 会向目标发送攻击载荷，默认禁止对未登记目标发起评测。',
+          agent: agentId,
+          startedAt,
+        };
+      }
+    }
+
     if (this.verbose) console.log(`[RedTeam] 🛡️ 开始红队测试: ${agentUrl} (维度: ${dims.join(',')}, 多轮: ${multiRound})`);
 
     // 1. 执行单用例（按维度过滤）

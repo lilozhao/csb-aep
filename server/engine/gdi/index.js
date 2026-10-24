@@ -23,11 +23,14 @@ const { verifyRate } = require('./verify.js');
 const { verifiableScore, calibrate } = require('./self-report.js');
 const { witness } = require('./witness.js');
 const { provenance } = require('./provenance.js');
-const { presentCard, buildSlices } = require('./present.js');
+const { presentCard, buildSlices, buildUnsignedSlices } = require('./present.js');
 
 const DEFAULT_SOURCES_DIR = path.join(__dirname, '..', '..', '..', 'data', 'gdi', 'sources');
 const DEFAULT_WEIGHTS = { contract: 0.4, verify: 0.3, reuse: 0.2, selfReport: 0.1 };
-const DEFAULT_SECRET = 'csb-gdi-present-dev-secret'; // 生产环境用 AEP_GDI_PRESENT_SECRET 覆盖
+// P1-1 修复（2026-10-24 · 明鉴评审）：旧回退链 `参数 || env || DEFAULT_SECRET` 最终落到
+// 仓库公开字符串——所有忘配 env 的实例共享同一把公开钥匙，伪造凭证可污染 GDI 信誉数据链。
+// 新行为：**去掉 DEFAULT_SECRET**。无密钥 → 切片降级为「未签名模式」，每片标
+// `unsigned:true`，消费方可机械识别（明鉴处方原文）。
 
 function loadJson(p) {
   return JSON.parse(fs.readFileSync(p, 'utf8'));
@@ -37,7 +40,11 @@ class GdiObserver {
   constructor({ sourcesDir, weights, presentSecret } = {}) {
     this.sourcesDir = sourcesDir || DEFAULT_SOURCES_DIR;
     this.weights = weights || DEFAULT_WEIGHTS;
-    this.secret = presentSecret || process.env.AEP_GDI_PRESENT_SECRET || DEFAULT_SECRET;
+    this.secret = presentSecret || process.env.AEP_GDI_PRESENT_SECRET || null;
+    this.unsigned = !this.secret;
+    if (this.unsigned) {
+      console.warn('[GDI] ⚠️ 未配置 AEP_GDI_PRESENT_SECRET：呈现切片走「未签名模式」（输出标 unsigned:true，不代表已验真）');
+    }
   }
 
   /** 加载全部契约源，按 id 去重 merge */
@@ -140,7 +147,8 @@ class GdiObserver {
     const cal = selfReport10 !== null ? calibrate(selfReport10, comp) : null;
 
     const card = presentCard(c, v, r, comp, { baseline: true });
-    const slices = buildSlices(this.secret, agentName, card, ts);
+    // 无密钥 → 不再用公开常量签（等于谁都能伪造），降级为显式未签名切片
+    const slices = this.secret ? buildSlices(this.secret, agentName, card, ts) : buildUnsignedSlices(agentName, card, ts);
 
     return {
       agent: agentName,

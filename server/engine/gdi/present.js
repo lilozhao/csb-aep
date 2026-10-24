@@ -106,7 +106,19 @@ function buildSlices(secret, agent, card, ts) {
     .map(d => signSlice(secret, { agent, dim: d, label: card[d].label, arrow: card[d].arrow, ts }));
 }
 
+/**
+ * 未签名切片（P1-1 2026-10-24）：无密钥时的降级口径。
+ * 字段与签名切片同构，但 sig 换成显式 `unsigned: true`——
+ * 消费方据此判「未验真」，而不是误信一个用公开常量签出来的假 sig。
+ */
+function buildUnsignedSlices(agent, card, ts) {
+  const dims = ['composite', 'contract', 'verify', 'reuse'];
+  return dims
+    .filter(d => card[d])
+    .map(d => ({ dim: d, agent, label: card[d].label, arrow: card[d].arrow, ts, unsigned: true }));
+}
+
 module.exports = {
   presentCard, contractLabel, verifyLabel, reuseLabel, compositeLabel,
-  signSlice, verifySlice, buildSlices,
+  signSlice, verifySlice, buildSlices, buildUnsignedSlices,
 };

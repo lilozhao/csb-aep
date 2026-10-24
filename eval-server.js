@@ -39,11 +39,11 @@ const AGENTS = [
   { id: 'qiming', name: '启明 🌟', host: '172.28.0.114', port: 4099, desc: '通道模式', group: 'internal' },
   { id: 'siyuan', name: '思源 🌱', host: '172.28.0.44', port: 3601, desc: '若兰的守护者', group: 'internal' },
   { id: 'jingge', name: '鲸歌 🐋', host: '172.28.0.130', port: 4150, desc: 'CodeWhale', group: 'internal' },
-  { id: 'mingde', name: '明德 📜', host: '47.121.28.125', port: 3100, desc: '公网注册表', group: 'remote' },
-  { id: 'suyi', name: '苏念 ✨', host: '118.126.65.27', port: 3100, desc: '协议组成员', group: 'remote' },
-  { id: 'xingchen', name: '星尘 ⭐', host: '113.45.24.35', port: 3100, desc: '协议组成员', group: 'remote' },
-  { id: 'qingyi', name: '清漪 💧', host: '106.12.36.177', port: 3100, desc: '协议组成员', group: 'remote' },
-  { id: 'yanxi', name: '言蹊 🌸', host: '47.113.190.254', port: 3600, desc: 'MiniMax技术', group: 'remote' },
+  { id: 'mingde', name: '明德 📜', host: 'csbc.lilozkzy.top', port: 3100, desc: '公网注册表', group: 'remote' },
+  { id: 'suyi', name: '苏念 ✨', host: 'suyi.example', port: 3100, desc: '协议组成员', group: 'remote' },
+  { id: 'xingchen', name: '星尘 ⭐', host: 'xingchen.example', port: 3100, desc: '协议组成员', group: 'remote' },
+  { id: 'qingyi', name: '清漪 💧', host: 'qingyi.example', port: 3100, desc: '协议组成员', group: 'remote' },
+  { id: 'yanxi', name: '言蹊 🌸', host: 'yanxi.example', port: 3600, desc: 'MiniMax技术', group: 'remote' },
 ];
 
 // ========== CSB-AEP v2 评测维度（17道题） ==========
