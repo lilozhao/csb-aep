@@ -30,6 +30,7 @@ class GdiAPI {
     const gdiCfg = config.gdi || {};
     this.observer = new GdiObserver({
       sourcesDir: gdiCfg.sourcesDir || config.gdiSourcesDir,
+      auditDir: gdiCfg.auditDir || config.gdiAuditDir,   // [P0-0] 审计源可与其它源分离
       weights: gdiCfg.weights,
       presentSecret: gdiCfg.presentSecret,
     });

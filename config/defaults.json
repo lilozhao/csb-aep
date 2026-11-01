@@ -12,12 +12,22 @@
     "senderUrl": "http://aep.local"
   },
   "gdi": {
-    "weights": { "contract": 0.4, "verify": 0.3, "reuse": 0.2, "selfReport": 0.1 },
+    "weights": {
+      "contract": 0.4,
+      "verify": 0.3,
+      "reuse": 0.2,
+      "selfReport": 0.1
+    },
     "selfReportWeightCap": 0.2,
     "presentSecret": "csb-gdi-present-dev-secret",
-    "calibration": { "deepReviewMonths": 6, "lightCheckMonths": 3, "weightFloor": 0.05 },
+    "calibration": {
+      "deepReviewMonths": 6,
+      "lightCheckMonths": 3,
+      "weightFloor": 0.05
+    },
     "sourcesDir": "./data/gdi/sources",
-    "storeFile": "./data/gdi/gdi-store.json"
+    "storeFile": "./data/gdi/gdi-store.json",
+    "auditDir": "../csb-a2a-aip/data/audit"
   },
   "frameworks": {
     "auto": {

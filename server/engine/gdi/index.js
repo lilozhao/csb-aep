@@ -37,8 +37,15 @@ function loadJson(p) {
 }
 
 class GdiObserver {
-  constructor({ sourcesDir, weights, presentSecret } = {}) {
+  constructor({ sourcesDir, auditDir, weights, presentSecret } = {}) {
     this.sourcesDir = sourcesDir || DEFAULT_SOURCES_DIR;
+    // [2026-11-02 P0-0] 审计源可与其它源分处两地：A2A 的账本在 csb-a2a-aip/data/audit/。
+    //   不设则退回原行为（<sourcesDir>/audit），不制造隐式依赖。
+    //   相对路径按**仓根**解析（不按 cwd）：否则换个目录启动就静默指空，又变成 no_audit_source。
+    const REPO_ROOT = path.join(__dirname, '..', '..', '..');
+    this.auditDir = auditDir
+      ? path.resolve(REPO_ROOT, auditDir)
+      : path.join(this.sourcesDir, 'audit');
     this.weights = weights || DEFAULT_WEIGHTS;
     this.secret = presentSecret || process.env.AEP_GDI_PRESENT_SECRET || null;
     this.unsigned = !this.secret;
@@ -96,7 +103,7 @@ class GdiObserver {
         } catch { /* skip */ }
       }
     }
-    const auditDir = path.join(this.sourcesDir, 'audit');
+    const auditDir = this.auditDir;
     if (fs.existsSync(auditDir)) {
       for (const f of fs.readdirSync(auditDir).filter(x => x.endsWith('.jsonl')).sort()) {
         try {
@@ -128,7 +135,7 @@ class GdiObserver {
     const ts = now.toISOString();
     const contracts = this.loadContracts().filter(c => c.promisor === agentName);
     const refs = this.loadReferences().filter(r => r.target === agentName);
-    const auditDir = path.join(this.sourcesDir, 'audit');
+    const auditDir = this.auditDir;
 
     const c = hitRate(contracts, now);
     const v = verifyRate(auditDir, agentName);
