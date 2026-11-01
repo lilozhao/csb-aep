@@ -10,6 +10,11 @@ const { ClaimingStore } = require('../store/claiming-store');
 const { ExecRiskEngine, PREFIX_WARN_THRESHOLD, PREFIX_SUSPEND_THRESHOLD } = require('../engine/exec-risk');
 const { CSBChecker } = require('../standard/csb');
 const { ResultsStore } = require('../store/results');
+// [2026-11-02 P0-1] 判定内核（三态 + 回执 + 门）。可抽出的形状，将来抽走只改这一行 require。
+const verdict = require('../engine/verdict');
+const AEP_VERSION = (() => {
+  try { return require('../../package.json').version; } catch { return null; }
+})();
 const { GenericA2AAdapter } = require('../adapter/generic-a2a');
 const { OpenClawAdapter } = require('../adapter/openclaw');
 const { HermesAdapter } = require('../adapter/hermes');
@@ -494,6 +499,13 @@ class EvalAPI {
         }
       }
 
+      // ═══ P0-1：判定回执（纯加法，不改评分逻辑）═══
+      //  知微审计事实 1：上层点名的 10 个字段在仓里 0 命中，对外讲的"可验证判定"没有实现。
+      //  这里先把 7 个必填落地；条件必有字段按条件补。
+      report.receipt = buildReportReceipt(report, {
+        standard, mode, adapter, evalResult, whiteboxResult, req,
+      });
+
       // 存储
       const saved = await this.store.add(report);
 
@@ -562,3 +574,72 @@ class EvalAPI {
 }
 
 module.exports = { EvalAPI };
+
+
+/**
+ * [2026-11-02 P0-1] 从评测报告构建判定回执
+ *
+ * 原则：
+ *  · 必填缺失 → buildReceipt 内部已把 verdict 降为 UNDECIDED/missing_field，本函数不抛错
+ *  · 签名密钥取 AEP_RECEIPT_SECRET；没有就 unsigned:true（不假装已验真）
+ *  · 不改动 report.score / results —— 回执是附加物，不是新的判定源
+ */
+function buildReportReceipt(report, ctx) {
+  const { mode, adapter, evalResult, whiteboxResult, req } = ctx;
+  const secret = process.env.AEP_RECEIPT_SECRET || null;
+
+  // 口径版本：权重表随 mode 变，所以要能区分「按哪版口径算的」
+  const policyVersion = `aep-${AEP_VERSION || 'unknown'}/${mode || 'blackbox'}`;
+
+  // 题集摘要：对实际跑到的用例清单做哈希（同题集同摘要）
+  const caseIds = (report.results || []).map((r) => r.id).sort();
+  const hasDataset = caseIds.length > 0;
+
+  // 采集器：适配器名 + 该适配器文件哈希（同一名字改代码 → 摘要变）
+  const collectorId = adapter?.name || 'unknown';
+  let collectorVersion = null;
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    const f = require.resolve(path.join(__dirname, '..', 'adapter', `${collectorId}.js`));
+    collectorVersion = verdict.digestOf(fs.readFileSync(f, 'utf8')).slice(0, 23);
+  } catch { collectorVersion = AEP_VERSION; }
+
+  // 采集档位：本地 agentPath 才可能读文件；远程只有协议档
+  const tier = req?.body?.agentPath ? verdict.TIER.PROTOCOL : verdict.TIER.PROTOCOL;
+
+  // 三态：把 results 映射成内核的 items，供 aggregate 出 coverage/insufficient
+  const items = (report.results || []).map((r) => {
+    if (r.status === verdict.VERDICT.UNDECIDED) {
+      return verdict.undecided(r.reason || verdict.UNDECIDED_REASON.UNREACHABLE, r.detail);
+    }
+    return (r.pass === true || (typeof r.score === 'number' && r.score >= 50))
+      ? verdict.pass(r.score)
+      : verdict.fail(r.score);
+  });
+  const agg = verdict.aggregate(items, { minCoverage: 0.6 });
+
+  const topVerdict = typeof report.score === 'number'
+    ? (agg.insufficient ? verdict.VERDICT.UNDECIDED : agg.verdict)
+    : verdict.VERDICT.UNDECIDED;
+
+  return verdict.buildReceipt({
+    verdict: topVerdict,
+    score: typeof report.score === 'number' ? report.score : null,
+    issued_at: new Date().toISOString(),
+    policy: { version: policyVersion },
+    collector: { id: collectorId, version: collectorVersion },
+    telemetry_tier: tier,
+    config: {
+      mode: mode || 'blackbox',
+      standard: ctx.standard || 'a2a-v0.6',
+      weights: (report.results || []).reduce((m, r) => { m[r.id] = r.weight; return m; }, {}),
+    },
+    evidence: {
+      results: verdict.digestOf((report.results || []).map((r) => ({ id: r.id, pass: r.pass, score: r.score, status: r.status || null }))),
+      ...(whiteboxResult ? { whitebox: verdict.digestOf(whiteboxResult.dimensions || {}) } : {}),
+    },
+    dataset: hasDataset ? caseIds : undefined,
+    ctx: { telemetry_tier: tier },
+  }, { secret });
+}

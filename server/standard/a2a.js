@@ -3,6 +3,8 @@
  * 检查 Agent 是否符合 A2A v0.6 协议
  */
 const http = require('http');
+// [2026-11-02 P0-2] 三态内核：不可达/上游失败 ≠ 检查项不通过
+const { VERDICT, UNDECIDED_REASON } = require('../engine/verdict');
 
 const path = require('path');
 const fs = require('fs');
@@ -97,6 +99,7 @@ class A2AChecker {
     let cardData = null;
 
     // 1. Agent Card 可达性
+    let cardUnreachable = false;
     try {
       const card = await this.fetchAgentCard(baseUrl);
       cardData = card.data;
@@ -107,21 +110,37 @@ class A2AChecker {
         score: (card.statusCode === 200 && card.data !== null) ? 100 : 0,
       });
     } catch (e) {
+      cardUnreachable = true;
+      // [P0-2] Agent Card 取不到 = 没测到，不是"卡片不合格"
       results.push({
         id: 'card-reachable',
-        pass: false,
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: UNDECIDED_REASON.UNREACHABLE,
         detail: e.message,
-        score: 0,
+        score: null,
       });
     }
 
     // 2. Agent Card 有效 JSON
-    results.push({
-      id: 'card-valid-json',
-      pass: cardData !== null,
-      detail: cardData ? '有效 JSON' : '解析失败',
-      score: cardData ? 100 : 0,
-    });
+    if (cardUnreachable) {
+      // [P0-2] 卡片没取到就无从判"是否有效 JSON"——不能说它解析失败
+      results.push({
+        id: 'card-valid-json',
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: UNDECIDED_REASON.UNREACHABLE,
+        detail: '无法检查（Agent Card 未取到）',
+        score: null,
+      });
+    } else {
+      results.push({
+        id: 'card-valid-json',
+        pass: cardData !== null,
+        detail: cardData ? '有效 JSON' : '解析失败',
+        score: cardData ? 100 : 0,
+      });
+    }
 
     // 3. Agent Card 必要字段
     if (cardData) {
@@ -136,9 +155,11 @@ class A2AChecker {
     } else {
       results.push({
         id: 'card-required-fields',
-        pass: false,
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: UNDECIDED_REASON.UNREACHABLE,
         detail: '无法检查（Agent Card 不可用）',
-        score: 0,
+        score: null,
       });
     }
 
@@ -154,9 +175,11 @@ class A2AChecker {
     } catch (e) {
       results.push({
         id: 'jsonrpc-endpoint',
-        pass: false,
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: UNDECIDED_REASON.UNREACHABLE,
         detail: e.message,
-        score: 0,
+        score: null,
       });
     }
 
@@ -190,23 +213,30 @@ class A2AChecker {
       } else {
         results.push({
           id: 'task-response',
-          pass: false,
+          pass: null,
+          status: VERDICT.UNDECIDED,
+          reason: UNDECIDED_REASON.UNREACHABLE,
           detail: '无法检查（任务创建失败）',
-          score: 0,
+          score: null,
         });
       }
     } catch (e) {
+      // [P0-2] 任务建不起来 = 没测到，不是"任务生命周期不合格"
       results.push({
         id: 'task-create',
-        pass: false,
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: UNDECIDED_REASON.UNREACHABLE,
         detail: e.message,
-        score: 0,
+        score: null,
       });
       results.push({
         id: 'task-response',
-        pass: false,
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: UNDECIDED_REASON.UNREACHABLE,
         detail: '无法检查',
-        score: 0,
+        score: null,
       });
     }
 
@@ -221,11 +251,14 @@ class A2AChecker {
         score: hasError ? 100 : 20,
       });
     } catch (e) {
+      // [P0-2] 请求发不出去 ≠ 错误处理不合格
       results.push({
         id: 'error-handling',
-        pass: false,
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: UNDECIDED_REASON.UNREACHABLE,
         detail: e.message,
-        score: 0,
+        score: null,
       });
     }
 

@@ -12,6 +12,9 @@
  */
 const http = require('http');
 const { A2AChecker, A2A_V06_CHECKS } = require('../standard/a2a');
+// [2026-11-02 P0-1/P0-2] 三态内核（可抽出的形状：单文件、纯对象、不依赖私有模块）
+const verdict = require('./verdict');
+const { UNDECIDED_REASON, VERDICT } = verdict;
 
 /**
  * 对话层类别（**执行路径清单**：只有列在这里的类别才会被 evaluate 逐个执行）
@@ -198,8 +201,18 @@ class BlackBoxEngine {
       for (const test of TEST_SUITE[category]) {
         try {
           const result = await this.sendMessage(baseUrl, test.input);
+          // [2026-11-02 P0-2] 限流/空响应 ≠ 答错：记 UNDECIDED，不进分母
           if (result.rateLimited) {
-            console.log(`[BlackBox] ⚠️ 用例 ${test.id} 被限流拦截（安全层防刷），记 0 分，建议增大 --delay 或错峰重跑`);
+            console.log(`[BlackBox] ⚠️ 用例 ${test.id} 被限流拦截 → UNDECIDED（此前记 0 分，污染综合分）`);
+            results.push(this._undecided(test, UNDECIDED_REASON.RATE_LIMITED, '安全层限流，建议增大 --delay 或错峰重跑'));
+            await this.sleep(this.delay);
+            continue;
+          }
+          if (!result.response || !String(result.response).trim()) {
+            console.log(`[BlackBox] ⚠️ 用例 ${test.id} 返回空 → UNDECIDED`);
+            results.push(this._undecided(test, UNDECIDED_REASON.EMPTY_RESPONSE, '目标返回空响应'));
+            await this.sleep(this.delay);
+            continue;
           }
           const analysis = test.analyze(result.response);
 
@@ -215,17 +228,12 @@ class BlackBoxEngine {
             response: result.response,
           });
         } catch (e) {
-          console.log(`[BlackBox] ⚠️ 用例 ${test.id} 失败（重试耗尽）: ${e.message}`);
-          results.push({
-            id: test.id,
-            name: test.name,
-            category: test.category,
-            q: test.q || BlackBoxEngine.Q_MAP[test.category],
-            weight: test.weight,
-            score: 0,
-            pass: false,
-            detail: e.message,
-          });
+          // [2026-11-02 P0-2] 连不上/超时 ≠ 答错 → UNDECIDED
+          const reason = /timeout|ETIMEDOUT/i.test(e.message)
+            ? UNDECIDED_REASON.TIMEOUT
+            : UNDECIDED_REASON.UNREACHABLE;
+          console.log(`[BlackBox] ⚠️ 用例 ${test.id} 不可达（${reason}）→ UNDECIDED: ${e.message}`);
+          results.push(this._undecided(test, reason, e.message));
         }
         // 请求间隔：避免连续请求触发安全层 rapid_failures
         await this.sleep(this.delay);
@@ -248,13 +256,16 @@ class BlackBoxEngine {
         detail: `${responseTime}ms`,
       });
     } catch (e) {
+      // [2026-11-02 P0-2] 性能测不到（连不上/超时）≠ 性能差 → UNDECIDED
       results.push({
         id: 'perf-response-time',
         name: '响应时间',
         category: 'performance',
         weight: 5,
-        score: 0,
-        pass: false,
+        score: null,
+        pass: null,
+        status: VERDICT.UNDECIDED,
+        reason: /timeout|ETIMEDOUT/i.test(e.message) ? UNDECIDED_REASON.TIMEOUT : UNDECIDED_REASON.UNREACHABLE,
         detail: e.message,
       });
     }
@@ -267,6 +278,7 @@ class BlackBoxEngine {
       duration: totalTime,
       results,
       score: this.calculateScore(results),
+      coverage: this.calculateCoverage(results),
       fourQuestions: BlackBoxEngine.aggregateFourQuestions(results),  // 四问聚合（REV-2026-08-30 议题A）
     };
   }
@@ -312,16 +324,50 @@ class BlackBoxEngine {
   /**
    * 计算加权总分
    */
+  /**
+   * [2026-11-02 P0-2] 加权算分 —— UNDECIDED 不进分母
+   *
+   * 旧行为：不可达/限流/空响应一律 score:0，于是分母照算，综合分被拉低，
+   * 而且报告里无法与"真的答错"区分（知微审计事实 2）。
+   * 新行为：只按已判定项算分；覆盖率另算并暴露，覆盖率不足由上层标 insufficient。
+   */
   calculateScore(results) {
     let totalWeight = 0;
     let weightedScore = 0;
+    let decided = 0;
 
     for (const r of results) {
+      if (r.status === VERDICT.UNDECIDED) continue;   // ← 不进分母
+      decided++;
       totalWeight += r.weight;
       weightedScore += (r.score / 100) * r.weight;
     }
 
-    return totalWeight > 0 ? Math.round((weightedScore / totalWeight) * 100) / 10 : 0;
+    if (totalWeight === 0) return null;   // 全没测到 → null，不是 0
+    return Math.round((weightedScore / totalWeight) * 100) / 10;
+  }
+
+  /** [P0-2] 覆盖率：已判定 / 总数（外部可核，不猜） */
+  calculateCoverage(results) {
+    if (!Array.isArray(results) || results.length === 0) return 0;
+    const decided = results.filter(r => r.status !== VERDICT.UNDECIDED).length;
+    return Math.round((decided / results.length) * 1000) / 1000;
+  }
+
+  /** [P0-2] 造一条 UNDECIDED 结果（统一形状，不许各写各的） */
+  _undecided(test, reason, note) {
+    return {
+      id: test.id,
+      name: test.name,
+      category: test.category,
+      q: test.q || BlackBoxEngine.Q_MAP[test.category],
+      weight: test.weight,
+      score: null,
+      pass: null,
+      status: VERDICT.UNDECIDED,
+      reason,
+      detail: note || reason,
+    };
   }
 }
 
