@@ -71,17 +71,18 @@ class HarnessAPI {
 
     // 创建评测
     app.post('/api/harness/eval', (req, res) => {
-      const { manifest = null, traces = [], ttftMs = [], traps = [], runs = [], traceFormat,
+      const { manifest = null, agentCard = null, traces = [], ttftMs = [], traps = [], runs = [], traceFormat,
         peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec,
         compression, multiAgent, orchestration, boundary, observability, recovery,
         seeds, envDeclared, modelScores,
         model, taskSetHash, baselineMeta,
         baselineScore, baselineBreakdown, gameAnalysis } = req.body || {};
-      if (!manifest) {
-        return res.status(400).json({ error: 'manifest 必填（协议 §7.2 前置条件）' });
+      // P0-3：manifest 可来自 Agent Card（harness_manifest.aep），两者都缺才拒。
+      if (!manifest && !(agentCard && (agentCard.harness_manifest || agentCard.harnessManifest))) {
+        return res.status(400).json({ error: 'manifest 或带 harness_manifest 的 agentCard 至少给一个（协议 §7.2 前置条件）' });
       }
       try {
-        const result = this.evaluator.evaluate({ manifest, traces, ttftMs, traps, runs, traceFormat,
+        const result = this.evaluator.evaluate({ manifest, agentCard, traces, ttftMs, traps, runs, traceFormat,
           peerTokens, bestSteps, unitPrice, toolCost, peerCosts, loads, trapSpec,
           compression, multiAgent, orchestration, boundary, observability, recovery,
           seeds, envDeclared, modelScores,

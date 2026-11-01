@@ -110,8 +110,18 @@ function editDistance(a, b) {
 /** A5 工具编排正确率（选择率 / 参数率 / 顺序合理性） */
 function a5(cfg, traceData = {}) {
   const tasks = traceData.orchestration; // [{ actual:[{tool,args_hash}], expected:[{tool,args_hash}] }]
+  // P0-3：Agent Card 的 manifest.skills 是「声明」，不是「标准任务图」。
+  //   → 有声明只能进 note 做对照说明，**不能据此计分**（否则等于用自述给自己打分）。
+  const declared = Array.isArray(cfg?.skills) ? cfg.skills.filter(s => s && s.name) : [];
+  const declaredNote = declared.length
+    ? `按 manifest skills 对照（声明 ${declared.length} 项：${declared.slice(0, 5).map(s => s.name).join('、')}${declared.length > 5 ? ' 等' : ''}）`
+    : '';
   if (!Array.isArray(tasks) || !tasks.length) {
-    return { id: 'A5', score: null, status: 'N/A', note: '无标准任务图数据 → N/A' };
+    return {
+      id: 'A5', score: null, status: 'N/A',
+      note: declaredNote ? `无标准任务图数据 → N/A；${declaredNote}` : '无标准任务图数据 → N/A',
+      ...(declaredNote ? { manifestSkills: declared.map(s => s.name) } : {}),
+    };
   }
   let selHit = 0, selTotal = 0, argHit = 0, argTotal = 0, orderSum = 0, orderN = 0;
   for (const t of tasks) {
@@ -136,7 +146,11 @@ function a5(cfg, traceData = {}) {
   else if (all.every(r => r >= 0.75)) score = 7;
   else if (all.some(r => r < 0.60)) score = 3;
   else score = 5;
-  return { id: 'A5', score, status: 'ok', selectionRate: +selRate.toFixed(3), argRate: +argRate.toFixed(3), orderRate: +orderRate.toFixed(3), tasks: tasks.length };
+  return {
+    id: 'A5', score, status: 'ok',
+    selectionRate: +selRate.toFixed(3), argRate: +argRate.toFixed(3), orderRate: +orderRate.toFixed(3), tasks: tasks.length,
+    ...(declaredNote ? { note: declaredNote, manifestSkills: declared.map(s => s.name) } : {}),
+  };
 }
 
 /** A6 权限与沙箱隔离强度（越权/逃逸用例 + 实际边界核对） */

@@ -14,7 +14,7 @@
  */
 'use strict';
 
-const { validateManifest, extractConfig } = require('./manifest.js');
+const { validateManifest, extractConfig, fromAgentCard } = require('./manifest.js');
 const { parseTraces } = require('./trace.js');
 const { normalize } = require('./adapters');
 const { a1, a2, a3, a4, a5, a6, a7, a8, a9 } = require('./robustness.js');
@@ -66,8 +66,23 @@ class HarnessEvaluator {
    */
   evaluate(input = {}) {
     const ts = this.now().toISOString();
-    const manifestCheck = validateManifest(input.manifest);
-    const cfg = extractConfig(input.manifest);
+    // P0-3 manifest 消费侧：优先用请求体里的 manifest；否则从 Agent Card 的
+    //   harness_manifest.aep 取参数面，并把 skills/plugins/experience_ref 带进 cfg 作对照。
+    const cardInfo = input.agentCard ? fromAgentCard(input.agentCard) : null;
+    const manifestInput = input.manifest || (cardInfo && cardInfo.manifest) || null;
+    const mergedManifest = manifestInput ? {
+      ...manifestInput,
+      skills: (Array.isArray(manifestInput.skills) && manifestInput.skills.length)
+        ? manifestInput.skills
+        : ((cardInfo && cardInfo.skills) || []),
+      plugins: (Array.isArray(manifestInput.plugins) && manifestInput.plugins.length)
+        ? manifestInput.plugins
+        : ((cardInfo && cardInfo.plugins) || []),
+      experience_ref: manifestInput.experience_ref || (cardInfo && cardInfo.experienceRef) || null,
+      __source: input.manifest ? 'request.manifest' : ((cardInfo && cardInfo.source) || null),
+    } : null;
+    const manifestCheck = validateManifest(mergedManifest);
+    const cfg = extractConfig(mergedManifest);
     const format = input.traceFormat || cfg.traceFormat || 'csb-trace-v1';
 
     // 归一化传入的 trace（若带 format）
@@ -137,6 +152,9 @@ class HarnessEvaluator {
         errors: manifestCheck.errors,
         warnings: manifestCheck.warnings,
         na: manifestCheck.na,
+        // 诚实来源：manifest 从哪来、声明了哪些 skills（缺则空，不编）
+        source: cfg.manifestSource,
+        skills: cfg.skills.map(s => s.name),
       },
       trace: { count: traces.length, format },
       metrics,
