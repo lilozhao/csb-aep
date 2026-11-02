@@ -12,6 +12,7 @@ const { CSBChecker } = require('../standard/csb');
 const { ResultsStore } = require('../store/results');
 // [2026-11-02 P0-1] 判定内核（三态 + 回执 + 门）。可抽出的形状，将来抽走只改这一行 require。
 const verdict = require('../engine/verdict');
+const criteria = require('../engine/criteria');
 const AEP_VERSION = (() => {
   try { return require('../../package.json').version; } catch { return null; }
 })();
@@ -549,6 +550,17 @@ class EvalAPI {
       timestamp: r.timestamp,
       standard: r.standard,
       mode: r.mode || 'blackbox',
+      // P1-4：判据指纹与「是否已过期」。
+      //   口径说明（不夸大）：
+      //   • policyStale = 该报告的口径版本 ≠ 当前代码版本下的同 mode 口径版本
+      //     → 判据（权重表/阈值/词表）可能已变，分数不可与今日结果直接比较
+      //   • criteriaHash 原样给出去，调用方可自行与今日报告的 criteria.hash 比对
+      //   • 老报告（P1-4 之前）没有 criteria → hash 为 null 且 untracked=true
+      //     这**不等于可用**：只是我们无法证明它一致
+      criteriaHash: r.criteria?.hash || null,
+      criteriaVersion: r.criteria?.version || null,
+      untracked: !r.criteria,
+      policyStale: Boolean(r.criteria?.version && r.criteria.version !== `aep-${AEP_VERSION}/${r.mode || 'blackbox'}`),
     })));
   }
 
@@ -678,6 +690,16 @@ function buildReportReceipt(report, ctx) {
     sources: collectorMeta.sources || null,    // 静态证据源
     sourcesReason: collectorMeta.sourcesReason || null,
   };
+
+  // P1-4：判据快照落报告层 —— 旧报告将来能不能复用，靠这个判断。
+  //   只存 hash 就只能说"变了"，说不出"哪里变"；所以连快照一起存。
+  //   注意：快照**不含**运行时状态（结果本身、时间戳），见 criteria.STATE_FIELDS。
+  report.criteria = criteria.snapshot({
+    policyVersion,
+    mode: mode || 'blackbox',
+    standard: ctx.standard || 'a2a-v0.6',
+    weights: (report.results || []).reduce((m, r) => { m[r.id] = r.weight; return m; }, {}),
+  });
 
   return verdict.buildReceipt({
     verdict: topVerdict,
