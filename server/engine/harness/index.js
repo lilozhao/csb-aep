@@ -16,6 +16,7 @@
 
 const { validateManifest, extractConfig, fromAgentCard } = require('./manifest.js');
 const { parseTraces } = require('./trace.js');
+const { analyzeProcess } = require('../process-signals.js');
 const { normalize } = require('./adapters');
 const { a1, a2, a3, a4, a5, a6, a7, a8, a9 } = require('./robustness.js');
 const { b1, b2, b3, b4, b5 } = require('./cost.js');
@@ -143,6 +144,20 @@ class HarnessEvaluator {
       selfModify: input.selfModify || {},
     });
 
+    // 过程监督三信号（P1-2 · 2026-11-02）
+    //   只看过程，不改任何分数 —— 与 groupD 一样是旁路信息。
+    //   drift 需要任务范围：不给 processScope 就只能是 unknown（无参照系不判）。
+    //   没传 trace → 全部 unknown，并显式写出来，不许静默当「没问题」。
+    const processSignals = traces.map((t, idx) => ({
+      task_id: t.task_id || `trace-${idx + 1}`,
+      ...analyzeProcess(t, { scope: input.processScope, ...(input.processOptions || {}) }),
+    }));
+    const processSummary = processSignals.reduce((m, r) => {
+      for (const f of r.flags) m.flags[f] = (m.flags[f] || 0) + 1;
+      for (const u of r.unknown) m.unknown[u] = (m.unknown[u] || 0) + 1;
+      return m;
+    }, { flags: {}, unknown: {} });
+
     return {
       domain: 'harness',
       harness: { name: cfg.name, version: cfg.version, format },
@@ -170,6 +185,23 @@ class HarnessEvaluator {
       gameResistance: gr,
       // D 群（改进质量）· draft 阈值待评审 · **不计入 average**
       improvement,
+      // 过程监督（P1-2）· 只挂标记，不改分类；unknown 与 absent 严格区分
+      process: {
+        total: processSignals.length,
+        withTrace: processSignals.filter((r) => r.valid).length,
+        flags: processSummary.flags,        // { repeat: 2, stall: 1 }
+        unknown: processSummary.unknown,    // { drift: 3 } ← 判不了的，显式暴露
+        // 一条 trace 都没有时，unknown 计数会全是 0 —— 那看起来像「三个信号都判过了、都没问题」。
+        // 用一个独立字段把「根本没评」和「评了但判不了」分开，否则就是最典型的假绿。
+        notEvaluated: processSignals.length === 0 ? ['repeat', 'stall', 'drift'] : [],
+        scopeDeclared: Boolean(input.processScope && Array.isArray(input.processScope.expectedTools) && input.processScope.expectedTools.length),
+        traces: processSignals,
+        note: processSignals.length === 0
+          ? '未传 trace → 三个信号全部 unknown（不是「没发现问题」）'
+          : (processSummary.unknown.drift && !input.processScope
+            ? 'drift 未判：未声明 processScope.expectedTools，无参照系'
+            : null),
+      },
       dataSource: traces.length || input.traps || input.runs ? 'local' : 'unavailable',
     };
   }
