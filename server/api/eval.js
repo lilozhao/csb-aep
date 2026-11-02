@@ -527,11 +527,32 @@ class EvalAPI {
 
   /**
    * GET /api/eval/:id
+   *
+   * P1-5：支持「这份结论能不能用在这件事上」的机械查询：
+   *   ?use=gate&strength=gating       → 单用途
+   *   ?use=gate,report&strength=...   → 多用途（逗号分隔）
+   *   ?policy_version=...             → 显式换口径校验（不传则按回执自身口径比）
+   *
+   * 越界时返回 `reuse.reusable=false` + 具体缺什么 + 固定口令「越界一律新开」。
+   * **不提供「把 mandate 改大一点」的参数** —— 那是本功能要禁止的事。
    */
   async getEval(req, res) {
     const result = await this.store.getById(req.params.id);
     if (!result) {
       return res.status(404).json({ error: 'Not found' });
+    }
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const use = url.searchParams.get('use');
+    if (use) {
+      const mandateSource = result.mandate || result.receipt?.mandate || null;
+      const reuse = mandateSource
+        ? verdict.checkMandateReuse(mandateSource, {
+          scope: use.split(',').map((s) => s.trim()).filter(Boolean),
+          strength: url.searchParams.get('strength') || 'advisory',
+          policy_version: url.searchParams.get('policy_version') || undefined,
+        })
+        : { reusable: false, code: 'missing_mandate', reason: '该报告未携带委托凭据（P1-5 之前产出）→ 无法证明可用范围，请新开判定' };
+      return res.json({ ...result, reuse });
     }
     res.json(result);
   }
@@ -561,6 +582,15 @@ class EvalAPI {
       criteriaVersion: r.criteria?.version || null,
       untracked: !r.criteria,
       policyStale: Boolean(r.criteria?.version && r.criteria.version !== `aep-${AEP_VERSION}/${r.mode || 'blackbox'}`),
+      // P1-5：委托边界（不解签就能看出口径）。
+      //   mandateDerived=true 表示这是系统补的保守默认（eval:read / advisory），
+      //   **不能当门禁用**；要门禁级结论，得发起方显式给 mandate 或新开一次判定。
+      mandate: r.mandate
+        ? { scope: r.mandate.scope, strength: r.mandate.strength, policy_version: r.mandate.policy_version, depth: r.mandate.depth, derived: r.mandate.derived === true }
+        : null,
+      mandateDerived: r.mandate ? r.mandate.derived === true : null,
+      mandateUntracked: !r.mandate,   // true = P1-5 之前产出，无法证明可用范围
+      mandateDigest: r.mandate_digest || null,
     })));
   }
 
@@ -701,7 +731,11 @@ function buildReportReceipt(report, ctx) {
     weights: (report.results || []).reduce((m, r) => { m[r.id] = r.weight; return m; }, {}),
   });
 
-  return verdict.buildReceipt({
+  // P1-5：委托边界落在报告层（回执里也有一份，两边同源）。
+  //   默认委托 = 保守值：scope 只到 `eval:read`、强度 advisory、derived=true。
+  //   要拿去当门禁/对外凭证，必须由**发起方显式**给出更强 mandate（或自己新开一次判定）。
+  //   报告层多存一份的理由：`/api/eval/list` 不用解签就能告诉调用方「这份能不能当门禁用」。
+  const receipt = verdict.buildReceipt({
     verdict: topVerdict,
     score: typeof report.score === 'number' ? report.score : null,
     issued_at: new Date().toISOString(),
@@ -709,6 +743,7 @@ function buildReportReceipt(report, ctx) {
     // 回执只取 id/version（P0-1 契约不动）。能力快照见上方 report.collector。
     collector: { id: collectorId, version: collectorVersion },
     telemetry_tier: tier,
+    mandate: (req && (req.mandate || (req.body && req.body.mandate))) || undefined,
     config: {
       mode: mode || 'blackbox',
       standard: ctx.standard || 'a2a-v0.6',
@@ -721,4 +756,10 @@ function buildReportReceipt(report, ctx) {
     dataset: hasDataset ? caseIds : undefined,
     ctx: { telemetry_tier: tier },
   }, { secret });
+
+  report.mandate = receipt.mandate;
+  report.mandate_digest = receipt.mandate_digest;
+  report.mandate_derived = receipt.mandate_derived;
+  report.mandate_valid = receipt.mandate_valid;
+  return receipt;
 }

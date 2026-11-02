@@ -161,7 +161,12 @@ const SRC = fs.readFileSync(path.join(__dirname, '../server/engine/verdict/index
 
 t('JUDGE: 不 require 任何 AEP 私有模块（可抽出）', () => {
   const requires = [...SRC.matchAll(/require\((['"])([^'"]+)\1\)/g)].map((m) => m[2]);
-  assert.deepStrictEqual(requires, ['crypto'], `只应依赖 node 内置，实际: ${JSON.stringify(requires)}`);
+  // P1-5：允许同目录兄弟模块（./mandate）—— 抽成 csb-verdict 包时它们一起走。
+  //   判定标准仍然是「能不能整体抽出去」：node 内置 + 同目录 = 能；../ 或仓内其他路径 = 不能。
+  const external = requires.filter((r) => !r.startsWith('.'));
+  const local = requires.filter((r) => r.startsWith('.'));
+  assert.deepStrictEqual(external, ['crypto'], `只应依赖 node 内置，实际: ${JSON.stringify(requires)}`);
+  for (const r of local) assert.match(r, /^\.\/[a-z-]+$/, `同目录兄弟模块才允许，实际: ${r}`);
 });
 
 t('JUDGE: 无 ../ 相对上跳', () => {

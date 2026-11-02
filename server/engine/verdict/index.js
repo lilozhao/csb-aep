@@ -30,6 +30,7 @@
 'use strict';
 
 const crypto = require('crypto');
+const mandateLib = require('./mandate');   // 同目录兄弟模块（抽出成 csb-verdict 时一起走）
 
 // ══════════════════════════════════════════════
 // 一、三态定义（唯一）
@@ -273,7 +274,8 @@ const RECEIPT_CONDITIONAL = Object.freeze({
  * 构建回执（纯加法，不改评分逻辑）
  *
  * @param {object} input 普通对象：
- *   verdict, score, evidence, policy, collector, dataset, anchors, stages, retry, budget, ctx
+ *   verdict, score, evidence, policy, collector, dataset, anchors, stages, retry, budget, ctx,
+ *   mandate（可选：{scope, strength, policy_version, subject, delegable, expires_at}）
  * @param {object} opts { secret } —— 给了 secret 才签名；不给则 unsigned:true（诚实标出）
  */
 function buildReceipt(input = {}, opts = {}) {
@@ -292,6 +294,19 @@ function buildReceipt(input = {}, opts = {}) {
     score: typeof input.score === 'number' ? input.score : null,
     evidence_digests: input.evidence || {},
   };
+
+  // P1-5：委托边界。**每次回执都必须带 mandate** ——
+  //   没被告知用途时补一份保守默认（eval:read / advisory / derived:true），
+  //   而不是留空：留空必然有人写 `mandate || {}`，那才是真·无限授权。
+  const mandate = input.mandate
+    ? mandateLib.normalize({ policy_version: r.policy_version, ...input.mandate })
+    : mandateLib.conservativeDefault(r.policy_version, input.subject, r.issued_at);
+  r.mandate = mandate;
+  r.mandate_digest = mandateLib.digestOf(mandate);
+  r.mandate_derived = mandate.derived === true;
+  const mv = mandateLib.validate(mandate);
+  r.mandate_valid = mv.valid;
+  if (!mv.valid) r.mandate_problems = mv.problems;
 
   // 条件必有
   if (input.dataset !== undefined) r.dataset_digest = input.dataset ? digestOf(input.dataset) : null;
@@ -321,10 +336,14 @@ function buildReceipt(input = {}, opts = {}) {
 }
 
 function signPayload(r) {
+  // mandate_digest 进签名：否则 mandate 可以在签名之外被整个换掉（换 scope 不破签）
+  // 旧回执（无 mandate_digest）时该键为 undefined，JSON.stringify 会整键丢弃，
+  // 签名串与 P0-1 逐字一致 —— 向后兼容，历史回执仍验得过。
   return JSON.stringify({
     verdict: r.verdict,
     evidence_digests: r.evidence_digests || {},
     policy_version: r.policy_version || null,
+    ...(r.mandate_digest ? { mandate_digest: r.mandate_digest } : {}),
   });
 }
 
@@ -342,6 +361,13 @@ function verifyReceipt(receipt, secret) {
   if (missing.length) return { ok: false, reason: 'missing_fields', missing };
   if (receipt.unsigned) return { ok: false, reason: 'unsigned' };
   if (!secret) return { ok: false, reason: 'no_secret_provided' };
+  // 有 mandate 就必须与摘要对得上（防「签名不动、mandate 换掉」）
+  if (receipt.mandate || receipt.mandate_digest) {
+    if (!receipt.mandate) return { ok: false, reason: 'missing_mandate' };
+    const expectDigest = mandateLib.digestOf(receipt.mandate);
+    if (expectDigest !== receipt.mandate_digest) return { ok: false, reason: 'mandate_tampered' };
+    if (!mandateLib.validate(receipt.mandate).valid) return { ok: false, reason: 'invalid_mandate' };
+  }
   const expect = signReceipt(secret, receipt);
   if (expect !== receipt.signature) return { ok: false, reason: 'bad_signature' };
   return { ok: true };
@@ -425,6 +451,12 @@ module.exports = {
   buildReceipt,
   verifyReceipt,
   signReceipt,
+  // 委托边界（P1-5）
+  mandate: mandateLib,
+  createMandate: mandateLib.create,
+  delegateMandate: mandateLib.delegate,
+  checkMandateReuse: mandateLib.checkReuse,
+  mandateDigest: mandateLib.digestOf,
   configFingerprint,
   digestOf,
   stableStringify,
@@ -432,6 +464,6 @@ module.exports = {
   gate,
   toExitCode,
   // 元
-  VERSION: '1.0.0',
+  VERSION: '1.1.0',
   SHAPE: 'pure-object / no-aep-private-require',
 };
