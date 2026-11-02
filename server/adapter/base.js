@@ -5,6 +5,19 @@
  */
 const fs = require('fs').promises;
 const path = require('path');
+const { collectorFor } = require('./collector-registry');
+
+/**
+ * 运行时采集档位（P1-1）—— 与 verdict.TIER 同口径，但这里表达的是**能力上限**，
+ * 不是某次评测的结果。eval.js 用它给 resolveTier 封顶：
+ * 适配器声明 protocol，就不可能在本次评测里被判成 hook 档。
+ */
+const COLLECTOR_TIER = Object.freeze({
+  HOOK: 'hook',        // 能拿到工具调用级事件（tool_use / tool_result）
+  PROTOCOL: 'protocol',// 只能看到 A2A 请求/响应往返
+  PTY: 'pty',          // 只能抓屏 / 读终端输出
+  NONE: 'none',        // 运行时完全不可见，只能读静态文件
+});
 
 class BaseAdapter {
   constructor(name) {
@@ -14,6 +27,41 @@ class BaseAdapter {
     //   目前全部适配器都走 A2A 协议往返 → 一律 false（PROTOCOL 档）。
     //   哪天某个适配器接上了真实钩子，在这里改，并补一条测试证明它确实能读到工具事件。
     this.capabilities = { hooks: false };
+
+    // ── 采集器元数据（P1-1，2026-11-02）──────────────────────────────
+    // 两个概念必须分开，混在一起会得出错误结论：
+    //   ① tier   = **运行时**能看见什么粒度 → 决定这条结论能不能判 FAIL（P0-6 的档位天花板）
+    //   ② sources = **静态**能从 Agent 文件读到什么 → 决定白盒能查什么（S 类安全项的输入）
+    // 一个适配器可以静态全知、运行时全盲（tier=none），也可以反之。
+    //
+    // 声明纪律：sources 里写 true **必须真能读到**，由 collector-tier.test.js 逐个用样本目录验证。
+    // 读不到就写 false 并在 reason 里说明为什么 —— 宁可承认看不见，不要谎报看得见。
+    // 能力声明从 collector-registry 取（P1-1）：集中一张表，审计能一眼看全。
+    // 适配器可在构造后覆盖 this.collector.sources —— 覆盖必须同步更新 registry，
+    // 否则 collector-tier.test.js 会报「表与实现不一致」。
+    const declared = collectorFor(name);
+    this.collector = {
+      tier: declared.tier || COLLECTOR_TIER.PROTOCOL,   // 运行时档位上限（不是本次评测结果）
+      tierReason: declared.tierReason || 'a2a_roundtrip',
+      sources: { ...declared.sources },                 // 静态证据源
+      sourcesReason: { ...declared.sourcesReason },     // { 字段名: '为什么是这个值' }
+      registered: declared.registered === true,
+    };
+  }
+
+  /**
+   * 采集器元数据快照（供回执落库 / 报告展示）
+   * @returns {{id:string,tier:string,tierReason:string,sources:object,declared:object}}
+   */
+  collectorMeta() {
+    return {
+      id: this.name,
+      tier: this.collector.tier,
+      tierReason: this.collector.tierReason,
+      registered: this.collector.registered,
+      sources: { ...this.collector.sources },
+      sourcesReason: { ...this.collector.sourcesReason },
+    };
   }
 
   /**
@@ -143,4 +191,4 @@ class BaseAdapter {
   }
 }
 
-module.exports = { BaseAdapter };
+module.exports = { BaseAdapter, COLLECTOR_TIER };

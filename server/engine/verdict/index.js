@@ -131,12 +131,41 @@ function attachProcessFlags(v, signals = []) {
  * @param {object} evidence { hooks, protocol, screen }
  * @returns {{tier: string, reason: string}}
  */
-function resolveTier(evidence = {}) {
+/**
+ * 从**本次运行时的证据**算档位（P0-6），并可被采集器的能力上限封顶（P1-1）。
+ *
+ * 两件事必须分开：
+ *   evidence  = 这一次真的看到了什么（hooks 有事件流？协议往返有结果？）
+ *   ceiling   = 这个采集器**最高能**看到什么（适配器声明的能力上限）
+ * 结果 = min(evidence 算出的档位, ceiling)。原因：适配器声明只能到 protocol，
+ * 就不该因为某次偶然拿到一个 hook 形状的数据就自称 hook 档 —— 那会让判定链
+ * 对一项它其实看不清的指标下 FAIL。
+ *
+ * @param {object} evidence { hooks, protocol, screen }
+ * @param {object} [opts] { ceiling: 'hook'|'protocol'|'pty'|'none' }
+ */
+function resolveTier(evidence = {}, opts = {}) {
   const e = evidence || {};
-  if (e.hooks === true) return { tier: TIER.HOOK, reason: 'hooks_available' };
-  if (e.protocol === true) return { tier: TIER.PROTOCOL, reason: 'protocol_roundtrip' };
-  if (e.screen === true) return { tier: TIER.PTY, reason: 'screen_only' };
-  return { tier: TIER.NONE, reason: 'no_signal' };
+  let got = { tier: TIER.NONE, reason: 'no_signal' };
+  if (e.hooks === true) got = { tier: TIER.HOOK, reason: 'hooks_available' };
+  else if (e.protocol === true) got = { tier: TIER.PROTOCOL, reason: 'protocol_roundtrip' };
+  else if (e.screen === true) got = { tier: TIER.PTY, reason: 'screen_only' };
+
+  // 能力上限封顶（P1-1）。未声明 ceiling 时行为与 P0-6 完全一致。
+  const ceiling = opts.ceiling;
+  if (!ceiling) return got;
+  const order = [TIER.NONE, TIER.PTY, TIER.PROTOCOL, TIER.HOOK];
+  const ci = order.indexOf(ceiling);
+  const gi = order.indexOf(got.tier);
+  if (ci < 0 || gi < 0) return got;
+  if (gi <= ci) return { ...got, ceiling };
+  return {
+    tier: ceiling,
+    reason: 'capped_by_collector',
+    observed: got.tier,
+    observedReason: got.reason,
+    ceiling,
+  };
 }
 
 /**

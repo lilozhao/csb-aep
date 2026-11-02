@@ -611,12 +611,17 @@ function buildReportReceipt(report, ctx) {
   //   hooks 只认适配器**实际提供**的能力（BaseAdapter 默认 false）；
   //   protocol 只认「至少一条结果被真正判出来」（连上但全超时 = 没证据）。
   const decidedCount = (report.results || []).filter((r) => r.status !== verdict.VERDICT.UNDECIDED).length;
+  // P1-1：采集器声明的能力上限参与封顶。适配器说「我最多看到 protocol」，
+  // 就不该因为一次偶然的 hook 形状数据自称 hook 档（那会让判定链对看不清的指标下 FAIL）。
   const tierInfo = verdict.resolveTier({
     hooks: adapter?.capabilities?.hooks === true,
     protocol: decidedCount > 0,
     screen: false,
-  });
+  }, { ceiling: adapter?.collector?.tier });
   const tier = tierInfo.tier;
+  const collectorMeta = typeof adapter?.collectorMeta === 'function'
+    ? adapter.collectorMeta()
+    : { id: collectorId, tier: adapter?.collector?.tier || null, sources: null };
 
   // 三态：把 results 映射成内核的 items，供 aggregate 出 coverage/insufficient
   //   P0-6 两步收敛：① 单条按档位封顶（低档位不得 FAIL）② 再聚合
@@ -649,6 +654,9 @@ function buildReportReceipt(report, ctx) {
     insufficient: agg.insufficient,
     telemetry_tier: tier,
     tier_reason: tierInfo.reason,
+    tier_observed: tierInfo.observed || null,      // 被封顶前的实际观测档位
+    tier_ceiling: tierInfo.ceiling || null,        // 采集器声明上限
+    collector_sources: collectorMeta.sources || null,
     counts: { total: agg.total, decided: agg.decided, passed: agg.passed, failed: agg.failed, undecided: agg.undecided },
     undecidedReasons: agg.undecidedReasons,
     processFlags: agg.processFlags,
@@ -657,11 +665,26 @@ function buildReportReceipt(report, ctx) {
       : null,
   };
 
+  // P1-1：采集器能力快照落在**报告层**，不进回执。
+  //   理由：回执是判定契约（7 必填 + HMAC 口径），改字段会动到所有消费方；
+  //   报告是证据层，加字段是纯加法。
+  //   为什么不能塞进 buildReceipt 的入参：它会**静默丢弃**未知字段（只取 id/version），
+  //   看起来加了、实际没落库 —— 正是「假绿」。这里显式写进 report，测试锁住它真在。
+  report.collector = {
+    id: collectorId,
+    version: collectorVersion,
+    tier: collectorMeta.tier || null,          // 能力上限（不是本次评测结果）
+    registered: collectorMeta.registered !== false,
+    sources: collectorMeta.sources || null,    // 静态证据源
+    sourcesReason: collectorMeta.sourcesReason || null,
+  };
+
   return verdict.buildReceipt({
     verdict: topVerdict,
     score: typeof report.score === 'number' ? report.score : null,
     issued_at: new Date().toISOString(),
     policy: { version: policyVersion },
+    // 回执只取 id/version（P0-1 契约不动）。能力快照见上方 report.collector。
     collector: { id: collectorId, version: collectorVersion },
     telemetry_tier: tier,
     config: {
