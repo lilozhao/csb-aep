@@ -9,6 +9,11 @@ const path = require('path');
 class BaseAdapter {
   constructor(name) {
     this.name = name;
+    // 采集能力声明（P0-6）：决定判定档位上限，**必须如实**。
+    //   hooks=true 的含义是「本适配器真的能拿到工具调用级事件」，不是「我知道哪种架构有钩子」。
+    //   目前全部适配器都走 A2A 协议往返 → 一律 false（PROTOCOL 档）。
+    //   哪天某个适配器接上了真实钩子，在这里改，并补一条测试证明它确实能读到工具事件。
+    this.capabilities = { hooks: false };
   }
 
   /**

@@ -573,7 +573,8 @@ class EvalAPI {
   }
 }
 
-module.exports = { EvalAPI };
+// buildReportReceipt 一并导出：给单测直接喂构造报告，不必真跑 37 条用例（省钱且可复现）
+module.exports = { EvalAPI, buildReportReceipt };
 
 
 /**
@@ -605,23 +606,56 @@ function buildReportReceipt(report, ctx) {
     collectorVersion = verdict.digestOf(fs.readFileSync(f, 'utf8')).slice(0, 23);
   } catch { collectorVersion = AEP_VERSION; }
 
-  // 采集档位：本地 agentPath 才可能读文件；远程只有协议档
-  const tier = req?.body?.agentPath ? verdict.TIER.PROTOCOL : verdict.TIER.PROTOCOL;
+  // 采集档位（P0-6）：从**证据**算，不自报、不写死。
+  //   旧写法两个分支都返回 PROTOCOL（占位符），等于档位从不参与判定。
+  //   hooks 只认适配器**实际提供**的能力（BaseAdapter 默认 false）；
+  //   protocol 只认「至少一条结果被真正判出来」（连上但全超时 = 没证据）。
+  const decidedCount = (report.results || []).filter((r) => r.status !== verdict.VERDICT.UNDECIDED).length;
+  const tierInfo = verdict.resolveTier({
+    hooks: adapter?.capabilities?.hooks === true,
+    protocol: decidedCount > 0,
+    screen: false,
+  });
+  const tier = tierInfo.tier;
 
   // 三态：把 results 映射成内核的 items，供 aggregate 出 coverage/insufficient
+  //   P0-6 两步收敛：① 单条按档位封顶（低档位不得 FAIL）② 再聚合
   const items = (report.results || []).map((r) => {
-    if (r.status === verdict.VERDICT.UNDECIDED) {
-      return verdict.undecided(r.reason || verdict.UNDECIDED_REASON.UNREACHABLE, r.detail);
-    }
-    return (r.pass === true || (typeof r.score === 'number' && r.score >= 50))
-      ? verdict.pass(r.score)
-      : verdict.fail(r.score);
+    const raw = (r.status === verdict.VERDICT.UNDECIDED)
+      ? verdict.undecided(r.reason || verdict.UNDECIDED_REASON.UNREACHABLE, r.detail)
+      : ((r.pass === true || (typeof r.score === 'number' && r.score >= 50))
+        ? verdict.pass(r.score)
+        : verdict.fail(r.score));
+    // 过程信号只挂标记（第三条），这里允许用例自带 processSignals
+    const withFlags = verdict.attachProcessFlags(raw, r.processSignals || []);
+    // 需要工具级可见性的用例在低档位下只能 UNDECIDED
+    const required = r.requires || null;
+    return required
+      ? verdict.applyTelemetryRequirement(withFlags, { tier, requires: required })
+      : verdict.applyTierCeiling(withFlags, tier);
   });
   const agg = verdict.aggregate(items, { minCoverage: 0.6 });
 
   const topVerdict = typeof report.score === 'number'
     ? (agg.insufficient ? verdict.VERDICT.UNDECIDED : agg.verdict)
     : verdict.VERDICT.UNDECIDED;
+
+  // 对外呈现（纯加法）：让人一眼看出「这是判出来的，还是看不见」。
+  //   不覆盖 report.score —— 老消费方不受影响。
+  report.judgement = {
+    verdict: topVerdict,
+    score: agg.score,
+    coverage: agg.coverage,
+    insufficient: agg.insufficient,
+    telemetry_tier: tier,
+    tier_reason: tierInfo.reason,
+    counts: { total: agg.total, decided: agg.decided, passed: agg.passed, failed: agg.failed, undecided: agg.undecided },
+    undecidedReasons: agg.undecidedReasons,
+    processFlags: agg.processFlags,
+    note: agg.insufficient
+      ? '覆盖率低于阈值 → 整份结论按 UNDECIDED 处理（没测到 ≠ 做错）'
+      : null,
+  };
 
   return verdict.buildReceipt({
     verdict: topVerdict,

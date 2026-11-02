@@ -120,6 +120,57 @@ function attachProcessFlags(v, signals = []) {
 }
 
 /**
+ * 采集档位判定（P0-6 第一步：档位必须从**证据**来，不许调用方自报）
+ *
+ * 输入只认布尔证据 —— 因为「我这边能看很细」这种自述无法机械核对：
+ *   hooks    : 适配器**实际提供**工具级钩子（有实现，不是有意图）
+ *   protocol : 目标在协议层给出了可判定的一轮往返（不是"连上了"）
+ *   screen   : 只有截屏/PTY 可读
+ * 全不成立 → NONE。**宁可判低，不许判高**（判高会把"看不见"变成"做错了"）。
+ *
+ * @param {object} evidence { hooks, protocol, screen }
+ * @returns {{tier: string, reason: string}}
+ */
+function resolveTier(evidence = {}) {
+  const e = evidence || {};
+  if (e.hooks === true) return { tier: TIER.HOOK, reason: 'hooks_available' };
+  if (e.protocol === true) return { tier: TIER.PROTOCOL, reason: 'protocol_roundtrip' };
+  if (e.screen === true) return { tier: TIER.PTY, reason: 'screen_only' };
+  return { tier: TIER.NONE, reason: 'no_signal' };
+}
+
+/**
+ * 按「这项指标需要什么档位才能看见」来收敛单条结论（P0-6 第二条）
+ *
+ * 典型：工具编排类指标需要工具级可见性（HOOK）。在 PROTOCOL 档下跑，
+ * 不是「它没做到」，是「我们看不见」→ UNDECIDED / insufficient_telemetry。
+ *
+ * @param {object} v 三态结果
+ * @param {object} opts { tier, requires }
+ *   requires: 'hook' | 'protocol' | 'screen' | null（null = 任何档位都能判）
+ */
+function applyTelemetryRequirement(v, opts = {}) {
+  const tier = opts.tier || TIER.NONE;
+  const requires = opts.requires || null;
+  if (!requires) return { ...v };
+  const order = [TIER.NONE, TIER.PTY, TIER.PROTOCOL, TIER.HOOK];
+  // requires 的数值越高越难满足：HOOK(3) > PROTOCOL(2) > PTY(1) > NONE(0)
+  const need = order.indexOf(requires);
+  const have = order.indexOf(tier);
+  if (need < 0 || have < 0) return { ...v };
+  if (have >= need) return { ...v };
+  // 已经 PASS 的不降（看得见的部分做对了就是做对了）；要降的是 FAIL 和缺数据
+  if (v.verdict === VERDICT.PASS) return { ...v };
+  return {
+    verdict: VERDICT.UNDECIDED,
+    score: null,
+    reason: UNDECIDED_REASON.INSUFFICIENT_TELEMETRY,
+    note: `需要 ${requires} 档才能判，实际 ${tier} 档 → insufficient telemetry`,
+    process_flag: (v.process_flag || []).concat(['tier_insufficient']),
+  };
+}
+
+/**
  * 聚合多项三态 → 综合分 + 覆盖率（P0-2 的核心）
  *
  * **UNDECIDED 不进分母**（这是「没测到 ≠ 做错」的实现），
@@ -338,6 +389,8 @@ module.exports = {
   undecided,
   applyTierCeiling,
   attachProcessFlags,
+  resolveTier,
+  applyTelemetryRequirement,
   aggregate,
   // 回执
   buildReceipt,
