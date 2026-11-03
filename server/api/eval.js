@@ -8,6 +8,8 @@ const { ClaimingEngine } = require('../engine/claiming');
 const { GRISKEngine } = require('../engine/grisk');
 const { ClaimingStore } = require('../store/claiming-store');
 const { ExecRiskEngine, PREFIX_WARN_THRESHOLD, PREFIX_SUSPEND_THRESHOLD } = require('../engine/exec-risk');
+// [2026-11-03 P2-2] 路径②互评（五路径补齐第一步：唯一不需要答案键的路径）
+const { MutualEngine } = require('../engine/mutual');
 const { CSBChecker } = require('../standard/csb');
 const { ResultsStore } = require('../store/results');
 // [2026-11-02 P0-1] 判定内核（三态 + 回执 + 门）。可抽出的形状，将来抽走只改这一行 require。
@@ -64,6 +66,8 @@ class EvalAPI {
     this.whitebox = new WhiteBoxEngine();
     this.csbChecker = new CSBChecker();
     this.recommender = new Recommender();
+    // 依赖注入（仅为可测）：config.mutualTransport 可替掉真实 A2A 传输
+    this.mutualTransport = config.mutualTransport || null;
     this.store = new ResultsStore(config.resultsDir);
   }
 
@@ -325,6 +329,16 @@ class EvalAPI {
     try {
       const { agentUrl, standard, mode, adapter: adapterName } = req.body;
 
+      // ═══════════════════════════════════════════════════════════════
+      // 路径② 互评（P2-2）：独立分支，前置返回。
+      //   . 不需要 agentUrl（目标由 peers 共同评），但至少要有 1 个 peers
+      //   . 不走黑盒/白盒：互评只看「评审者之间是否自洽」，不是再测一遍目标
+      //   . 结论三态沿用同一内核（UNDECIDED 的 score 必须是 null，不是 0）
+      // ═══════════════════════════════════════════════════════════════
+      if (req.body.path === 'mutual') {
+        return await this.createMutualEval(req, res);
+      }
+
       // 请求间隔可覆盖（黑盒批量对话防触发安全层防刷）
       if (req.body.delay) this.blackbox.delay = req.body.delay;
       if (req.body.timeout) this.blackbox.timeout = req.body.timeout;
@@ -523,6 +537,84 @@ class EvalAPI {
       console.error('[AEP] ❌ 评估失败:', e.message);
       res.status(500).json({ error: e.message });
     }
+  }
+
+  /**
+   * POST /api/eval  · path=mutual（P2-2 五路径②）
+   *
+   * 与黑盒/白盒的关系：**不是再测一遍目标**，而是问「这群评审者的意见能不能用」。
+   * 三个信号：participation（应答率）· reproducibility（同题两措辞自洽）·
+   * discrimination（空洞对照样本要被打低分）。
+   *
+   * body:
+   *   path:      'mutual'
+   *   peers:     ['host:port', ...] 或 [{ name, url }]
+   *   tolerance: 2.0    同上评委两次打分容差（0-10）
+   *   canaryMax: 6.0    给空洞样本的容忍上限
+   *   minPeers:  1      至少几家可用
+   */
+  async createMutualEval(req, res) {
+    const { peers, tolerance, canaryMax, minPeers, delay, timeout } = req.body;
+
+    if (!Array.isArray(peers) || peers.length === 0) {
+      // 不报 400：这是可预期的「没给条件」，按三态返回 UNDECIDED(not_applicable)，
+      // 与「连不上」区分开（一个永远 400 的接口等于永远无法区分两种不知道）。
+      const r = await new MutualEngine({ delay: 0, transport: async () => ({}) }).evaluate({ peers: [] });
+      const saved = await this.store.add({ ...r, agentUrl: null, standard: 'csb-aep/mutual', mode: 'mutual' });
+      return res.json({ success: true, id: saved.id, path: 'mutual', verdict: r.verdict, reason: r.reason, score: r.score });
+    }
+
+    console.log(`[AEP] 🧑‍🤝‍🧑 互评路径: ${peers.length} 位评审者`);
+
+    const engine = new MutualEngine({
+      tolerance, canaryMax, minPeers, delay, timeout,
+      transport: this.mutualTransport || undefined,
+      senderName: (this.config.eval && this.config.eval.senderName) || 'CSB-AEP-MUTUAL',
+      senderUrl: (this.config.eval && this.config.eval.senderUrl) || 'http://aep.local',
+    });
+
+    const result = await engine.evaluate({ peers });
+
+    const report = {
+      ...result,
+      agentUrl: req.body.agentUrl || null,
+      standard: 'csb-aep/mutual',
+      mode: 'mutual',
+      adapter: 'mutual',
+    };
+
+    // 回执：与黑盒同一套 7 必填 + 委托边界，不另起一套。
+    // 先把 peers 映射成内核认识的 items 形状，挂到 report.results 上再算回执，
+    // 这样 report.judgement（人看的那层）也会落在**最终存库的那份**上。
+    report.results = result.peers.map((p) => ({
+      id: p.peer.name,
+      name: p.peer.name,
+      weight: 1,
+      score: p.targetScore,
+      pass: p.usable ? true : null,
+      status: p.usable ? undefined : 'UNDECIDED',
+      reason: p.usable ? undefined : (p.targetReason || p.signals.reproducibility.reason || 'insufficient_telemetry'),
+      detail: p.peer.url,
+    }));
+
+    report.receipt = buildReportReceipt(report, {
+      mode: 'mutual', adapter: { name: 'mutual' }, evalResult: result, whiteboxResult: null, req,
+    });
+
+    const saved = await this.store.add(report);
+    console.log(`[AEP] ✅ 互评完成: ${result.verdict} · score=${result.score} · 可信 ${result.participation.peers_usable}/${result.participation.peers_invited}`);
+
+    res.json({
+      success: true,
+      id: saved.id,
+      path: 'mutual',
+      verdict: result.verdict,
+      reason: result.reason,
+      score: result.score,
+      coverage: result.coverage,
+      participation: result.participation,
+      rejected: result.rejected,
+    });
   }
 
   /**

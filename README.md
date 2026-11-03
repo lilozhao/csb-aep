@@ -86,7 +86,8 @@ csb-aep/
 │   ├── api/eval.js          ← 评测 API 路由
 │   ├── engine/
 │   │   ├── blackbox.js      ← 黑盒测试引擎（37 项 / 13 类别）
-│   │   ├── whitebox.js      ← 白盒测试引擎（6 维度）
+│   │   ├── whitebox.js      ← 路径① 白盒测试引擎（6 维度）
+│   │   ├── mutual.js        ← 路径② 互评网络（应答率 / 可复现 / 判别力，P2-2）
 │   │   ├── recommender.js   ← 优化建议生成器
 │   │   ├── eval-redteam.js  ← 🛡️ CSB-RedTeam 红队引擎 v1.0（v2.1，28 个 S 类用例）
 │   │   ├── redteam-cases.js ← 红队测试用例集（S1-S4）
@@ -239,6 +240,8 @@ bash self-eval.sh [选项]
   -u, --agent-url URL    目标 Agent 地址 (默认: http://localhost:3100)
   --agent-path PATH      Agent 文件路径 (白盒测试时需要)
   -m, --mode MODE        blackbox|whitebox|both|v22 (默认: blackbox)
+  --path mutual         路径② 互评（配 --peers 使用，不依赖目标在线）
+  --peers a:3100,b:3100 互评评审者列表
   --agent-name NAME      Agent 名字（v22 模式第五问认领目录用）
   -d, --delay MS         黑盒请求间隔毫秒（默认 800；被安全层限流时调大如 3000）
   -k, --keep-server      评估后保持 AEP 服务运行
