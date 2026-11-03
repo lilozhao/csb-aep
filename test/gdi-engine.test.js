@@ -171,7 +171,7 @@ test('A15 呈现：基线期不输出趋势箭头（防误导）', () => {
 
 // ========== C. M2 新增 ==========
 
-const { verifyRate, verifyChain, canonicalContent } = require('../server/engine/gdi/verify.js');
+const { verifyRate, verifyChain, verifyChainSegments, canonicalContent } = require('../server/engine/gdi/verify.js');
 const { normalize, verifiableScore, calibrate } = require('../server/engine/gdi/self-report.js');
 const { verifyLabel, compositeLabel, signSlice, verifySlice, buildSlices } = require('../server/engine/gdi/present.js');
 
@@ -245,6 +245,96 @@ test('C3 verify：无审计源 → rate null + no_audit_source（诚实 N/A 不�
   const r = verifyRate(path.join(dir, 'audit'), '甲');
   assert.strictEqual(r.rate, null);
   assert.strictEqual(r.reason, 'no_audit_source');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('C5 分段校验：并发分叉的旧账 → 断点前照常计分，不是整份判死', () => {
+  // 复刻 2026-11-02 之前的真实故障形状：
+  //   写 A 段（seq 1..3）→ 另一个写入者从旧快照又写 B 段（seq 也从 1 算起，接同一个 GENESIS）
+  //   落盘后：A 段链完整，B 段的首条 prev_hash 接不上 A 段末条 → 分叉。
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gdi-verify-'));
+  const head = buildChain([
+    mkAuditEntry({ result: 'success' }),
+    mkAuditEntry({ result: 'success' }),
+    mkAuditEntry({ result: 'denied' }),
+  ]);
+  // B 段：另一个写入者从 GENESIS 重新开始（模拟内存计数器重叠）
+  const tail = buildChain([
+    mkAuditEntry({ result: 'denied' }),
+    mkAuditEntry({ result: 'denied' }),
+  ]);
+  const mixed = [...head, ...tail];
+  writeAuditSource(dir, mixed);
+
+  const seg = verifyChainSegments(mixed);
+  assert.strictEqual(seg.fullyValid, false, '有断点就不得说整份完整');
+  assert.strictEqual(seg.validEntries, 3, '断点前 3 条应可验');
+  assert.strictEqual(seg.firstBreak.index, 3);
+  assert.strictEqual(seg.firstBreak.reason, 'hash_chain_broken');
+
+  // 整份旧逻辑：0 条可用
+  assert.strictEqual(verifyChain(mixed).valid, false);
+
+  // 新逻辑：断点前的 3 条照常计分（2 success / 3）
+  const r = verifyRate(path.join(dir, 'audit'), '甲');
+  assert.strictEqual(r.fullyValid, false, '必须同时暴露「不完整」');
+  assert.strictEqual(r.verifiableEntries, 3);
+  assert.strictEqual(r.total, 3, '分母只含可验记录');
+  assert.strictEqual(r.passed, 2);
+  assert.ok(Math.abs(r.rate - 2 / 3) < 1e-9);
+  assert.ok(r.reason.includes('partial_chain'), `reason 应注明分段：${r.reason}`);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('C6 分段不得成暗门：段内篡改仍必须检出', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gdi-verify-'));
+  const entries = buildChain([
+    mkAuditEntry({ result: 'success' }),
+    mkAuditEntry({ result: 'denied' }),
+  ]);
+  // 只改内容不改 hash（段内篡改）
+  entries[1] = { ...entries[1], result: 'success' };
+  writeAuditSource(dir, entries);
+
+  const seg = verifyChainSegments(entries);
+  assert.strictEqual(seg.fullyValid, false);
+  assert.strictEqual(seg.firstBreak.reason, 'entry_tampered');
+  assert.strictEqual(seg.validEntries, 1, '篡改点之前仍可验');
+
+  const r = verifyRate(path.join(dir, 'audit'), '甲');
+  assert.strictEqual(r.total, 1, '篡改记录不得进分母');
+  assert.strictEqual(r.passed, 1);
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('C7 归档子目录不得被当成计分证据', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gdi-verify-'));
+  const auditDir = path.join(dir, 'audit');
+  fs.mkdirSync(path.join(auditDir, 'archive'), { recursive: true });
+
+  // 活账：1 条 success
+  const live = buildChain([mkAuditEntry({ result: 'success' })]);
+  fs.writeFileSync(path.join(auditDir, 'live.jsonl'), live.map(e => JSON.stringify(e)).join('\n') + '\n');
+
+  // 归档件：50 条全 success（如果被算进来，分母会明显变大）
+  const old = buildChain(Array.from({ length: 50 }, () => mkAuditEntry({ result: 'success' })));
+  fs.writeFileSync(path.join(auditDir, 'archive', 'old.jsonl'), old.map(e => JSON.stringify(e)).join('\n') + '\n');
+
+  const r = verifyRate(auditDir, '甲');
+  assert.strictEqual(r.total, 1, `归档件不该入分母，实际 total=${r.total}`);
+  assert.strictEqual(r.totalEntries, 1, 'totalEntries 也只算活账');
+  fs.rmSync(dir, { recursive: true, force: true });
+});
+
+test('C8 全链有效时 fullyValid 与 chainValid 同为 true（不混淆两种 true）', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'gdi-verify-'));
+  const entries = buildChain([mkAuditEntry({ result: 'success' }), mkAuditEntry({ result: 'success' })]);
+  writeAuditSource(dir, entries);
+  const r = verifyRate(path.join(dir, 'audit'), '甲');
+  assert.strictEqual(r.chainValid, true);
+  assert.strictEqual(r.fullyValid, true);
+  assert.strictEqual(r.verifiableEntries, 2);
+  assert.strictEqual(r.firstBreak, undefined, '无断点时不应有 firstBreak');
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
