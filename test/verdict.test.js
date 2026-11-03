@@ -180,8 +180,14 @@ t('JUDGE: 纯对象进出（JSON 往返后行为一致）', () => {
   const a2 = V.aggregate([roundtrip(V.pass(1)), roundtrip(V.undecided('unreachable'))]);
   assert.deepStrictEqual(a1, a2, '聚合结果不应依赖对象身份');
 
-  const r1 = V.buildReceipt({ ...FULL, receipt_id: 'fixed' }, { secret: 's' });
-  const r2 = V.buildReceipt(roundtrip({ ...FULL, receipt_id: 'fixed' }), { secret: 's' });
+  // [2026-11-04 修 flaky] 本用例断言「同一输入 → 同一回执」，但未固定 issued_at：
+  //   buildReceipt 内部用 new Date()，两次调用跨毫秒边界时 mandate_digest 随之变，
+  //   签名也就变 —— 实测 200 次里约 3% 失败（约 6 次），全量跑间歇挂 verdict.test.js。
+  //   问题在**测试少钉了非确定输入**，不在被测对象：回执本就该含签发时刻。
+  //   正确做法是钉住时间，而不是让签名忽略时间。
+  const pin = { issued_at: '2026-01-01T00:00:00.000Z' };
+  const r1 = V.buildReceipt({ ...FULL, ...pin, receipt_id: 'fixed' }, { secret: 's' });
+  const r2 = V.buildReceipt(roundtrip({ ...FULL, ...pin, receipt_id: 'fixed' }), { secret: 's' });
   assert.deepStrictEqual(r1, r2, '同一输入往返后应产出同一回执');
 });
 

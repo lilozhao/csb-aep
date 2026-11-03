@@ -357,12 +357,32 @@ async function runReal(checks, { paths, flags, args }) {
     return 2;
   }
   const defaults = readDefaults();
+  // CSB_AEP_RESULTS_DIR：测试与多实例隔离用。不给就用 config/defaults.json。
+  // （为什么要有：测「干净 clone 能跑」必须能把落盘指到一个不存在的目录，
+  //   而改仓库内 config/defaults.json 会污染其它测试 —— 那是拿改配置当测试手段。）
+  const resultsDir = path.resolve(AEP, process.env.CSB_AEP_RESULTS_DIR || defaults.resultsDir || './data/eval-results');
   const api = new EvalAPI({
     timeout: numOr(flags.timeout, defaults.timeout),
     delay: numOr(flags.delay, defaults.delay),
-    resultsDir: path.resolve(AEP, defaults.resultsDir || './data/eval-results'),
+    resultsDir,
     eval: defaults.eval || {},
   });
+
+  // [2026-11-03 · 验算实测反馈] CLI 路径必须先 init() 再 eval。
+  // 事故：新建实例 / 干净 clone 跑 `csb eval` → ENOENT open
+  //   data/eval-results/eval-results.json
+  // 原因：`data/eval-results/` 在 .gitignore 里（运行产物，不入库），
+  //   而 store.init() 只被 server/index.js 调过，CLI 从来没调 → 目录不存在，
+  //   第一次落盘就炸。报错长得像「你环境坏了」，实际是一条 mkdir -p 的事。
+  // 判据：删空 data/eval-results/ 后跑 `csb eval --path archaeology` 必须照样出结果。
+  try {
+    await api.init();
+  } catch (e) {
+    console.error(`csb: 初始化结果目录失败（${resultsDir}）：${e.message}`);
+    console.error('  → 检查该路径是否可写；可用 CSB_AEP_RESULTS_DIR 或 config/defaults.json 换目录');
+    process.exitCode = 2;
+    return 2;
+  }
 
   const out = [];
   // --json 时把引擎的运行日志改道到 stderr：

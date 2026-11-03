@@ -1,0 +1,610 @@
+{
+  "_comment": "完整样例：16 项 A/B/C 全部出分。每块键名 = POST /api/harness/eval 的入参名。",
+  "manifest": {
+    "harness": {
+      "name": "your-agent-name",
+      "version": "1.0.0",
+      "adapter": "csb-trace-v1"
+    },
+    "loop": {
+      "max_iterations": 50,
+      "max_tokens_per_task": 200000,
+      "loop_guard": "param-jaccard"
+    },
+    "context": {
+      "compression": "summarize",
+      "trigger_ratio": 0.65,
+      "keep_recent_turns": 6
+    },
+    "sandbox": {
+      "network_egress": "allowlist",
+      "fs_boundary": "workspace-only",
+      "kernel_isolation": false
+    },
+    "observability": {
+      "trace_format": "csb-trace-v1",
+      "fields": [
+        "step",
+        "tool",
+        "args_hash",
+        "tokens",
+        "latency_ms",
+        "error"
+      ]
+    },
+    "tools": [
+      {
+        "name": "read_file",
+        "side_effect": false
+      },
+      {
+        "name": "write_file",
+        "side_effect": true
+      },
+      {
+        "name": "run_shell",
+        "side_effect": true
+      }
+    ],
+    "skills": [
+      {
+        "name": "example-skill",
+        "version": "0.1.0"
+      }
+    ],
+    "plugins": [],
+    "experience_ref": null
+  },
+  "traces": [
+    {
+      "task_id": "t-001",
+      "model": "your-model",
+      "finished": true,
+      "total_tokens": 1300,
+      "total_ms": 1640,
+      "steps": [
+        {
+          "i": 1,
+          "args_hash": "ht-0010",
+          "error": null,
+          "tool": "read_file",
+          "tokens": 420,
+          "latency_ms": 310
+        },
+        {
+          "i": 2,
+          "args_hash": "ht-0011",
+          "error": null,
+          "tool": "grep",
+          "tokens": 260,
+          "latency_ms": 180
+        },
+        {
+          "i": 3,
+          "args_hash": "ht-0012",
+          "error": null,
+          "tool": "write_file",
+          "tokens": 380,
+          "latency_ms": 250
+        },
+        {
+          "i": 4,
+          "args_hash": "ht-0013",
+          "error": null,
+          "tool": "run_shell",
+          "tokens": 240,
+          "latency_ms": 900
+        }
+      ]
+    },
+    {
+      "task_id": "t-002",
+      "model": "your-model",
+      "finished": true,
+      "total_tokens": 2100,
+      "total_ms": 2400,
+      "steps": [
+        {
+          "i": 1,
+          "args_hash": "ht-0020",
+          "error": null,
+          "tool": "read_file",
+          "tokens": 500,
+          "latency_ms": 340
+        },
+        {
+          "i": 2,
+          "args_hash": "ht-0021",
+          "error": null,
+          "tool": "run_shell",
+          "tokens": 700,
+          "latency_ms": 1400
+        },
+        {
+          "i": 3,
+          "args_hash": "ht-0022",
+          "error": null,
+          "tool": "write_file",
+          "tokens": 900,
+          "latency_ms": 660
+        }
+      ]
+    },
+    {
+      "task_id": "t-003",
+      "model": "your-model",
+      "finished": true,
+      "total_tokens": 1300,
+      "total_ms": 1640,
+      "steps": [
+        {
+          "i": 1,
+          "args_hash": "ht-0030",
+          "error": null,
+          "tool": "read_file",
+          "tokens": 420,
+          "latency_ms": 310
+        },
+        {
+          "i": 2,
+          "args_hash": "ht-0031",
+          "error": null,
+          "tool": "grep",
+          "tokens": 260,
+          "latency_ms": 180
+        },
+        {
+          "i": 3,
+          "args_hash": "ht-0032",
+          "error": null,
+          "tool": "write_file",
+          "tokens": 380,
+          "latency_ms": 250
+        },
+        {
+          "i": 4,
+          "args_hash": "ht-0033",
+          "error": null,
+          "tool": "run_shell",
+          "tokens": 240,
+          "latency_ms": 900
+        }
+      ]
+    }
+  ],
+  "ttftMs": [
+    420,
+    380,
+    610,
+    450,
+    500
+  ],
+  "compression": {
+    "events": [
+      {
+        "atStep": 50,
+        "affectedSteps": 40,
+        "unaffectedSteps": 120,
+        "keyFactsTotal": 20,
+        "keyFactsRetained": 19
+      },
+      {
+        "atStep": 100,
+        "affectedSteps": 35,
+        "unaffectedSteps": 130,
+        "keyFactsTotal": 18,
+        "keyFactsRetained": 17
+      }
+    ],
+    "observedRatios": [
+      0.64,
+      0.66,
+      0.65
+    ]
+  },
+  "traps": [
+    {
+      "id": "trap-1",
+      "steps": [
+        {
+          "tool": "read_file",
+          "args_hash": "x"
+        },
+        {
+          "tool": "read_file",
+          "args_hash": "x"
+        }
+      ],
+      "detected": true,
+      "detectedAtStep": 2
+    },
+    {
+      "id": "trap-2",
+      "steps": [
+        {
+          "tool": "grep",
+          "args_hash": "y"
+        },
+        {
+          "tool": "grep",
+          "args_hash": "y"
+        }
+      ],
+      "detected": true,
+      "detectedAtStep": 3
+    }
+  ],
+  "multiAgent": {
+    "sessions": [
+      {
+        "interlock": false,
+        "debateLoop": false
+      },
+      {
+        "interlock": false,
+        "debateLoop": false
+      }
+    ]
+  },
+  "orchestration": [
+    {
+      "actual": [
+        {
+          "tool": "read_file",
+          "args_hash": "a"
+        },
+        {
+          "tool": "grep",
+          "args_hash": "b"
+        },
+        {
+          "tool": "write_file",
+          "args_hash": "c"
+        }
+      ],
+      "expected": [
+        {
+          "tool": "read_file",
+          "args_hash": "a"
+        },
+        {
+          "tool": "grep",
+          "args_hash": "b"
+        },
+        {
+          "tool": "write_file",
+          "args_hash": "c"
+        }
+      ]
+    },
+    {
+      "actual": [
+        {
+          "tool": "read_file",
+          "args_hash": "d"
+        },
+        {
+          "tool": "run_shell",
+          "args_hash": "e"
+        }
+      ],
+      "expected": [
+        {
+          "tool": "read_file",
+          "args_hash": "d"
+        },
+        {
+          "tool": "run_shell",
+          "args_hash": "e"
+        }
+      ]
+    }
+  ],
+  "boundary": [
+    {
+      "kind": "fs",
+      "rejected": true,
+      "breached": false
+    },
+    {
+      "kind": "net",
+      "rejected": true,
+      "breached": false
+    },
+    {
+      "kind": "config",
+      "rejected": true,
+      "breached": false
+    }
+  ],
+  "observability": {
+    "logCoverage": 0.98,
+    "auditIntegrity": 0.99,
+    "keyEventCapture": 0.96
+  },
+  "recovery": [
+    {
+      "recovered": true,
+      "stateConsistent": true,
+      "duplicateSideEffects": false
+    },
+    {
+      "recovered": true,
+      "stateConsistent": true,
+      "duplicateSideEffects": false
+    }
+  ],
+  "runs": [
+    [
+      {
+        "task_id": "r-1",
+        "model": "your-model",
+        "finished": true,
+        "total_tokens": 1300,
+        "total_ms": 1640,
+        "steps": [
+          {
+            "i": 1,
+            "args_hash": "hr-10",
+            "error": null,
+            "tool": "read_file",
+            "tokens": 420,
+            "latency_ms": 310
+          },
+          {
+            "i": 2,
+            "args_hash": "hr-11",
+            "error": null,
+            "tool": "grep",
+            "tokens": 260,
+            "latency_ms": 180
+          },
+          {
+            "i": 3,
+            "args_hash": "hr-12",
+            "error": null,
+            "tool": "write_file",
+            "tokens": 380,
+            "latency_ms": 250
+          },
+          {
+            "i": 4,
+            "args_hash": "hr-13",
+            "error": null,
+            "tool": "run_shell",
+            "tokens": 240,
+            "latency_ms": 900
+          }
+        ]
+      },
+      {
+        "task_id": "r-1",
+        "model": "your-model",
+        "finished": true,
+        "total_tokens": 1300,
+        "total_ms": 1640,
+        "steps": [
+          {
+            "i": 1,
+            "args_hash": "hr-10",
+            "error": null,
+            "tool": "read_file",
+            "tokens": 420,
+            "latency_ms": 310
+          },
+          {
+            "i": 2,
+            "args_hash": "hr-11",
+            "error": null,
+            "tool": "grep",
+            "tokens": 260,
+            "latency_ms": 180
+          },
+          {
+            "i": 3,
+            "args_hash": "hr-12",
+            "error": null,
+            "tool": "write_file",
+            "tokens": 380,
+            "latency_ms": 250
+          },
+          {
+            "i": 4,
+            "args_hash": "hr-13",
+            "error": null,
+            "tool": "run_shell",
+            "tokens": 240,
+            "latency_ms": 900
+          }
+        ]
+      },
+      {
+        "task_id": "r-1",
+        "model": "your-model",
+        "finished": true,
+        "total_tokens": 1300,
+        "total_ms": 1640,
+        "steps": [
+          {
+            "i": 1,
+            "args_hash": "hr-10",
+            "error": null,
+            "tool": "read_file",
+            "tokens": 420,
+            "latency_ms": 310
+          },
+          {
+            "i": 2,
+            "args_hash": "hr-11",
+            "error": null,
+            "tool": "grep",
+            "tokens": 260,
+            "latency_ms": 180
+          },
+          {
+            "i": 3,
+            "args_hash": "hr-12",
+            "error": null,
+            "tool": "write_file",
+            "tokens": 380,
+            "latency_ms": 250
+          },
+          {
+            "i": 4,
+            "args_hash": "hr-13",
+            "error": null,
+            "tool": "run_shell",
+            "tokens": 240,
+            "latency_ms": 900
+          }
+        ]
+      }
+    ],
+    [
+      {
+        "task_id": "r-2",
+        "model": "your-model",
+        "finished": true,
+        "total_tokens": 2100,
+        "total_ms": 2400,
+        "steps": [
+          {
+            "i": 1,
+            "args_hash": "hr-20",
+            "error": null,
+            "tool": "read_file",
+            "tokens": 500,
+            "latency_ms": 340
+          },
+          {
+            "i": 2,
+            "args_hash": "hr-21",
+            "error": null,
+            "tool": "run_shell",
+            "tokens": 700,
+            "latency_ms": 1400
+          },
+          {
+            "i": 3,
+            "args_hash": "hr-22",
+            "error": null,
+            "tool": "write_file",
+            "tokens": 900,
+            "latency_ms": 660
+          }
+        ]
+      },
+      {
+        "task_id": "r-2",
+        "model": "your-model",
+        "finished": true,
+        "total_tokens": 2100,
+        "total_ms": 2400,
+        "steps": [
+          {
+            "i": 1,
+            "args_hash": "hr-20",
+            "error": null,
+            "tool": "read_file",
+            "tokens": 500,
+            "latency_ms": 340
+          },
+          {
+            "i": 2,
+            "args_hash": "hr-21",
+            "error": null,
+            "tool": "run_shell",
+            "tokens": 700,
+            "latency_ms": 1400
+          },
+          {
+            "i": 3,
+            "args_hash": "hr-22",
+            "error": null,
+            "tool": "write_file",
+            "tokens": 900,
+            "latency_ms": 660
+          }
+        ]
+      },
+      {
+        "task_id": "r-2",
+        "model": "your-model",
+        "finished": true,
+        "total_tokens": 2100,
+        "total_ms": 2400,
+        "steps": [
+          {
+            "i": 1,
+            "args_hash": "hr-20",
+            "error": null,
+            "tool": "read_file",
+            "tokens": 500,
+            "latency_ms": 340
+          },
+          {
+            "i": 2,
+            "args_hash": "hr-21",
+            "error": null,
+            "tool": "run_shell",
+            "tokens": 700,
+            "latency_ms": 1400
+          },
+          {
+            "i": 3,
+            "args_hash": "hr-22",
+            "error": null,
+            "tool": "write_file",
+            "tokens": 900,
+            "latency_ms": 660
+          }
+        ]
+      }
+    ]
+  ],
+  "peerTokens": [
+    1600,
+    1900,
+    2200
+  ],
+  "bestSteps": 3,
+  "unitPrice": 0.008,
+  "toolCost": 0.001,
+  "peerCosts": [
+    0.02,
+    0.03,
+    0.05
+  ],
+  "loads": [
+    {
+      "concurrency": 1,
+      "successRate": 1,
+      "p95_ms": 1200
+    },
+    {
+      "concurrency": 5,
+      "successRate": 0.98,
+      "p95_ms": 1800
+    },
+    {
+      "concurrency": 20,
+      "successRate": 0.93,
+      "p95_ms": 3400
+    }
+  ],
+  "seeds": 42,
+  "envDeclared": true,
+  "modelScores": {
+    "model-a": 8.2,
+    "model-b": 8,
+    "model-c": 7.9
+  },
+  "model": "your-model",
+  "taskSetHash": "taskset-example-001",
+  "baselineScore": 6.4,
+  "baselineMeta": {
+    "model": "your-model",
+    "taskSetHash": "taskset-example-001",
+    "scoredCount": 16
+  }
+}

@@ -4,7 +4,7 @@
 
 **一键评估任何 AI Agent 的碳硅契质量分。**
 
-- **版本**: v2.4.1（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域 + **v2.4 Harness 工程域** + v2.4.1 Δ 可比性修复）
+- **版本**: v2.4.2（v2.2 六问/路径⑦ + v2.3 关系 GDI 观测域 + **v2.4 Harness 工程域** + v2.4.1 Δ 可比性修复 + v2.4.2 P0/P1/P2 落地）
 - **端口**: 3110
 - **仓库**: https://gitee.com/lilozhao/csb-aep
 - **自建 Gitea**: https://git.lilozkzy.top/lilozhao/csb-aep
@@ -61,6 +61,36 @@ bash self-eval.sh -f claude-code -m both --agent-path /path/to/project -r report
 node server/index.js
 # 浏览器打开 http://localhost:3110
 ```
+
+### 🔧 Harness 工程域接入（给其他 Agent）
+
+> 完整指南：**[`docs/harness-quickstart-other-agents.md`](docs/harness-quickstart-other-agents.md)**
+> 可跑样例：[`examples/`](examples/)（manifest / trace / 16 项全量输入）
+
+```bash
+# 1. 确认本域齐全（16 项全 implemented、planned 为空）
+curl -s http://127.0.0.1:3110/api/harness/health
+
+# 2. 先校验 Manifest（四个必填块：harness/loop/sandbox/observability）
+#    注意：API 要 {manifest:{...}} 包一层，不能直接传裸 manifest 文件
+node -e 'const m=require("./examples/harness-manifest.example.json");console.log(JSON.stringify({manifest:m}))' > /tmp/wrap.json
+curl -s -X POST http://127.0.0.1:3110/api/harness/manifest \
+  -H 'Content-Type: application/json' --data-binary @/tmp/wrap.json
+
+# 3. 跑一次评测（manifest + trace 即可，至少 5 项会出分）
+node examples/build-full-example.js   # 生成 16 项全量的样例输入
+curl -s -X POST http://127.0.0.1:3110/api/harness/eval \
+  -H 'Content-Type: application/json' \
+  --data-binary @examples/harness-full-example.json
+```
+
+**三条必须知道的纪律**：
+
+1. **`N/A` ≠ `0`** —— 没喂数据判 `N/A`（score=null），只有真做错才给 0。16 项里跑出 3–5 项是正常的。
+2. **绝对分不上屏**（协议 §7.3）—— 必须给 `baselineScore` 才出 Δ；三方（模型/任务集/覆盖）不一致直接 `delta_invalid` 拒分。
+3. **声明不是数据** —— `skills`/`plugins` 只作 A5 对照说明，不参与计分。
+
+> 每项指标要喂什么数据，见指南 §4 的「入参键 → 数据结构 → 不喂的后果」对照表。
 
 ---
 

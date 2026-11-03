@@ -34,16 +34,49 @@ const PLANNED = [];
 
 /**
  * 从 traces 推导循环陷阱判定（当未直接传 traps 时）：
- * 用 loopTrap 探针的默认判据扫描每条 trace，判定是否出现同工具同参数重复。
+ * 用 loopTrap 探针的判据扫描每条 trace，判定是否出现同工具同参数重复。
+ *
+ * [2026-11-04 修复两个 bug]
+ *  B1 `[]` 是 truthy：调用方 `input.traps || deriveTraps(...)` 在 traps=[] 时
+ *     永远走不到这里（HTTP 路由默认给 []）→ 直调出 0 分、HTTP 出 N/A，两条路分叉。
+ *  B2 靶子写死：过去一律用 loopTrap({}) 的默认靶 `read_file:trap-hash` 去比对真实
+ *     trace，真实 trace 永远命不中 → detected 恒为 false → a3 拿到“非空陷阱且零检出”
+ *     → **直接记 0 分**。这是「没测到」被记成「做错了」，违反 P0-2 铁律。
+ *  现在：先从 trace 里找出真实的连续重复序列当靶子；找不到就不产出陷阱条目
+ *  （→ A3 判 N/A，而不是 0）。找到则按探针语义判，检出与否都算真数据。
  */
+function findRepeatTarget(trace) {
+  const s = (trace && trace.steps) || [];
+  const seq = s.map(x => `${x.tool}:${x.args_hash || ''}`);
+  let best = null;
+  let i = 0;
+  while (i < seq.length) {
+    let j = i + 1;
+    while (j < seq.length && seq[j] === seq[i]) j++;
+    const run = j - i;
+    if (run >= 2 && (!best || run > best.run)) best = { key: seq[i], run };
+    i = j;
+  }
+  return best;
+}
+
 function deriveTraps(traces, trapSpec) {
   if (!Array.isArray(traces) || !traces.length) return [];
   const spec = trapSpec || {};
-  const probe = loopTrap(spec);
-  return traces.map(t => {
+  const out = [];
+  for (const t of traces) {
+    const hit = findRepeatTarget(t);
+    // 这条 trace 没有可识别的连续重复 → 不能用来判 A3（不硬凑 0 分）
+    if (!hit) continue;
+    const sep = hit.key.indexOf(':');
+    const tool = hit.key.slice(0, sep);
+    const args_hash = hit.key.slice(sep + 1);
+    // 用**真实靶子**重建判据，而不是探针的合成默认值
+    const probe = loopTrap({ ...spec, tool, args_hash });
     const j = probe.judge(t);
-    return { id: t.task_id || 'derived', steps: probe.payload.steps, detected: j.detected, detectedAtStep: j.detectedAtStep };
-  });
+    out.push({ id: t.task_id || 'derived', steps: probe.payload.steps, detected: j.detected, detectedAtStep: j.detectedAtStep });
+  }
+  return out;
 }
 
 class HarnessEvaluator {
@@ -96,7 +129,9 @@ class HarnessEvaluator {
     // A 群全量（M3）
     metrics.push(a1(cfg, { compression: input.compression }));
     metrics.push(a2(cfg, { compression: input.compression }));
-    metrics.push(a3(cfg, { traps: input.traps || deriveTraps(input.traces, input.trapSpec) }));
+    // traps 缺省是 []（HTTP 路由默认值），空数组是 truthy —— 必须判长度，否则推导永不触发
+    const trapsIn = (Array.isArray(input.traps) && input.traps.length) ? input.traps : deriveTraps(input.traces, input.trapSpec);
+    metrics.push(a3(cfg, { traps: trapsIn }));
     metrics.push(a4(cfg, { multiAgent: input.multiAgent }));
     metrics.push(a5(cfg, { orchestration: input.orchestration }));
     metrics.push(a6(cfg, { boundary: input.boundary }));
@@ -202,7 +237,7 @@ class HarnessEvaluator {
             ? 'drift 未判：未声明 processScope.expectedTools，无参照系'
             : null),
       },
-      dataSource: traces.length || input.traps || input.runs ? 'local' : 'unavailable',
+      dataSource: traces.length || (input.traps && input.traps.length) || (input.runs && input.runs.length) ? 'local' : 'unavailable',
     };
   }
 

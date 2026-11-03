@@ -1,0 +1,46 @@
+{
+  "_comment": "csb-harness-manifest-v1 示例。复制这份改自己的值即可。带 _ 前缀的字段是注释，引擎会忽略。",
+  "_doc": "docs/harness-quickstart-other-agents.md",
+
+  "harness": {
+    "name": "your-agent-name",
+    "version": "1.0.0",
+    "adapter": "csb-trace-v1"
+  },
+
+  "loop": {
+    "max_iterations": 50,
+    "max_tokens_per_task": 200000,
+    "loop_guard": "param-jaccard"
+  },
+
+  "context": {
+    "compression": "summarize",
+    "trigger_ratio": 0.65,
+    "keep_recent_turns": 6
+  },
+
+  "sandbox": {
+    "network_egress": "allowlist",
+    "fs_boundary": "workspace-only",
+    "kernel_isolation": false
+  },
+
+  "observability": {
+    "trace_format": "csb-trace-v1",
+    "fields": ["step", "tool", "args_hash", "tokens", "latency_ms", "error"]
+  },
+
+  "tools": [
+    { "name": "read_file", "side_effect": false },
+    { "name": "write_file", "side_effect": true },
+    { "name": "run_shell", "side_effect": true }
+  ],
+
+  "_声明面": "下面三块只作 A5 对照说明，不参与计分。没有就删掉，不要编。",
+  "skills": [
+    { "name": "example-skill", "version": "0.1.0" }
+  ],
+  "plugins": [],
+  "experience_ref": null
+}
