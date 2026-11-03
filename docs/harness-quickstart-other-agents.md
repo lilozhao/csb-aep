@@ -14,6 +14,8 @@ _建立 2026-11-04 · CSB-AEP v2.4.2 · 面向：想用 Harness 工程域自评�
 2. **绝对分不上屏。** 协议 §7.3 强制：必须给 `baselineScore`（裸模型基线）才出 Δ 卡片。**只跑自己的分不给完整结论**。
 3. **声明不是数据。** manifest 里 `skills` / `plugins` 只是「对照说明」，不参与计分。想拿 A5 的分，得给真实的 `orchestration` 执行序列。
 
+> 第 3.5 句：**只用 Harness 域的话，clone 这一个仓库就够了**。见 §1.1。
+
 ---
 
 ## 1. 环境与起服务
@@ -35,6 +37,40 @@ curl -s http://127.0.0.1:3110/api/harness/health
 ```
 
 `implemented` 列出 16 项全部在位，`planned` 为空 —— 这是「本域齐全」的机械判据。
+
+### 1.1 ⚠️ 跨仓依赖：只有五路径 `csb eval` 需要第二个仓
+
+本仓有**两条**互不相干的入口：
+
+| 入口 | 要不要 `csb-compliance-degree` | 说明 |
+|---|---|---|
+| **`csb harness`** / `/api/harness/*` | **不需要** | Harness 域自包含，单仓即可完整跑通 |
+| `csb eval`（①-⑦ 五路径） | **需要** | 判据指纹要从 `../csb-compliance-degree/config.json` 读 |
+
+只 clone 本仓就跑 `csb eval`，会看到：
+
+```
+🟡 判据指纹
+   找不到 ../csb-compliance-degree/config.json → 无法核对判据指纹
+   （报告仍可产出，但"可复用"判断会失效）
+```
+
+**这是 warning，不是 blocked** —— 报告照出，只是「判据是否一致、结果能不能跨次复用」这条断了。
+
+三种可选做法，按需挑：
+
+```bash
+# 做法 A（推荐）：并排 clone 两个仓
+cd ~ && git clone https://gitee.com/lilozhao/csb-aep.git \
+        && git clone https://gitee.com/lilozhao/csb-compliance-degree.git
+
+# 做法 B：只做 Harness 评测 → 不用管，用 csb harness 即可
+
+# 做法 C：只要五路径且不在意可复用性 → 忽略这条 warning，报告照样能出
+```
+
+> 我们**不把判据文件内置进本仓**：那会让「判据指纹」变成自己证明自己。
+> 两个仓分开、指纹对外可核对，才是它有意义的前提。
 
 ### 安全须知（重要）
 
@@ -131,7 +167,37 @@ curl -s -X POST http://127.0.0.1:3110/api/harness/manifest \
 
 ## 3. 跑一次评测
 
-### 3.1 最小可跑（只有 manifest + trace）
+### 3.0 命令行入口（推荐）
+
+不想记 curl 的话，用统一 CLI：
+
+```bash
+# 什么都不给 → 用内置示例自检（验证克隆没坏）
+node scripts/csb.js harness --dry-run
+
+# 只体检：会说清「这次会判不了什么」，不打分、不发请求
+node scripts/csb.js harness --manifest examples/harness-manifest.example.json \
+                          --traces examples/trace.example.jsonl --dry-run
+
+# 真跑（带基线才出 Δ）
+node scripts/csb.js harness --config examples/harness-full-example.json --baseline 6.4
+
+# 机读
+node scripts/csb.js harness --config examples/harness-full-example.json --baseline 6.4 --json
+```
+
+| 选项 | 作用 |
+|---|---|
+| `--config <file>` | 整包输入（manifest + traces + 各项埋点都在同一文件） |
+| `--manifest <file>` | 单独给 Manifest |
+| `--traces <file>` | `.jsonl`（一行一条）或 `.json`（数组） |
+| `--baseline <num>` | 裸模型基线分数，不给就不出 Δ |
+| `--dry-run` | 只体检，不出判定结论 |
+| `--json` | 机读输出 |
+
+退出码与 `csb eval` 同源：`ready 0` / `warning 1` / `blocked 2`。
+
+### 3.1 走 HTTP（服务已起时）
 
 ```bash
 curl -s -X POST http://127.0.0.1:3110/api/harness/eval \

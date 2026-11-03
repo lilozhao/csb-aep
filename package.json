@@ -10,7 +10,7 @@
     "start": "node server/index.js",
     "dev": "node server/index.js",
     "csb": "node scripts/csb.js",
-    "test": "node --test test/blackbox-suite.test.js test/gdi-engine.test.js test/whitebox-r14.test.js test/gdi-witness.test.js test/gdi-x1-sources.test.js test/harness-d-group.test.js test/verdict.test.js test/three-state-e2e.test.js test/collector-tier.test.js test/collector-wiring.test.js test/process-signals.test.js test/criteria.test.js test/mandate.test.js test/mandate-wiring.test.js test/mutual-path.test.js test/archaeology-path.test.js test/structure-path.test.js test/emergence-path.test.js test/paths-345-wiring.test.js && node test/manifest-consumption.test.js && node test/tier-ceiling.test.js && node test/cli-dry-run.test.js && node test/cli-real-run.test.js && node test/harness-quickstart-doc.test.js"
+    "test": "node --test test/blackbox-suite.test.js test/gdi-engine.test.js test/whitebox-r14.test.js test/gdi-witness.test.js test/gdi-x1-sources.test.js test/harness-d-group.test.js test/verdict.test.js test/three-state-e2e.test.js test/collector-tier.test.js test/collector-wiring.test.js test/process-signals.test.js test/criteria.test.js test/mandate.test.js test/mandate-wiring.test.js test/mutual-path.test.js test/archaeology-path.test.js test/structure-path.test.js test/emergence-path.test.js test/paths-345-wiring.test.js && node test/manifest-consumption.test.js && node test/tier-ceiling.test.js && node test/cli-dry-run.test.js && node test/cli-real-run.test.js && node test/harness-quickstart-doc.test.js && node test/cli-harness.test.js"
   },
   "keywords": [
     "a2a",

@@ -480,6 +480,185 @@ function redirectLogsToStderr() {
 
 function numOr(v, d) { const n = Number(v); return Number.isFinite(n) ? n : d; }
 
+// ══════════════════════════════════════════════
+// harness 子命令（2026-11-04）
+//   为什么不走 HTTP：外部 Agent 克隆完就应该能跑，不该被迫先起服务。
+//   引擎是纯函数（manifest/trace 进，指标出），CLI 直调即可。
+//   dry-run 沿用 eval 的口径：只说「会判不了什么」，不出判定结论。
+// ══════════════════════════════════════════════
+function readJsonFile(p) {
+  return JSON.parse(fs.readFileSync(path.resolve(p), 'utf8'));
+}
+
+/** 读 trace：支持 .jsonl（一行一条）与 .json（数组或单条） */
+function readTraces(p) {
+  const abs = path.resolve(p);
+  if (!fs.existsSync(abs)) throw new Error(`trace 文件不存在：${abs}`);
+  const raw = fs.readFileSync(abs, 'utf8').trim();
+  if (!raw) return [];
+  if (abs.endsWith('.jsonl') || abs.endsWith('.ndjson')) {
+    return raw.split('\n').filter(l => l.trim()).map((l, i) => {
+      try { return JSON.parse(l); } catch (e) { throw new Error(`trace 第 ${i + 1} 行不是合法 JSON：${e.message}`); }
+    });
+  }
+  const j = JSON.parse(raw);
+  return Array.isArray(j) ? j : [j];
+}
+
+async function cmdHarness(args) {
+  const { HarnessEvaluator, IMPLEMENTED } = require(path.join(AEP, 'server/engine/harness'));
+  const { validateManifest } = require(path.join(AEP, 'server/engine/harness/manifest.js'));
+  const { parseTrace } = require(path.join(AEP, 'server/engine/harness/trace.js'));
+  const f = args.flags;
+  const jsonOut = !!f.json;
+  const dryRun = !!f['dry-run'];
+  const restore = jsonOut ? redirectLogsToStderr() : null;
+
+  const report = { domain: 'harness', implemented: IMPLEMENTED, dryRun, state: STATE.READY, exitCode: 0, checks: [] };
+  const add = (state, title, detail, hints) => report.checks.push({ state, title, detail, hints });
+
+  try {
+    // ① 输入来源：--config（整包）或 --manifest + --traces
+    let payload = {};
+    if (f.config) {
+      payload = readJsonFile(f.config);
+      delete payload._comment;
+    } else if (!f.manifest && !f.traces) {
+      // 什么都没给 → 用仓库内置示例自检（usage 里承诺过的行为）
+      const exM = path.join(AEP, 'examples/harness-manifest.example.json');
+      const exT = path.join(AEP, 'examples/trace.example.jsonl');
+      if (fs.existsSync(exM) && fs.existsSync(exT)) {
+        report.usingExample = true;
+        add(STATE.READY, '使用内置示例', '没给输入 → 用 examples/ 下的样例自检', []);
+        payload.manifest = readJsonFile(exM);
+        payload.traces = readTraces(exT);
+      } else {
+        add(STATE.BLOCKED, '缺少 Manifest', '没给 --manifest/--config，且内置示例缺失', [
+          'csb harness --manifest <file> --traces <file> --dry-run',
+        ]);
+      }
+    } else {
+      if (!f.manifest) {
+        add(STATE.BLOCKED, '缺少 Manifest', '没给 --manifest，也没有 --config', [
+          'csb harness --manifest examples/harness-manifest.example.json --traces examples/trace.example.jsonl --dry-run',
+        ]);
+      } else {
+        payload.manifest = readJsonFile(f.manifest);
+      }
+      if (f.traces) payload.traces = readTraces(f.traces);
+    }
+
+    // --baseline：裸模型基线分数（协议 §7.3 无 Δ 不上屏）
+    if (f.baseline !== undefined) {
+      const b = Number(f.baseline);
+      if (!Number.isFinite(b)) {
+        add(STATE.BLOCKED, '--baseline 不是数字', `收到的：${f.baseline}`, ['--baseline 6.4']);
+      } else {
+        payload.baselineScore = b;
+        // 三方一致性所需的元数据没有就补同值：CLI 单次评测场景下模型/任务集就是本次这一份
+        payload.baselineMeta = payload.baselineMeta || {
+          model: payload.model || payload.manifest?.harness?.name || 'cli',
+          taskSetHash: payload.taskSetHash || 'cli-default',
+          scoredCount: 16,
+        };
+        payload.model = payload.model || payload.baselineMeta.model;
+        payload.taskSetHash = payload.taskSetHash || payload.baselineMeta.taskSetHash;
+      }
+    }
+
+    // ② Manifest 校验（协议 §7.2 前置）
+    if (payload.manifest) {
+      const mv = validateManifest(payload.manifest);
+      report.manifest = mv;
+      if (mv.valid) {
+        add(STATE.READY, 'Manifest 校验', '四个必填块齐全', mv.warnings && mv.warnings.length ? [`警告：${mv.warnings.join('；')}`] : []);
+      } else {
+        add(STATE.BLOCKED, 'Manifest 校验失败', mv.errors.join('；'), [
+          '四个必填块：harness / loop / sandbox / observability',
+          'loop.max_iterations 与 sandbox.fs_boundary 必填；observability.fields 须含 step/tool/tokens',
+        ]);
+      }
+      if (mv.na && mv.na.length) add(STATE.WARNING, '声明缺口', `这些项会判 N/A：${mv.na.join(', ')}`, []);
+    }
+
+    // ③ Trace 解析
+    if (payload.traces) {
+      const parsed = payload.traces.map(parseTrace);
+      const bad = parsed.filter(p => !p.valid);
+      report.trace = { count: parsed.length, invalid: bad.length };
+      if (!parsed.length) add(STATE.WARNING, 'Trace 为空', '没有 trace → B 群多数会判 N/A', ['补 --traces']);
+      else if (bad.length) add(STATE.WARNING, 'Trace 有问题', `${bad.length}/${parsed.length} 条不合法：${bad[0].errors.join('；')}`, []);
+      else add(STATE.READY, 'Trace 解析', `${parsed.length} 条全部合法`, []);
+    }
+
+    // ④ 先算一遍，才知道「会判不了什么」
+    const ev = new HarnessEvaluator();
+    const result = ev.evaluate({ ...payload });
+    const naList = result.metrics.filter(m => m.score === null).map(m => m.id);
+    const scored = result.metrics.filter(m => m.score !== null).map(m => m.id);
+    report.wouldScore = scored;
+    report.wouldNA = naList;
+    report.delta = result.delta;
+
+    if (naList.length) {
+      add(STATE.WARNING, '会判不了什么', `${naList.length}/16 项无数据 → N/A（不是 0 分）`, [
+        `缺：${naList.join(', ')}`, '每项要喂什么：docs/harness-quickstart-other-agents.md §4',
+      ]);
+    } else {
+      add(STATE.READY, '指标覆盖', '16/16 项都有数据可判', []);
+    }
+
+    if (!result.delta || result.delta.available !== true) {
+      add(STATE.WARNING, 'Δ 基线', '无 Δ 不出完整结论（协议 §7.3 无 Δ 不上屏）', [
+        '补 --baseline <裸模型分数>，或整包里的 baselineScore',
+      ]);
+    } else {
+      add(STATE.READY, 'Δ 基线', `Δ=${result.delta.delta}（${result.delta.verdict}）`, []);
+    }
+
+    // ⑤ 汇总态：取最严
+    const worst = report.checks.reduce((a, c) => (ORDER[c.state] > ORDER[a] ? c.state : a), STATE.READY);
+    report.state = worst;
+    report.exitCode = STATE_EXIT[worst];
+    report.result = dryRun ? undefined : result;
+
+    if (jsonOut) {
+      process.stdout.write(JSON.stringify(report, null, 2) + '\n');
+    } else {
+      console.log(`\n  CSB-Harness${dryRun ? ' · dry-run（只体检，不出判定结论）' : ''}`);
+      console.log('  ' + '─'.repeat(66));
+      for (const c of report.checks) {
+        const icon = c.state === STATE.READY ? '🟢' : c.state === STATE.WARNING ? '🟡' : '🔴';
+        console.log(`  ${icon} ${c.title}`);
+        console.log(`     ${c.detail}`);
+        for (const h of (c.hints || [])) console.log(`     ↳ ${h}`);
+      }
+      if (!dryRun) {
+        console.log('  ' + '─'.repeat(66));
+        console.log(`  出分 ${result.partial.scoredCount}/16 · average=${result.partial.average}`);
+        console.log(`  N/A：${naList.length ? naList.join(', ') : '无'}`);
+        if (result.delta && result.delta.available) {
+          console.log(`  Δ=${result.delta.delta}（${result.delta.verdict}）`);
+        } else {
+          console.log(`  Δ：不出（${result.delta && result.delta.note ? result.delta.note : '缺基线'}）`);
+        }
+      }
+      console.log('  ' + '─'.repeat(66));
+      console.log(`  ${report.state === STATE.READY ? '🟢' : report.state === STATE.WARNING ? '🟡' : '🔴'} ${report.state}（exit ${report.exitCode}）`);
+      console.log('');
+    }
+    process.exitCode = report.exitCode;
+    return report.exitCode;
+  } catch (e) {
+    if (jsonOut) process.stdout.write(JSON.stringify({ domain: 'harness', state: STATE.BLOCKED, exitCode: 2, error: e.message }, null, 2) + '\n');
+    else console.error(`\n  🔴 ${e.message}\n`);
+    process.exitCode = 2;
+    return 2;
+  } finally {
+    if (restore) restore();
+  }
+}
+
 function printReport(checks, opts) {
   const overall = stateOf(checks);
   const exit = STATE_EXIT[overall];
@@ -525,6 +704,7 @@ function usage() {
 csb —— CSB-AEP 统一入口
 
   csb eval [选项]
+  csb harness [选项]
 
 选项
   --dry-run            只体检：能不能判、会判不了什么。不发任何 A2A 消息
@@ -543,6 +723,22 @@ csb —— CSB-AEP 统一入口
   csb eval --dry-run
   csb eval --url 172.28.0.4:3100 --dry-run
   csb eval --path mutual --peers 172.28.0.4:3100,172.28.0.5:3100 --dry-run
+
+  csb harness --dry-run                                   # 用内置示例自检
+  csb harness --manifest examples/harness-manifest.example.json \
+              --traces examples/trace.example.jsonl --dry-run
+  csb harness --config examples/harness-full-example.json    # 16 项全量
+  csb harness --config examples/harness-full-example.json --baseline 6.4
+
+harness 选项
+  --config <file>      整包输入（manifest + traces + 各项埋点，全部入参同一文件）
+  --manifest <file>    单独给 Manifest（示例：examples/harness-manifest.example.json）
+  --traces <file>      csb-trace-v1 追踪（.jsonl 一行一条，或 .json 数组）
+  --baseline <num>     裸模型基线分数（不给就不出 Δ，协议 §7.3）
+  --dry-run            只体检：只说「会判不了什么」，不打分
+  --json               机读输出
+
+  不喂数据不会给 0 分，而是判 N/A——N/A 是「没测到」，0 才是「做错了」。
 `);
 }
 
@@ -557,6 +753,8 @@ async function main() {
 
   if (cmd === 'eval') return cmdEval(args);
 
+  if (cmd === 'harness') return cmdHarness(args);
+
   if (cmd === 'paths') {
     console.log('① 白盒       已实现  server/engine/whitebox.js');
     console.log('② 互评       已实现  server/engine/mutual.js（P2-2）');
@@ -569,6 +767,11 @@ async function main() {
     console.log('  ③ agentPath（本地目录，离线可判）');
     console.log('  ④ agentUrl + casesets/structure/<domain>.json');
     console.log('  ⑤ agentUrl + 引擎内置场景集');
+    console.log('');
+    console.log('Harness 工程域（v2.4 · 16 项 A/B/C）：');
+    console.log('  ⑥ Harness     已实现  server/engine/harness/（manifest + trace 双前置）');
+    console.log('                 csb harness --manifest <json> --traces <jsonl>');
+    console.log('                 详见 docs/harness-quickstart-other-agents.md');
     return;
   }
 
