@@ -764,8 +764,11 @@ class EvalAPI {
       verdict: result.verdict,
       reason: result.reason,
       score: result.score,
+      scoreScale: result.scoreScale ?? null,   // 涌现为 null（不产出质量分），CLI 靠它区分"不适用"与"判不了"
       coverage: result.coverage ?? null,
+      note: result.note ?? null,
       ...(result.emergenceRate !== undefined ? { emergenceRate: result.emergenceRate } : {}),
+      ...(result.decided !== undefined ? { decided: result.decided } : {}),
     });
   }
 

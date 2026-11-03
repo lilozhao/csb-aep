@@ -213,11 +213,66 @@ function checkTier(paths) {
 async function cmdEval(args) {
   const f = args.flags;
   const dry = Boolean(f['dry-run']);
-  const wantPath = String(f.path || (f.url ? 'blackbox' : 'mutual'));
+  // 默认路径推断：**只从用户真给的参数推**，绝不凭“没给 url”就假设 mutual。
+  // 教训：早先写成 `f.url ? 'blackbox' : 'mutual'`，用户什么参数都不给时
+  //   CLI 会自作主张选互评，再回头抱怨“缺 --peers” —— 把自己猜的东西
+  //   算成用户的输入错误。未提供任何驱动条件时应直接说“无评测对象”。
+  const wantPath = String(f.path || (f.url ? 'blackbox' : (f.peers ? 'mutual' : 'none')));
   const rawPaths = String(f.paths || '');
   const paths = rawPaths ? rawPaths.split(',').map((s) => s.trim()).filter(Boolean) : [wantPath];
+  // 驱动条件：③ 只需 agentPath（可离线）；② 只需 peers；①④⑤ 需 url
+  const needsUrl = paths.some((p) => ['blackbox', 'whitebox', 'both', 'v22', 'structure', 'emergence'].includes(p));
+  const needsPeers = paths.includes('mutual');
+  const needsPath = paths.some((p) => ['whitebox', 'archaeology', 'both', 'v22'].includes(p));
 
-  if (!f.url && !f.peers) {
+  if (!f.url && !f.peers && !f['agent-path'] && !f.path) {
+    // 什么条件都没给：这是“用法错误”，但仍按三态返回，好让机器统一处理
+    const noCond = {
+      id: 'input', title: '评测条件', state: STATE.BLOCKED,
+      detail: '既没有 --url、也没有 --peers、也没有 --agent-path → 没有任何可评测的对象',
+      fixes: [
+        'csb eval --url host:port                     # 黑盒 / ④ 结构密度 / ⑤ 涌现',
+        'csb eval --path mutual --peers a:3100,b:3100  # ② 互评',
+        'csb eval --path archaeology --agent-path /p   # ③ 行为考古（离线可判）',
+      ],
+    };
+    const checks0 = [noCond, checkCriteria()];
+    if (!dry) { printReport(checks0, { dry: false, args }); console.log('  ⛔ 体检未过，未发起评测\n'); return STATE_EXIT[STATE.BLOCKED]; }
+    return printReport(checks0, { dry, wantPath, args });
+  }
+
+  if (needsUrl && !f.url) {
+    const noTarget = {
+      id: 'target', title: '评测目标', state: STATE.BLOCKED,
+      detail: `路径 ${paths.filter((p) => ['blackbox', 'structure', 'emergence'].includes(p)).join('/')} 需要 --url，但未提供`,
+      fixes: ['csb eval --url host:port --path ' + paths[0]],
+    };
+    const checks0 = [noTarget, checkCriteria()];
+    if (!dry) { printReport(checks0, { dry: false, args }); console.log('  ⛔ 体检未过，未发起评测\n'); return STATE_EXIT[STATE.BLOCKED]; }
+    return printReport(checks0, { dry, wantPath, args });
+  }
+  if (needsPeers && !f.peers) {
+    const noPeer = {
+      id: 'peers', title: '互评评审者', state: STATE.BLOCKED,
+      detail: 'path=mutual 需要 --peers，但未提供',
+      fixes: ['csb eval --path mutual --peers a:3100,b:3100'],
+    };
+    const checks0 = [noPeer, checkCriteria()];
+    if (!dry) { printReport(checks0, { dry: false, args }); console.log('  ⛔ 体检未过，未发起评测\n'); return STATE_EXIT[STATE.BLOCKED]; }
+    return printReport(checks0, { dry, wantPath, args });
+  }
+  if (needsPath && !f['agent-path']) {
+    const noDir = {
+      id: 'whitebox', title: 'Agent 目录', state: STATE.BLOCKED,
+      detail: `路径 ${paths.filter((p) => ['whitebox', 'archaeology'].includes(p)).join('/')} 需要 --agent-path，但未提供`,
+      fixes: ['csb eval --path archaeology --agent-path /path/to/agent'],
+    };
+    const checks0 = [noDir, checkCriteria()];
+    if (!dry) { printReport(checks0, { dry: false, args }); console.log('  ⛔ 体检未过，未发起评测\n'); return STATE_EXIT[STATE.BLOCKED]; }
+    return printReport(checks0, { dry, wantPath, args });
+  }
+
+  if (!f.url && !f.peers && !f['agent-path']) {
     // 什么条件都没给：这是"用法错误"，但仍按三态返回，好让机器统一处理
     const noCond = {
       id: 'input', title: '评测条件', state: STATE.BLOCKED,
@@ -237,8 +292,7 @@ async function cmdEval(args) {
   }
   checks.push(checkTier(paths));
 
-  // 结构化「这次会判不了什么」
-  //
+  // 结构化「这次会判不了什么」  //
   // P2-2（11-03 13:38 后）：③④⑤ 引擎已落地（archaeology.js / structure.js / emergence.js），
   //   所以这里**不再**笼统写「path_not_implemented」—— 那话已过期，会让人以为没做。
   //   改成按各自的 driver 说清楚「什么条件下这条路径必然 UNDECIDED」：
@@ -259,8 +313,152 @@ async function cmdEval(args) {
   }
   willUndecided.push({ item: '工具编排细节', reason: 'tier_below_hook' });
 
+  // ── 非 dry-run：体检完接着真跑 ──
+  //   为什么不打自己家的 HTTP：那是第二条发请求的路径（CLI 跑一部分、HTTP 跑一部分 → 两份结果）。
+  //   这里直接构造 EvalAPI 走同一份代码，结论与 HTTP 接口同源。
+  if (!dry) {
+    return await runReal(checks, { paths, flags: f, args });
+  }
+
   return printReport(checks, { dry, wantPath, willUndecided, args });
 }
+
+/**
+ * 真跑：把体检结论与评测结论**分开展示**。
+ *
+ * 为什么必须分开：体检是「能不能判」，评测是「判出了什么」。
+ * 合成一个分数就会出现「因为 blocked 所以 0 分」——那是把条件缺失当成能力差。
+ */
+async function runReal(checks, { paths, flags, args }) {
+  const overall = stateOf(checks);
+  const json = flags.json;
+
+  if (overall === STATE.BLOCKED) {
+    if (json) {
+      process.stdout.write(JSON.stringify({
+        command: 'eval', dryRun: false, state: overall, exitCode: STATE_EXIT[overall],
+        checks, ran: false, note: '体检 blocked → 不发任何评测请求（发了也是白烧 token）',
+      }, null, 2) + '\n');
+      process.exitCode = STATE_EXIT[overall];
+      return STATE_EXIT[overall];
+    }
+    printReport(checks, { dry: false, args });
+    console.log('  ⛔ 体检未过，未发起评测（避免白烧 token 又拿回一堆 UNDECIDED）\n');
+    return STATE_EXIT[overall];
+  }
+
+  // 加载 EvalAPI（与 HTTP 服务同一个类）
+  let EvalAPI;
+  try {
+    ({ EvalAPI } = require(path.join(AEP, 'server/api/eval')));
+  } catch (e) {
+    console.error(`csb: 载入 EvalAPI 失败：${e.message}`);
+    process.exitCode = 2;
+    return 2;
+  }
+  const defaults = readDefaults();
+  const api = new EvalAPI({
+    timeout: numOr(flags.timeout, defaults.timeout),
+    delay: numOr(flags.delay, defaults.delay),
+    resultsDir: path.resolve(AEP, defaults.resultsDir || './data/eval-results'),
+    eval: defaults.eval || {},
+  });
+
+  const out = [];
+  // --json 时把引擎的运行日志改道到 stderr：
+  //   否则 stdout 同时包含「人类日志」和「JSON」，任何 JSON.parse 都会崩。
+  //   机器可读模式里 stdout 只能有一个东西——这是接口契约，不是风格偏好。
+  const restoreLog = json ? redirectLogsToStderr() : () => {};
+  try {
+    for (const p of paths) {
+      const body = { path: p };
+      if (flags.url) body.agentUrl = flags.url;
+      if (flags['agent-path']) body.agentPath = flags['agent-path'];
+      if (flags.peers) body.peers = String(flags.peers).split(',').map((s) => s.trim()).filter(Boolean);
+      if (flags.domains) body.domains = String(flags.domains).split(',').map((s) => s.trim()).filter(Boolean);
+      if (flags.scenarios) body.scenarios = String(flags.scenarios).split(',').map((s) => s.trim()).filter(Boolean);
+
+      const res = await callApi(api, body);
+      out.push({ path: p, ...res });
+    }
+  } finally {
+    restoreLog();
+  }
+
+  // 退出码：取各路径最严的那个（"判不了"(2) 严于 "跑完"(0)；真 FAIL 在路径结果里表达）
+  const verdictRank = { PASS: 0, FAIL: 1, UNDECIDED: 2 };
+  const worst = out.reduce((m, r) => Math.max(m, verdictRank[r.verdict] ?? 2), 0);
+  const exit = worst === 2 ? 2 : 0;
+  process.exitCode = exit;
+
+  if (json) {
+    process.stdout.write(JSON.stringify({
+      command: 'eval', dryRun: false, state: overall, exitCode: exit,
+      checks, ran: true, results: out,
+    }, null, 2) + '\n');
+    return exit;
+  }
+
+  console.log('');
+  console.log('  CSB-AEP · eval（体检已过：' + (overall === STATE.READY ? 'ready' : 'warning') + '）');
+  console.log('  ' + '─'.repeat(66));
+  for (const r of out) {
+    const icon = r.verdict === 'PASS' ? '✅' : r.verdict === 'FAIL' ? '🔴' : '🟡';
+    const scoreTxt = r.score === null || r.score === undefined
+      ? (r.scoreScale === null ? '不适用（本路径不产出质量分）' : 'null（没判出来，不是 0 分）')
+      : r.score;
+    console.log(`  ${icon} ${r.path}  verdict=${r.verdict}  score=${scoreTxt}`);
+    if (r.reason) console.log(`     reason: ${r.reason}`);
+    if (r.note) console.log(`     ${r.note}`);
+    if (r.emergenceRate !== undefined && r.emergenceRate !== null) {
+      const decided = r.decided ?? r.counts?.decided ?? '?';
+      console.log(`     涌现率 ${r.emergenceRate}（${decided} 个可判场景）—— 涌现路径不产出质量分`);
+    }
+    if (r.coverage !== undefined && r.coverage !== null) console.log(`     覆盖率 ${r.coverage}`);
+    if (r.id) console.log(`     报告 id: ${r.id}`);
+  }
+  console.log('  ' + '─'.repeat(66));
+  console.log(`  ${exit === 2 ? '🟡 有路径判不了（UNDECIDED）—— 先把条件备齐，别当成"做得差"' : '✅ 跑完'}   （exit ${exit}）`);
+  console.log('');
+  return exit;
+}
+
+/** 调 EvalAPI：把它的 (req, res) 签名包成一个 Promise */
+function callApi(api, body) {
+  return new Promise((resolve) => {
+    const res = {
+      json: (o) => resolve(o),
+      status: () => ({ json: (o) => resolve(o) }),
+    };
+    api.createEval({ body }, res).catch((e) => resolve({ verdict: 'UNDECIDED', reason: 'insufficient_telemetry', note: `调用异常：${e.message}`, score: null }));
+  });
+}
+
+function readDefaults() {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(AEP, 'config/defaults.json'), 'utf8'));
+  } catch { return {}; }
+}
+
+/**
+ * 把 console.log/info/warn 临时改道到 stderr（--json 模式专用）。
+ * 返回还原函数——必须 finally 调用，否则后续输出会一直跑到 stderr。
+ */
+function redirectLogsToStderr() {
+  const orig = { log: console.log, info: console.info, warn: console.warn, error: console.error };
+  const toErr = (...a) => process.stderr.write(a.map(String).join(' ') + '\n');
+  console.log = toErr;
+  console.info = toErr;
+  console.warn = toErr;
+  return () => {
+    console.log = orig.log;
+    console.info = orig.info;
+    console.warn = orig.warn;
+    console.error = orig.error;
+  };
+}
+
+function numOr(v, d) { const n = Number(v); return Number.isFinite(n) ? n : d; }
 
 function printReport(checks, opts) {
   const overall = stateOf(checks);

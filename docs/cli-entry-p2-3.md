@@ -37,7 +37,24 @@ csb eval --url 172.28.0.4:3100 --dry-run
 csb eval --path mutual --peers a:3100,b:3100 --dry-run
 csb eval --url host:port --json                  # 机读
 csb paths                                        # 五路径实现状态
+
+# ── 真跑（不带 --dry-run）──
+csb eval --path archaeology --agent-path /path/to/agent   # ③ 离线可判
+csb eval --path structure --url host:port                 # ④ 需目标在线
+csb eval --path emergence --url host:port                 # ⑤ 需目标在线
+csb eval --path mutual --peers a:3100,b:3100              # ② 需评审者在线
 ```
+
+### 真跑时会发生什么
+
+1. 先跑同一套体检
+2. **`blocked` → 一条评测请求都不发**（白烧 token 又拿回一堆 UNDECIDED 没意义）
+3. 通过 → 在**同一进程内**构造 `EvalAPI` 调 `createEval`，与 HTTP 接口同一份代码
+4. 输出把**体检结论**与**评测结论**分开展示（合成一个分就会出现「因为 blocked 所以 0 分」）
+
+> 为什么不打自己家的 HTTP：那会变成第二条发请求的路径，
+> 出现「CLI 跑了一部分、HTTP 又跑了一部分」的两份结果。
+> `test/cli-real-run.test.js` 用 `!/json-rpc/` 反证 CLI 没有自己拼 A2A 请求。
 
 安装后可直接 `csb`（`package.json` 已声明 `bin.csb → scripts/csb.js`）；
 未安装时 `node scripts/csb.js ...` 等价。
@@ -73,12 +90,28 @@ npm test                          → 179 tests / 179 pass / 0 fail
 ## 六、诚实边界（这版没做的）
 
 1. **只有 `eval` 一个子命令**。`csb gdi` / `csb harness` 未接，目前仍需走 HTTP。
-2. **`csb eval` 不带 `--dry-run` 时不会真的发起评测** —— 它只做体检并给出口径，
-   真要跑请走 `POST /api/eval`（或 `path=mutual`）。这是刻意的：
-   避免 CLI 变成第二条发请求的路径，出现「CLI 跑了一部分、HTTP 又跑一部分」的两份结果。
+2. **真跑不带 `--dry-run` 时才发请求**，且只跑用户**显式**给的路径（`--path`）；
+   不给驱动条件时直接报 blocked，不会自作主张选一条路径。
 3. **采集档位是「预估」不是实测**：适配器目前无人声明 `hooks:true`，
    所以固定报 protocol 档。真档位由 `buildReportReceipt` 从证据算（P1-1）。
-4. 五路径里 **③④⑤ 仍未实现**，`csb paths` 如实标「未实现」。
+4. 五路径 ①~⑤ 均已接（③④⑤ 见 `docs/paths-345-...-p2-2.md`），
+   **但 ⑤ 不产出质量分**（`score` 恒 null，只给 `emergenceRate`）。
+
+## 七、踩过的三个坑（都已在代码/测试里锁住）
+
+| 坑 | 现象 | 锁在哪 |
+|---|---|---|
+| `--json` 混入引擎日志 | `JSON.parse` 崩在 `[AEP] ...` | 真跑时日志改道 stderr；测试断言 stdout 无日志行 |
+| 默认路径凭“没给 url”就选 mutual | 用户什么都不给，却被怪“缺 --peers” | 只有 `--peers` 才推 mutual；无任何驱动条件 → 报“无评测对象” |
+| `host:port` 缺 scheme | `new URL` 抛 Invalid URL，白等 9 秒重试 | `BlackBoxEngine.normalizeUrl()` |
+
+## 八、判据
+
+```
+node test/cli-dry-run.test.js   → 12/12
+node test/cli-real-run.test.js  → 8/8
+npm test                        → 191 tests / 191 pass / 0 fail
+```
 
 ---
 

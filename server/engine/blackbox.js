@@ -108,9 +108,26 @@ class BlackBoxEngine {
     }
   }
 
+  /**
+   * 地址归一：把 `host:port` / `//host:port` / 带尾斜线的 URL 统一成 `http://host:port`
+   *
+   * 为什么必须有：内部用 `new URL('/a2a/json-rpc', baseUrl)` 拼端点，
+   * 传入不带 scheme 的 `127.0.0.1:3100` 时 `new URL` 会直接抛 Invalid URL，
+   * 而这个错误**既不是超时也不是不可达** —— 会被正确地归为「判不了」，
+   * 但代价是白跑一轮重试（3s+6s），且报告上写不出真正的原因。
+   * 归一化后这类“我们自己的传参问题”在入口就消失。
+   */
+  static normalizeUrl(baseUrl) {
+    const s = String(baseUrl || '').trim();
+    if (!s) return s;
+    if (/^https?:\/\//i.test(s)) return s.replace(/\/+$/, '');
+    if (/^\/\//.test(s)) return `http:${s}`.replace(/\/+$/, '');
+    return `http://${s}`.replace(/\/+$/, '');
+  }
+
   async _sendOnce(baseUrl, message) {
     return new Promise((resolve, reject) => {
-      const url = new URL('/a2a/json-rpc', baseUrl);
+      const url = new URL('/a2a/json-rpc', BlackBoxEngine.normalizeUrl(baseUrl));
       const sb = { name: this.senderName, url: this.senderUrl };
       const payload = JSON.stringify({
         jsonrpc: '2.0',
@@ -168,6 +185,7 @@ class BlackBoxEngine {
    * 运行黑盒评测
    */
   async evaluate(baseUrl) {
+    baseUrl = BlackBoxEngine.normalizeUrl(baseUrl);
     const startTime = Date.now();
     const results = [];
 

@@ -63,7 +63,13 @@ async function closedPort() {
     const r = csb(['eval', '--dry-run']);
     assert.strictEqual(r.code, 2, `应 exit 2，实际 ${r.code}\n${r.out}`);
     assert.match(r.out, /blocked/);
-    assert.match(r.out, /既没有 --url 也没有 --peers/);
+    assert.match(r.out, /既没有 --url、也没有 --peers、也没有 --agent-path/);
+  });
+
+  await t('JUDGE: 什么都不给时不自作主张选 mutual 再怪用户缺 --peers', () => {
+    const r = csb(['eval', '--dry-run']);
+    assert.ok(!/path=mutual 需要 --peers/.test(r.out), `不应把 CLI 的默认猜测算成用户的错：\n${r.out}`);
+    assert.match(r.out, /评测条件/);
   });
 
   await t('JUDGE: 目标不可达 → blocked + exit 2', async () => {
