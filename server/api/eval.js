@@ -10,7 +10,72 @@ const { ClaimingStore } = require('../store/claiming-store');
 const { ExecRiskEngine, PREFIX_WARN_THRESHOLD, PREFIX_SUSPEND_THRESHOLD } = require('../engine/exec-risk');
 // [2026-11-03 P2-2] 路径②互评（五路径补齐第一步：唯一不需要答案键的路径）
 const { MutualEngine } = require('../engine/mutual');
+// [2026-11-03 P2-2] 路径③④⑤：行为考古 / 结构密度 / 涌现
+const { ArchaeologyEngine, DIMENSIONS: ARCH_DIMENSIONS } = require('../engine/archaeology');
+const { StructureEngine } = require('../engine/structure');
+const { EmergenceEngine } = require('../engine/emergence');
 const { CSBChecker } = require('../standard/csb');
+
+// ═══════════════════════════════════════════════════════════════
+// 五路径③④⑤的接线表（P2-2）
+//
+// 为什么集中成一张表而不是三段 if：
+//   ① 三个引擎的 evaluate 签名不同（③ 吃字符串路径，④⑤ 吃 options）
+//   ② 但**结论形状必须同源** —— 各写一遍 toItems，迟早有一份把「判不了」写成 0 分
+//   ③ 将来抽 kernel 时，这张表就是唯一的接入点
+//
+// driver：该路径靠什么驱动。这决定了「什么条件下必然 UNDECIDED」，
+//         也决定 CLI --dry-run 该体检哪一项。
+// ═══════════════════════════════════════════════════════════════
+const PATH_ENGINES = Object.freeze({
+  archaeology: {
+    title: '行为考古', emoji: '🏺', driver: 'agentPath',
+    policyVersion: 'archaeology',
+    create: (opts) => new ArchaeologyEngine(opts),
+    // 每个维度是一条 item：有分且有理由以外的证据 → 判出来了；否则 UNDECIDED。
+    // ⚠️ 维度的 state 由引擎给（它按覆盖率算过），这里只做映射，不重新判。
+    toItems: (r) => (r.dimensions || []).map((d) => ({
+      id: d.id,
+      weight: (ARCH_DIMENSIONS.find((x) => x.id === d.id) || {}).weight || 0,
+      score: d.score,
+      status: d.state,
+      reason: d.reason,
+      detail: d.note,
+      requires: null,          // 纯文件考古，不依赖采集档位
+    })),
+  },
+  structure: {
+    title: '结构密度', emoji: '🧱', driver: 'agentUrl',
+    policyVersion: 'structure',
+    create: (opts) => new StructureEngine(opts),
+    toItems: (r) => (r.domains || []).map((d) => ({
+      id: d.id,
+      weight: 1,
+      score: d.score,
+      status: d.state,
+      reason: d.reason,
+      detail: d.note,
+      requires: 'protocol',    // 必须有一轮可判往返
+    })),
+  },
+  emergence: {
+    title: '涌现', emoji: '✨', driver: 'agentUrl',
+    policyVersion: 'emergence',
+    create: (opts) => new EmergenceEngine(opts),
+    // ⚠️ 涌现不评分：score 恒为 null，只在顶层给 emergenceRate。
+    //    把它塞进 0-10 会让人以为「涌现少 = 做得差」——协议里没这么说。
+    toItems: (r) => (r.scenarios || []).map((s) => ({
+      id: s.id,
+      weight: 1,
+      score: null,
+      status: s.state,
+      reason: s.reason,
+      detail: s.note || s.why || null,
+      requires: 'protocol',
+    })),
+  },
+});
+
 const { ResultsStore } = require('../store/results');
 // [2026-11-02 P0-1] 判定内核（三态 + 回执 + 门）。可抽出的形状，将来抽走只改这一行 require。
 const verdict = require('../engine/verdict');
@@ -339,6 +404,18 @@ class EvalAPI {
         return await this.createMutualEval(req, res);
       }
 
+      // ═══════════════════════════════════════════════════════════════
+      // 路径③④⑤（P2-2）：行为考古 / 结构密度 / 涌现
+      //   三者共用同一套三态内核，所以走同一个分支 + 同一个回执构造器。
+      //   驱动条件不同：
+      //     ③ archaeology → agentPath（纯文件考古，目标离线也能跑）
+      //     ④ structure   → agentUrl（必须现场提问）
+      //     ⑤ emergence   → agentUrl（必须现场提问）
+      // ═══════════════════════════════════════════════════════════════
+      if (PATH_ENGINES[req.body.path]) {
+        return await this.createPathEval(req, res);
+      }
+
       // 请求间隔可覆盖（黑盒批量对话防触发安全层防刷）
       if (req.body.delay) this.blackbox.delay = req.body.delay;
       if (req.body.timeout) this.blackbox.timeout = req.body.timeout;
@@ -618,6 +695,81 @@ class EvalAPI {
   }
 
   /**
+   * POST /api/eval · path=archaeology|structure|emergence（P2-2 五路径③④⑤）
+   *
+   * 与黑盒/白盒的关系：不是替代，是**问不同的问题**。
+   *   ③ 行为考古：不看它说了什么，看它留下了什么（文件 + 时间戳）。目标可离线。
+   *   ④ 结构密度：现场学 5 个案例，第 6 个能不能迁移过去。答案键绝不进 prompt。
+   *   ⑤ 涌现：不给案例，看它能不能自己提出结构。不评分，只记涌现率。
+   *
+   * 三者共同的纪律（与 kernel 一致，不许各写一套）：
+   *   . 判不出来 = UNDECIDED，score 必须是 null，不是 0
+   *   . 条件没给 = 可预期的「没东西可判」，仍按三态返回，不报 400
+   *     （永远 400 的接口等于永远无法区分「没给」和「判不了」）
+   */
+  async createPathEval(req, res) {
+    const kind = req.body.path;
+    const spec = PATH_ENGINES[kind];
+    const { agentUrl, agentPath, delay, timeout } = req.body;
+
+    // 驱动条件：③ 吃 agentPath，④⑤ 吃 agentUrl
+    const needsUrl = spec.driver === 'agentUrl';
+    const driverValue = needsUrl ? agentUrl : agentPath;
+
+    console.log(`[AEP] ${spec.emoji} ${spec.title}路径: ${driverValue || '(未提供驱动条件)'}`);
+
+    let result;
+    if (!driverValue) {
+      // 条件没给：直接让引擎返回它的"没东西可判"形态，保证结论形状与真跑一致
+      const engine = spec.create({ delay: 0 });
+      result = needsUrl ? await engine.evaluate({}) : await engine.evaluate(null);
+    } else {
+      const engine = spec.create({
+        delay, timeout,
+        senderName: (this.config.eval && this.config.eval.senderName) || 'CSB-AEP',
+        senderUrl: (this.config.eval && this.config.eval.senderUrl) || 'http://aep.local',
+        // 仅测试用：允许注入传输，避免端到端测试真的发 A2A
+        transport: this.pathTransport || undefined,
+      });
+      result = needsUrl
+        ? await engine.evaluate({ agentUrl, ...(req.body.domains ? { domains: req.body.domains } : {}), ...(req.body.scenarios ? { scenarios: req.body.scenarios } : {}) })
+        : await engine.evaluate(agentPath);
+    }
+
+    const report = {
+      ...result,
+      agentUrl: agentUrl || null,
+      agentPath: agentPath || null,
+      standard: `csb-aep/${kind}`,
+      mode: kind,
+    };
+
+    report.receipt = buildReportReceipt(report, {
+      mode: kind,
+      adapter: { name: kind },
+      evalResult: result,
+      whiteboxResult: null,
+      req,
+      pathItems: spec.toItems(result),
+      pathPolicy: spec.policyVersion,
+    });
+
+    const saved = await this.store.add(report);
+    console.log(`[AEP] ✅ ${spec.title}完成: ${result.verdict} · score=${result.score === null ? 'null' : result.score}`);
+
+    res.json({
+      success: true,
+      id: saved.id,
+      path: kind,
+      verdict: result.verdict,
+      reason: result.reason,
+      score: result.score,
+      coverage: result.coverage ?? null,
+      ...(result.emergenceRate !== undefined ? { emergenceRate: result.emergenceRate } : {}),
+    });
+  }
+
+  /**
    * GET /api/eval/:id
    *
    * P1-5：支持「这份结论能不能用在这件事上」的机械查询：
@@ -708,7 +860,9 @@ class EvalAPI {
 }
 
 // buildReportReceipt 一并导出：给单测直接喂构造报告，不必真跑 37 条用例（省钱且可复现）
-module.exports = { EvalAPI, buildReportReceipt };
+// PATH_ENGINES 一并导出：接线表是「五路径接在哪个引擎上」的唯一真源，
+//   单测要能直接核它（而不是核文档或核某段 if）—— 文档会过期，代码不会。
+module.exports = { EvalAPI, buildReportReceipt, PATH_ENGINES };
 
 
 /**
@@ -724,7 +878,9 @@ function buildReportReceipt(report, ctx) {
   const secret = process.env.AEP_RECEIPT_SECRET || null;
 
   // 口径版本：权重表随 mode 变，所以要能区分「按哪版口径算的」
-  const policyVersion = `aep-${AEP_VERSION || 'unknown'}/${mode || 'blackbox'}`;
+  // P2-2 ③④⑤：这三种路径没有 results/用例清单，口径名沿用自己的（ctx.pathPolicy），
+  //   否则会产生「证据结构完全不同、口径名却一样」的回执 —— 那等于口径没版本。
+  const policyVersion = `aep-${AEP_VERSION || 'unknown'}/${ctx.pathPolicy || mode || 'blackbox'}`;
 
   // 题集摘要：对实际跑到的用例清单做哈希（同题集同摘要）
   const caseIds = (report.results || []).map((r) => r.id).sort();
@@ -740,18 +896,23 @@ function buildReportReceipt(report, ctx) {
     collectorVersion = verdict.digestOf(fs.readFileSync(f, 'utf8')).slice(0, 23);
   } catch { collectorVersion = AEP_VERSION; }
 
-  // 采集档位（P0-6）：从**证据**算，不自报、不写死。
-  //   旧写法两个分支都返回 PROTOCOL（占位符），等于档位从不参与判定。
-  //   hooks 只认适配器**实际提供**的能力（BaseAdapter 默认 false）；
-  //   protocol 只认「至少一条结果被真正判出来」（连上但全超时 = 没证据）。
-  const decidedCount = (report.results || []).filter((r) => r.status !== verdict.VERDICT.UNDECIDED).length;
+  // P2-2 ③④⑤：这三条路径没有 adapter 文件（不是协议往返，是自带引擎）。
+  //   但档位**仍必须从证据算**：
+  //     ③ 行为考古读的是本地文件 + 时间戳 → 看得见文件即 HOOK 档（文件就是钩子级证据）
+  //     ④⑤ 靠协议问答 → 至多 PROTOCOL 档，一条都判不出来则 NONE
+  const hasPathItems = Array.isArray(ctx.pathItems);
+  const sourceForTier = hasPathItems ? ctx.pathItems : (report.results || []);
+  const decidedCount = sourceForTier.filter((r) => r.status !== verdict.VERDICT.UNDECIDED).length;
+  // ③ 的档位来自「真的读到了文件」：引擎把读不到的维度标成 no_audit_source。
+  //   只要有一个维度判出来了，就说明文件读到了 → HOOK。
+  const isFileAudit = ctx.pathPolicy === 'archaeology';
   // P1-1：采集器声明的能力上限参与封顶。适配器说「我最多看到 protocol」，
   // 就不该因为一次偶然的 hook 形状数据自称 hook 档（那会让判定链对看不清的指标下 FAIL）。
   const tierInfo = verdict.resolveTier({
-    hooks: adapter?.capabilities?.hooks === true,
+    hooks: adapter?.capabilities?.hooks === true || (isFileAudit && decidedCount > 0),
     protocol: decidedCount > 0,
     screen: false,
-  }, { ceiling: adapter?.collector?.tier });
+  }, { ceiling: adapter?.collector?.tier || (hasPathItems && isFileAudit ? 'hook' : undefined) });
   const tier = tierInfo.tier;
   const collectorMeta = typeof adapter?.collectorMeta === 'function'
     ? adapter.collectorMeta()
@@ -759,7 +920,11 @@ function buildReportReceipt(report, ctx) {
 
   // 三态：把 results 映射成内核的 items，供 aggregate 出 coverage/insufficient
   //   P0-6 两步收敛：① 单条按档位封顶（低档位不得 FAIL）② 再聚合
-  const items = (report.results || []).map((r) => {
+  // P2-2 ③④⑤：这三条路径的判定单元不是用例（results），而是维度/领域/场景。
+  //   由调用方按各自引擎的原始输出给出（PATH_ENGINES[*].toItems），
+  //   但**统一走内核**的三态构造 + 档位收敛 —— 不许各写一套「判不了算 0 分」。
+  const sourceItems = ctx.pathItems || report.results || [];
+  const items = sourceItems.map((r) => {
     const raw = (r.status === verdict.VERDICT.UNDECIDED)
       ? verdict.undecided(r.reason || verdict.UNDECIDED_REASON.UNREACHABLE, r.detail)
       : ((r.pass === true || (typeof r.score === 'number' && r.score >= 50))

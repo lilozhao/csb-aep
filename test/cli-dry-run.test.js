@@ -94,7 +94,24 @@ async function closedPort() {
   await t('JUDGE: 会说「这次会判不了什么」（不只说能跑）', () => {
     const r = csb(['eval', '--url', '127.0.0.1:1', '--dry-run']);
     assert.match(r.out, /这次会判不了什么/, '缺少"会判不了什么"段落');
-    assert.match(r.out, /no_agent_path|no_peers|path_not_implemented/);
+    assert.match(r.out, /no_agent_path|no_peers|no_agent_url/);
+    // P2-2：③④⑤ 引擎已落地，CLI 不得再笼统说「未实现」——
+    //   那话会让调用方以为没做，转而去手工补判据。
+    assert.doesNotMatch(r.out, /path_not_implemented/, 'CLI 仍声称③④⑤未实现（引擎已存在，话过期了）');
+  });
+
+  await t('JUDGE: ③④⑤ 按各自的 driver 报缺项，不是一句「未实现」', () => {
+    // 没给 agentPath → ③ 行为考古必判不了（它是文件驱动）
+    const noPath = csb(['eval', '--url', '127.0.0.1:1', '--dry-run', '--json']);
+    const j1 = JSON.parse(noPath.out);
+    const w1 = j1.willUndecided.map((x) => `${x.item}=${x.reason}`);
+    assert.ok(w1.some((x) => x.startsWith('③行为考古=')), '③行为考古 未出现在 willUndecided');
+    assert.ok(w1.some((x) => x.startsWith('③行为考古=no_agent_path')), '③行为考古 应报 no_agent_path');
+    // 给了 url → ④⑤ 的 driver 齐了，不该再报 no_agent_url
+    const withUrl = csb(['eval', '--url', '127.0.0.1:1', '--agent-path', __dirname, '--dry-run', '--json']);
+    const j2 = JSON.parse(withUrl.out);
+    const w2 = j2.willUndecided.map((x) => `${x.item}=${x.reason}`);
+    assert.ok(!w2.some((x) => x.includes('no_agent_url')), '给了 --url 还报 no_agent_url（④⑤ 是 url 驱动）');
   });
 
   await t('JUDGE: --json 可机读，state/exitCode 与文本模式一致', () => {

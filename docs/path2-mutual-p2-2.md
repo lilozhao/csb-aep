@@ -92,7 +92,8 @@ npm test                        → 179/179（含本套）
    判不了工具编排与执行细节。要那部分请走①白盒或带 `trajectory` 的路径⑦。
 2. **`participation` 在网络本身不可信时也必然低**：此时结论是「这群人评不了」，
    不是「目标不好」——报告里 `note` 会明确写出来。
-3. **③行为考古 / ④结构密度 / ⑤涌现 仍未实现**（`csb paths` 如实标）。
+3. **③行为考古 / ④结构密度 / ⑤涌现 已于 11-03 续做落地**
+   （`archaeology.js` / `structure.js` / `emergence.js`，见 `paths-345-archaeology-structure-emergence-p2-2.md`）。
 
 ---
 

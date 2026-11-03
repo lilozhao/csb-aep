@@ -238,10 +238,25 @@ async function cmdEval(args) {
   checks.push(checkTier(paths));
 
   // 结构化「这次会判不了什么」
+  //
+  // P2-2（11-03 13:38 后）：③④⑤ 引擎已落地（archaeology.js / structure.js / emergence.js），
+  //   所以这里**不再**笼统写「path_not_implemented」—— 那话已过期，会让人以为没做。
+  //   改成按各自的 driver 说清楚「什么条件下这条路径必然 UNDECIDED」：
+  //     ③ 行为考古 ← agentPath（本地目录，离线可判）
+  //     ④ 结构密度 ← agentUrl + 案例集（casesets/structure/*.json）
+  //     ⑤ 涌现     ← agentUrl + 场景集（引擎内置）
+  // 注意：这里只说**条件缺不缺**，不承诺结论 —— 条件齐了也可能判不出来。
   const willUndecided = [];
   if (!f['agent-path']) willUndecided.push({ item: '①白盒（文件类判据）', reason: 'no_agent_path' });
   if (!f.peers) willUndecided.push({ item: '②互评', reason: 'no_peers' });
-  willUndecided.push({ item: '③行为考古 / ④结构密度 / ⑤涌现', reason: 'path_not_implemented' });
+  if (!f['agent-path']) {
+    willUndecided.push({ item: '③行为考古', reason: 'no_agent_path' });
+  } else if (!fs.existsSync(f['agent-path'])) {
+    willUndecided.push({ item: '③行为考古', reason: 'agent_path_missing' });
+  }
+  if (!f.url) {
+    willUndecided.push({ item: '④结构密度 / ⑤涌现', reason: 'no_agent_url' });
+  }
   willUndecided.push({ item: '工具编排细节', reason: 'tier_below_hook' });
 
   return printReport(checks, { dry, wantPath, willUndecided, args });
@@ -298,7 +313,7 @@ csb —— CSB-AEP 统一入口
   --url host:port      黑盒评测目标
   --path <p>           blackbox | whitebox | mutual（默认按是否给 url / peers 推断）
   --peers a:1,b:1      path=mutual 时的评审者列表
-  --agent-path <dir>   路径①白盒要读的 Agent 目录
+  --agent-path <dir>   路径①白盒 / 路径③行为考古要读的 Agent 目录
   --json               机读输出
 
 三态 / 退出码
@@ -327,9 +342,15 @@ async function main() {
   if (cmd === 'paths') {
     console.log('① 白盒       已实现  server/engine/whitebox.js');
     console.log('② 互评       已实现  server/engine/mutual.js（P2-2）');
-    console.log('③ 行为考古   未实现');
-    console.log('④ 结构密度   未实现');
-    console.log('⑤ 涌现       未实现');
+    console.log('③ 行为考古   已实现  server/engine/archaeology.js（P2-2）');
+    console.log('④ 结构密度   已实现  server/engine/structure.js（P2-2）');
+    console.log('⑤ 涌现       已实现  server/engine/emergence.js（P2-2）');
+    console.log('');
+    console.log('驱动条件：');
+    console.log('  ① agentPath（本地目录） · ② peers（在线评审者）');
+    console.log('  ③ agentPath（本地目录，离线可判）');
+    console.log('  ④ agentUrl + casesets/structure/<domain>.json');
+    console.log('  ⑤ agentUrl + 引擎内置场景集');
     return;
   }
 

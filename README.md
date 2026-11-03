@@ -88,6 +88,9 @@ csb-aep/
 │   │   ├── blackbox.js      ← 黑盒测试引擎（37 项 / 13 类别）
 │   │   ├── whitebox.js      ← 路径① 白盒测试引擎（6 维度）
 │   │   ├── mutual.js        ← 路径② 互评网络（应答率 / 可复现 / 判别力，P2-2）
+│   │   ├── archaeology.js   ← 路径③ 行为考古（记忆/承诺/学习/社交/演化五维，P2-2）
+│   │   ├── structure.js     ← 路径④ 结构密度（迁移测试，答案键不进 prompt，P2-2）
+│   │   ├── emergence.js     ← 路径⑤ 涌现测试（只布尔判定 + 证据，不给分，P2-2）
 │   │   ├── recommender.js   ← 优化建议生成器
 │   │   ├── eval-redteam.js  ← 🛡️ CSB-RedTeam 红队引擎 v1.0（v2.1，28 个 S 类用例）
 │   │   ├── redteam-cases.js ← 红队测试用例集（S1-S4）
@@ -206,6 +209,31 @@ csb-aep/
 | 元认知能力 | 20% | AGENTS.md、行为规则、SELF_STATE、HEARTBEAT、反思 |
 | 学习成长 | 15% | 纠正记录、经验教训、成长记录、可复用结构 |
 | A2A 配置 | 5% | identity.json、端口、版本、LLM |
+
+### 五路径②③④⑤（P2-2 · 五路径补齐）
+
+| 路径 | 引擎 | 问的问题 | 驱动条件 |
+|------|------|---------|---------|
+| ② 互评 | `engine/mutual.js` | 多个评审者的判定之间自不自洽 | `--peers a:3100,b:3100` |
+| ③ 行为考古 | `engine/archaeology.js` | 它**真的**做过什么（翻历史，不听自述） | `--agent-path <dir>`（离线可判） |
+| ④ 结构密度 | `engine/structure.js` | 现场学 5 个案例，第 6 个能不能迁移 | `--url` + `casesets/structure/*.json` |
+| ⑤ 涌现 | `engine/emergence.js` | 不给案例，它能不能自己提出结构 | `--url`（内置场景集） |
+
+五条路径共用同一套判定纪律：判不出来 = `UNDECIDED` + `score=null`（**不是 0 分**），
+口径名互不相同（回执的 `policy_version` 带路径后缀）。
+详情见 `docs/path2-mutual-p2-2.md` 与 `docs/paths-345-archaeology-structure-emergence-p2-2.md`。
+
+### 统一 CLI 入口 `csb`（P2-3）
+
+```bash
+node scripts/csb.js eval --dry-run                     # 只体检：能不能判、会判不了什么
+node scripts/csb.js eval --url host:port --dry-run      # 三态：ready(0) / warning(1) / blocked(2)
+node scripts/csb.js paths                               # 五路径各自的实现状态与驱动条件
+```
+
+**dry-run 零副作用**：探针只做 TCP 连接 + 读本地文件，**一条 A2A 消息都不发**
+（测试用假服务端锁死），所以可以随便跑、可以进 CI。
+输出里会先说清「这次会判不了什么」，免得跑完把 `UNDECIDED` 当成「做错了」。
 
 ### CSB 碳硅契标准
 
